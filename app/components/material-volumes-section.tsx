@@ -39,7 +39,9 @@ export default function MaterialVolumesSection({
             className="rounded-3xl border border-white/10 bg-white/5 p-5"
           >
             <div className="mx-auto mb-5 max-w-[220px]">
-              <PdfCoverPreview fileUrl={volume.pdf_url} />
+              <PdfCoverPreview
+                fileUrl={`/api/files/view?kind=volume&id=${volume.id}`}
+              />
             </div>
 
             <h3 className="text-xl font-semibold text-white">

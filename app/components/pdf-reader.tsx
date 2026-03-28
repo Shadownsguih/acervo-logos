@@ -61,6 +61,7 @@ const SWIPE_MAX_VERTICAL_DRIFT = 60;
 const MOBILE_UI_AUTO_HIDE_DELAY = 1500;
 const DESKTOP_UI_AUTO_HIDE_DELAY = 1400;
 const MOBILE_PINCH_SENSITIVITY = 1.15;
+const FALLBACK_PAGE_RATIO = 1.4142;
 
 function clampZoom(value: number) {
   return Math.min(Math.max(Number(value.toFixed(2)), MIN_ZOOM), MAX_ZOOM);
@@ -108,6 +109,7 @@ export default function PdfReader({
     useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [gestureHint, setGestureHint] = useState<string>("");
+  const [pageShellWidth, setPageShellWidth] = useState<number>(0);
   const [devicePixelRatio, setDevicePixelRatio] = useState<number>(1);
   const [isPinching, setIsPinching] = useState<boolean>(false);
   const [isMobileUiVisible, setIsMobileUiVisible] = useState<boolean>(true);
@@ -700,6 +702,65 @@ export default function PdfReader({
   }, [fullscreenTargetId, isDesktopFullscreen]);
 
   useEffect(() => {
+    const element = pageShellRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    function updateWidth() {
+      if (!pageShellRef.current) {
+        return;
+      }
+
+      setPageShellWidth(pageShellRef.current.clientWidth);
+    }
+
+    updateWidth();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => {
+        updateWidth();
+      });
+
+      observer.observe(element);
+
+      return () => {
+        observer.disconnect();
+      };
+    }
+
+    window.addEventListener("resize", updateWidth);
+
+    return () => {
+      window.removeEventListener("resize", updateWidth);
+    };
+  }, [isImmersive, isMobileUiVisible, isDesktopUiVisible]);
+
+  useEffect(() => {
+    if (!isMobile || pageShellWidth <= 0) {
+      return;
+    }
+
+    const horizontalPadding = isMobileReaderFullscreen ? 0 : 16;
+    const availableWidth = Math.max(240, Math.floor(pageShellWidth - horizontalPadding));
+
+    if (mobileBaseWidth === 0) {
+      setMobileBaseWidth(availableWidth);
+    }
+
+    if (mobileBaseHeight === 0) {
+      setMobileBaseHeight(Math.floor(availableWidth * FALLBACK_PAGE_RATIO));
+    }
+  }, [
+    isMobile,
+    pageShellWidth,
+    isMobileReaderFullscreen,
+    mobileBaseWidth,
+    mobileBaseHeight,
+  ]);
+
+  useEffect(() => {
     function handleKeyNavigation(
       event: KeyboardEvent | globalThis.KeyboardEvent
     ) {
@@ -813,6 +874,8 @@ export default function PdfReader({
     mobileBaseWidth > 0 ? Math.round(mobileBaseWidth * effectiveZoom) : 0;
   const mobileScaledHeight =
     mobileBaseHeight > 0 ? Math.round(mobileBaseHeight * effectiveZoom) : 0;
+
+  const canRenderMobilePage = isMobile && mobileBaseWidth > 0 && mobileBaseHeight > 0;
 
   return (
     <div
@@ -1185,7 +1248,7 @@ export default function PdfReader({
               }
             >
               {isMobile ? (
-                mobileBaseWidth > 0 && mobileBaseHeight > 0 ? (
+                canRenderMobilePage ? (
                   <div
                     className={`${
                       isMobileReaderFullscreen
