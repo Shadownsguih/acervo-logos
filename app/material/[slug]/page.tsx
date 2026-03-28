@@ -130,7 +130,16 @@ export default function MaterialPage() {
 
   const previewUrl = useMemo(() => {
     if (!material) return null;
-    return hasVolumes ? volumes[0].pdf_url : material.pdf_url;
+
+    if (hasVolumes && volumes[0]?.id) {
+      return `/api/files/view?kind=volume&id=${volumes[0].id}`;
+    }
+
+    if (material.pdf_url) {
+      return `/api/files/view?kind=material&id=${material.id}`;
+    }
+
+    return null;
   }, [material, hasVolumes, volumes]);
 
   const backHref = getCategoryHref(material?.category ?? null);

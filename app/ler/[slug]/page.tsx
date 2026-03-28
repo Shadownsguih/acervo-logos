@@ -161,7 +161,7 @@ export default async function ReadPage({
             </div>
 
             <PdfReader
-              fileUrl={volume.pdf_url}
+              fileUrl={`/api/files/view?kind=volume&id=${volume.id}`}
               readingProgressKey={`pdf-reading-progress:volume:${volume.id}`}
               fullscreenTargetId="desktop-reader-fullscreen-root"
               fullscreenToolbarSlot={
@@ -293,7 +293,7 @@ export default async function ReadPage({
           </div>
 
           <PdfReader
-            fileUrl={material.pdf_url}
+            fileUrl={`/api/files/view?kind=material&id=${material.id}`}
             readingProgressKey={`pdf-reading-progress:material:${material.id}`}
             fullscreenTargetId="desktop-reader-fullscreen-root"
             fullscreenToolbarSlot={
