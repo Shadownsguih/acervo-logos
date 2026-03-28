@@ -841,36 +841,29 @@ export default function PdfReader({
       return;
     }
 
-    const scrollY = window.scrollY;
-    mobileScrollRestoreRef.current = scrollY;
+    mobileScrollRestoreRef.current = window.scrollY;
 
-    const previousHtmlOverflow = document.documentElement.style.overflow;
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousBodyPosition = document.body.style.position;
-    const previousBodyTop = document.body.style.top;
-    const previousBodyLeft = document.body.style.left;
-    const previousBodyRight = document.body.style.right;
-    const previousBodyWidth = document.body.style.width;
-    const previousBodyTouchAction = document.body.style.touchAction;
+    const html = document.documentElement;
+    const body = document.body;
 
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-    document.body.style.width = "100%";
-    document.body.style.touchAction = "none";
+    const previousHtmlOverflow = html.style.overflow;
+    const previousHtmlOverscrollBehavior = html.style.overscrollBehavior;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyOverscrollBehavior = body.style.overscrollBehavior;
+    const previousBodyTouchAction = body.style.touchAction;
+
+    html.style.overflow = "hidden";
+    html.style.overscrollBehavior = "contain";
+    body.style.overflow = "hidden";
+    body.style.overscrollBehavior = "contain";
+    body.style.touchAction = "manipulation";
 
     return () => {
-      document.documentElement.style.overflow = previousHtmlOverflow;
-      document.body.style.overflow = previousBodyOverflow;
-      document.body.style.position = previousBodyPosition;
-      document.body.style.top = previousBodyTop;
-      document.body.style.left = previousBodyLeft;
-      document.body.style.right = previousBodyRight;
-      document.body.style.width = previousBodyWidth;
-      document.body.style.touchAction = previousBodyTouchAction;
+      html.style.overflow = previousHtmlOverflow;
+      html.style.overscrollBehavior = previousHtmlOverscrollBehavior;
+      body.style.overflow = previousBodyOverflow;
+      body.style.overscrollBehavior = previousBodyOverscrollBehavior;
+      body.style.touchAction = previousBodyTouchAction;
 
       window.scrollTo({
         top: mobileScrollRestoreRef.current,
