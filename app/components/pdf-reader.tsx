@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -96,7 +97,9 @@ export default function PdfReader({
   const mobileUiHideTimerRef = useRef<number | null>(null);
   const desktopUiHideTimerRef = useRef<number | null>(null);
   const wheelLockRef = useRef(false);
+  const mobileScrollRestoreRef = useRef(0);
 
+  const [isMounted, setIsMounted] = useState(false);
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [pageInput, setPageInput] = useState<string>("1");
@@ -604,6 +607,10 @@ export default function PdfReader({
   }
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     function syncFullscreenState() {
       setIsNativeFullscreen(Boolean(document.fullscreenElement));
     }
@@ -743,7 +750,10 @@ export default function PdfReader({
     }
 
     const horizontalPadding = isMobileReaderFullscreen ? 0 : 16;
-    const availableWidth = Math.max(240, Math.floor(pageShellWidth - horizontalPadding));
+    const availableWidth = Math.max(
+      240,
+      Math.floor(pageShellWidth - horizontalPadding)
+    );
 
     if (mobileBaseWidth === 0) {
       setMobileBaseWidth(availableWidth);
@@ -823,24 +833,51 @@ export default function PdfReader({
   }, []);
 
   useEffect(() => {
-    if (!isMobileReaderFullscreen || typeof document === "undefined") {
+    if (
+      !isMobile ||
+      !isMobileReaderFullscreen ||
+      typeof document === "undefined"
+    ) {
       return;
     }
 
+    const scrollY = window.scrollY;
+    mobileScrollRestoreRef.current = scrollY;
+
     const previousHtmlOverflow = document.documentElement.style.overflow;
     const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyPosition = document.body.style.position;
+    const previousBodyTop = document.body.style.top;
+    const previousBodyLeft = document.body.style.left;
+    const previousBodyRight = document.body.style.right;
+    const previousBodyWidth = document.body.style.width;
     const previousBodyTouchAction = document.body.style.touchAction;
 
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
     document.body.style.touchAction = "none";
 
     return () => {
       document.documentElement.style.overflow = previousHtmlOverflow;
       document.body.style.overflow = previousBodyOverflow;
+      document.body.style.position = previousBodyPosition;
+      document.body.style.top = previousBodyTop;
+      document.body.style.left = previousBodyLeft;
+      document.body.style.right = previousBodyRight;
+      document.body.style.width = previousBodyWidth;
       document.body.style.touchAction = previousBodyTouchAction;
+
+      window.scrollTo({
+        top: mobileScrollRestoreRef.current,
+        behavior: "auto",
+      });
     };
-  }, [isMobileReaderFullscreen]);
+  }, [isMobile, isMobileReaderFullscreen]);
 
   const visibleZoomPercent = useMemo(
     () => Math.round(zoomLevel * 100),
@@ -875,16 +912,17 @@ export default function PdfReader({
   const mobileScaledHeight =
     mobileBaseHeight > 0 ? Math.round(mobileBaseHeight * effectiveZoom) : 0;
 
-  const canRenderMobilePage = isMobile && mobileBaseWidth > 0 && mobileBaseHeight > 0;
+  const canRenderMobilePage =
+    isMobile && mobileBaseWidth > 0 && mobileBaseHeight > 0;
 
-  return (
+  const readerContent = (
     <div
       ref={containerRef}
       className={`relative flex flex-col ${
         isNativeFullscreen ? "h-screen w-screen bg-black p-0" : "gap-3 md:gap-4"
       } ${
         isMobileReaderFullscreen
-          ? "fixed inset-0 z-[80] bg-black p-0"
+          ? "fixed inset-0 z-[9999] bg-black p-0"
           : ""
       } ${
         isDesktopFullscreen && !isDesktopUiVisible ? "cursor-none" : ""
@@ -894,6 +932,8 @@ export default function PdfReader({
           ? {
               width: "100vw",
               height: "100dvh",
+              maxWidth: "100vw",
+              maxHeight: "100dvh",
             }
           : undefined
       }
@@ -1312,4 +1352,10 @@ export default function PdfReader({
       </div>
     </div>
   );
+
+  if (isMobile && isMobileReaderFullscreen && isMounted) {
+    return createPortal(readerContent, document.body);
+  }
+
+  return readerContent;
 }
