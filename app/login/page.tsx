@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Cinzel } from "next/font/google";
 import { loginUserAction } from "./actions";
+import LoginMobilePanels from "./login-mobile-panels";
 
 const cinzel = Cinzel({
   subsets: ["latin"],
@@ -59,7 +60,14 @@ export default async function LoginPage({
 
       <div className="relative mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-8 md:px-8">
         <div className="relative w-full max-w-[1180px]">
-          <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.05] shadow-[0_25px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
+          <LoginMobilePanels
+            nextPath={nextPath}
+            errorMessage={errorMessage}
+            whatsappLink={whatsappLink}
+            cinzelClassName={cinzel.className}
+          />
+
+          <div className="hidden overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.05] shadow-[0_25px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl lg:block">
             <div className="grid min-h-[700px] lg:grid-cols-[460px_minmax(0,1fr)]">
               <section className="relative border-b border-white/10 bg-white/[0.04] px-8 py-12 lg:border-b-0 lg:border-r lg:px-12 lg:py-14">
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]" />

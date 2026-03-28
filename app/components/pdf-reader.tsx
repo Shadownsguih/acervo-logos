@@ -26,7 +26,7 @@ type PdfReaderProps = {
 const DEFAULT_ZOOM = 1;
 const MIN_ZOOM = 0.85;
 const MAX_ZOOM = 3;
-const ZOOM_STEP = 0.2;
+const ZOOM_STEP = 0.1;
 const WHEEL_ZOOM_STEP = 0.12;
 const DESKTOP_BASE_SCALE = 1.2;
 const MOBILE_BREAKPOINT = 768;
@@ -34,6 +34,7 @@ const SWIPE_THRESHOLD = 70;
 const SWIPE_MAX_VERTICAL_DRIFT = 60;
 const MOBILE_UI_AUTO_HIDE_DELAY = 1500;
 const DESKTOP_UI_AUTO_HIDE_DELAY = 1400;
+const MOBILE_PINCH_SENSITIVITY = 1.18;
 
 type PinchState = {
   startDistance: number;
@@ -394,7 +395,10 @@ export default function PdfReader({
       }
 
       const ratio = currentDistance / pinchStateRef.current.startDistance;
-      const nextZoom = clampZoom(pinchStateRef.current.startZoom * ratio);
+      const adjustedRatio = Math.pow(ratio, MOBILE_PINCH_SENSITIVITY);
+      const nextZoom = clampZoom(
+        pinchStateRef.current.startZoom * adjustedRatio
+      );
 
       setZoomLevel(nextZoom);
       setGestureHint(`Zoom: ${Math.round(nextZoom * 100)}%`);
@@ -708,13 +712,23 @@ export default function PdfReader({
 
   const effectiveZoom = isPinching ? zoomLevel : committedZoomLevel;
 
-  const mobilePageWidth = useMemo(() => {
+  const mobileBasePageWidth = useMemo(() => {
     if (!isMobile || !pageShellWidth) {
       return undefined;
     }
 
-    return Math.max(240, Math.floor(pageShellWidth * effectiveZoom));
-  }, [isMobile, pageShellWidth, effectiveZoom]);
+    const horizontalPadding = isMobileReaderFullscreen ? 0 : 16;
+
+    return Math.max(240, Math.floor(pageShellWidth - horizontalPadding));
+  }, [isMobile, pageShellWidth, isMobileReaderFullscreen]);
+
+  const mobileScale = useMemo(() => {
+    if (!isMobile) {
+      return undefined;
+    }
+
+    return Number(effectiveZoom.toFixed(2));
+  }, [isMobile, effectiveZoom]);
 
   const desktopScale = useMemo(() => {
     return Number((DESKTOP_BASE_SCALE * effectiveZoom).toFixed(2));
@@ -734,7 +748,7 @@ export default function PdfReader({
   }, [devicePixelRatio, effectiveZoom]);
 
   const pageKey = `${pageNumber}-${
-    isMobile ? mobilePageWidth ?? 0 : "desktop"
+    isMobile ? mobileBasePageWidth ?? 0 : "desktop"
   }-${Math.round(effectiveZoom * 100)}-${Math.round(
     renderDevicePixelRatio * 100
   )}`;
@@ -1108,7 +1122,7 @@ export default function PdfReader({
                 </div>
               }
             >
-              {isMobile && !mobilePageWidth ? (
+              {isMobile && !mobileBasePageWidth ? (
                 <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-zinc-300">
                   Ajustando leitura para o celular...
                 </div>
@@ -1123,8 +1137,8 @@ export default function PdfReader({
                   <Page
                     key={pageKey}
                     pageNumber={pageNumber}
-                    width={isMobile ? mobilePageWidth : undefined}
-                    scale={isMobile ? undefined : desktopScale}
+                    width={isMobile ? mobileBasePageWidth : undefined}
+                    scale={isMobile ? mobileScale : desktopScale}
                     devicePixelRatio={renderDevicePixelRatio}
                     renderAnnotationLayer
                     renderTextLayer
