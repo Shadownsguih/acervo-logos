@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { ReactNode } from "react";
 
 const PdfReader = dynamic(() => import("./pdf-reader"), {
   ssr: false,
@@ -13,8 +14,23 @@ const PdfReader = dynamic(() => import("./pdf-reader"), {
 
 type PdfReaderClientProps = {
   fileUrl: string;
+  readingProgressKey?: string;
+  fullscreenTargetId?: string;
+  fullscreenToolbarSlot?: ReactNode;
 };
 
-export default function PdfReaderClient({ fileUrl }: PdfReaderClientProps) {
-  return <PdfReader fileUrl={fileUrl} />;
+export default function PdfReaderClient({
+  fileUrl,
+  readingProgressKey,
+  fullscreenTargetId,
+  fullscreenToolbarSlot,
+}: PdfReaderClientProps) {
+  return (
+    <PdfReader
+      fileUrl={fileUrl}
+      readingProgressKey={readingProgressKey}
+      fullscreenTargetId={fullscreenTargetId}
+      fullscreenToolbarSlot={fullscreenToolbarSlot}
+    />
+  );
 }

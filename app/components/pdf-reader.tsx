@@ -23,22 +23,13 @@ type PdfReaderProps = {
   fullscreenToolbarSlot?: ReactNode;
 };
 
-const DEFAULT_ZOOM = 1;
-const MIN_ZOOM = 0.85;
-const MAX_ZOOM = 3;
-const ZOOM_STEP = 0.1;
-const WHEEL_ZOOM_STEP = 0.12;
-const DESKTOP_BASE_SCALE = 1.2;
-const MOBILE_BREAKPOINT = 768;
-const SWIPE_THRESHOLD = 70;
-const SWIPE_MAX_VERTICAL_DRIFT = 60;
-const MOBILE_UI_AUTO_HIDE_DELAY = 1500;
-const DESKTOP_UI_AUTO_HIDE_DELAY = 1400;
-const MOBILE_PINCH_SENSITIVITY = 1.18;
-
 type PinchState = {
   startDistance: number;
   startZoom: number;
+  startScrollLeft: number;
+  startScrollTop: number;
+  centerX: number;
+  centerY: number;
 };
 
 type SwipeState = {
@@ -51,6 +42,26 @@ type TouchLike = {
   clientY: number;
 };
 
+type MobilePageLoadSuccess = {
+  getViewport: (params: { scale: number }) => {
+    width: number;
+    height: number;
+  };
+};
+
+const DEFAULT_ZOOM = 1;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 3;
+const ZOOM_STEP = 0.1;
+const WHEEL_ZOOM_STEP = 0.12;
+const DESKTOP_BASE_SCALE = 1.2;
+const MOBILE_BREAKPOINT = 768;
+const SWIPE_THRESHOLD = 70;
+const SWIPE_MAX_VERTICAL_DRIFT = 60;
+const MOBILE_UI_AUTO_HIDE_DELAY = 1500;
+const DESKTOP_UI_AUTO_HIDE_DELAY = 1400;
+const MOBILE_PINCH_SENSITIVITY = 1.15;
+
 function clampZoom(value: number) {
   return Math.min(Math.max(Number(value.toFixed(2)), MIN_ZOOM), MAX_ZOOM);
 }
@@ -60,6 +71,13 @@ function getDistanceBetweenTouches(touchA: TouchLike, touchB: TouchLike) {
   const deltaY = touchA.clientY - touchB.clientY;
 
   return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+}
+
+function getTouchCenter(touchA: TouchLike, touchB: TouchLike) {
+  return {
+    x: (touchA.clientX + touchB.clientX) / 2,
+    y: (touchA.clientY + touchB.clientY) / 2,
+  };
 }
 
 export default function PdfReader({
@@ -90,11 +108,12 @@ export default function PdfReader({
     useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [gestureHint, setGestureHint] = useState<string>("");
-  const [pageShellWidth, setPageShellWidth] = useState<number>(0);
   const [devicePixelRatio, setDevicePixelRatio] = useState<number>(1);
   const [isPinching, setIsPinching] = useState<boolean>(false);
   const [isMobileUiVisible, setIsMobileUiVisible] = useState<boolean>(true);
   const [isDesktopUiVisible, setIsDesktopUiVisible] = useState<boolean>(true);
+  const [mobileBaseWidth, setMobileBaseWidth] = useState<number>(0);
+  const [mobileBaseHeight, setMobileBaseHeight] = useState<number>(0);
 
   const isImmersive = isMobile ? isMobileReaderFullscreen : isNativeFullscreen;
   const isDesktopFullscreen = !isMobile && isNativeFullscreen;
@@ -213,8 +232,32 @@ export default function PdfReader({
 
   function applyZoom(nextZoom: number, hint?: string) {
     const safeZoom = clampZoom(nextZoom);
-    setZoomLevel(safeZoom);
-    setCommittedZoomLevel(safeZoom);
+    const shell = pageShellRef.current;
+
+    if (isMobile && shell && mobileBaseWidth > 0 && mobileBaseHeight > 0) {
+      const oldZoom = committedZoomLevel || 1;
+      const ratio = safeZoom / oldZoom;
+      const viewportCenterX = shell.scrollLeft + shell.clientWidth / 2;
+      const viewportCenterY = shell.scrollTop + shell.clientHeight / 2;
+
+      setZoomLevel(safeZoom);
+      setCommittedZoomLevel(safeZoom);
+
+      requestAnimationFrame(() => {
+        shell.scrollLeft = Math.max(
+          0,
+          viewportCenterX * ratio - shell.clientWidth / 2
+        );
+        shell.scrollTop = Math.max(
+          0,
+          viewportCenterY * ratio - shell.clientHeight / 2
+        );
+      });
+    } else {
+      setZoomLevel(safeZoom);
+      setCommittedZoomLevel(safeZoom);
+    }
+
     setPageError("");
     setGestureHint(hint ?? `Zoom: ${Math.round(safeZoom * 100)}%`);
     clearGestureHintWithDelay();
@@ -233,6 +276,21 @@ export default function PdfReader({
     setPageInput(String(initialPage));
   }
 
+  function onPageLoadSuccess(page: MobilePageLoadSuccess) {
+    if (!isMobile || !pageShellRef.current) {
+      return;
+    }
+
+    const viewport = page.getViewport({ scale: 1 });
+    const shellWidth = pageShellRef.current.clientWidth;
+    const horizontalPadding = isMobileReaderFullscreen ? 0 : 16;
+    const availableWidth = Math.max(240, shellWidth - horizontalPadding);
+    const fitScale = availableWidth / viewport.width;
+
+    setMobileBaseWidth(Math.floor(viewport.width * fitScale));
+    setMobileBaseHeight(Math.floor(viewport.height * fitScale));
+  }
+
   function goToPage(targetPage: number) {
     if (!numPages) return;
 
@@ -244,6 +302,11 @@ export default function PdfReader({
     setPageNumber(targetPage);
     setPageInput(String(targetPage));
     setPageError("");
+
+    if (isMobile && pageShellRef.current) {
+      pageShellRef.current.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    }
+
     showReaderUiTemporarily();
   }
 
@@ -254,6 +317,11 @@ export default function PdfReader({
     setPageNumber(nextPage);
     setPageInput(String(nextPage));
     setPageError("");
+
+    if (isMobile && pageShellRef.current) {
+      pageShellRef.current.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    }
+
     showReaderUiTemporarily();
   }
 
@@ -264,6 +332,11 @@ export default function PdfReader({
     setPageNumber(nextPage);
     setPageInput(String(nextPage));
     setPageError("");
+
+    if (isMobile && pageShellRef.current) {
+      pageShellRef.current.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    }
+
     showReaderUiTemporarily();
   }
 
@@ -348,14 +421,20 @@ export default function PdfReader({
     showReaderUiTemporarily();
 
     if (event.touches.length === 2) {
+      const shell = pageShellRef.current;
       const distance = getDistanceBetweenTouches(
         event.touches[0],
         event.touches[1]
       );
+      const center = getTouchCenter(event.touches[0], event.touches[1]);
 
       pinchStateRef.current = {
         startDistance: distance,
-        startZoom: zoomLevel,
+        startZoom: committedZoomLevel,
+        startScrollLeft: shell?.scrollLeft ?? 0,
+        startScrollTop: shell?.scrollTop ?? 0,
+        centerX: center.x,
+        centerY: center.y,
       };
 
       swipeStateRef.current = null;
@@ -385,12 +464,13 @@ export default function PdfReader({
     if (event.touches.length === 2 && pinchStateRef.current) {
       event.preventDefault();
 
+      const shell = pageShellRef.current;
       const currentDistance = getDistanceBetweenTouches(
         event.touches[0],
         event.touches[1]
       );
 
-      if (!pinchStateRef.current.startDistance) {
+      if (!pinchStateRef.current.startDistance || !shell) {
         return;
       }
 
@@ -402,20 +482,50 @@ export default function PdfReader({
 
       setZoomLevel(nextZoom);
       setGestureHint(`Zoom: ${Math.round(nextZoom * 100)}%`);
+
+      const currentCenter = getTouchCenter(event.touches[0], event.touches[1]);
+      const relativeX =
+        pinchStateRef.current.centerX / Math.max(shell.clientWidth, 1);
+      const relativeY =
+        pinchStateRef.current.centerY / Math.max(shell.clientHeight, 1);
+
+      const zoomRatio = nextZoom / pinchStateRef.current.startZoom;
+
+      requestAnimationFrame(() => {
+        const baseCenterX =
+          pinchStateRef.current!.startScrollLeft +
+          shell.clientWidth * relativeX;
+        const baseCenterY =
+          pinchStateRef.current!.startScrollTop +
+          shell.clientHeight * relativeY;
+
+        const dragX = pinchStateRef.current!.centerX - currentCenter.x;
+        const dragY = pinchStateRef.current!.centerY - currentCenter.y;
+
+        shell.scrollLeft = Math.max(
+          0,
+          baseCenterX * zoomRatio - shell.clientWidth * relativeX + dragX
+        );
+        shell.scrollTop = Math.max(
+          0,
+          baseCenterY * zoomRatio - shell.clientHeight * relativeY + dragY
+        );
+      });
+
       gestureHandledRef.current = true;
       return;
     }
 
-    if (event.touches.length === 1 && swipeStateRef.current) {
+    if (
+      event.touches.length === 1 &&
+      swipeStateRef.current &&
+      committedZoomLevel <= 1.02
+    ) {
       const currentTouch = event.touches[0];
       const deltaX = currentTouch.clientX - swipeStateRef.current.startX;
       const deltaY = currentTouch.clientY - swipeStateRef.current.startY;
 
-      if (
-        Math.abs(deltaX) > Math.abs(deltaY) &&
-        Math.abs(deltaX) > 12 &&
-        committedZoomLevel <= 1.05
-      ) {
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 12) {
         event.preventDefault();
       }
     }
@@ -440,7 +550,7 @@ export default function PdfReader({
       return;
     }
 
-    if (committedZoomLevel > 1.05) {
+    if (committedZoomLevel > 1.02) {
       swipeStateRef.current = null;
       gestureHandledRef.current = false;
       return;
@@ -590,42 +700,6 @@ export default function PdfReader({
   }, [fullscreenTargetId, isDesktopFullscreen]);
 
   useEffect(() => {
-    const element = pageShellRef.current;
-
-    if (!element) {
-      return;
-    }
-
-    function updateWidth() {
-      if (!pageShellRef.current) {
-        return;
-      }
-
-      setPageShellWidth(pageShellRef.current.clientWidth);
-    }
-
-    updateWidth();
-
-    if (typeof ResizeObserver !== "undefined") {
-      const observer = new ResizeObserver(() => {
-        updateWidth();
-      });
-
-      observer.observe(element);
-
-      return () => {
-        observer.disconnect();
-      };
-    }
-
-    window.addEventListener("resize", updateWidth);
-
-    return () => {
-      window.removeEventListener("resize", updateWidth);
-    };
-  }, [isImmersive, isMobileUiVisible, isDesktopUiVisible]);
-
-  useEffect(() => {
     function handleKeyNavigation(
       event: KeyboardEvent | globalThis.KeyboardEvent
     ) {
@@ -667,6 +741,8 @@ export default function PdfReader({
     setZoomLevel(DEFAULT_ZOOM);
     setCommittedZoomLevel(DEFAULT_ZOOM);
     setIsPinching(false);
+    setMobileBaseWidth(0);
+    setMobileBaseHeight(0);
   }, [readingProgressKey, fileUrl]);
 
   useEffect(() => {
@@ -712,24 +788,6 @@ export default function PdfReader({
 
   const effectiveZoom = isPinching ? zoomLevel : committedZoomLevel;
 
-  const mobileBasePageWidth = useMemo(() => {
-    if (!isMobile || !pageShellWidth) {
-      return undefined;
-    }
-
-    const horizontalPadding = isMobileReaderFullscreen ? 0 : 16;
-
-    return Math.max(240, Math.floor(pageShellWidth - horizontalPadding));
-  }, [isMobile, pageShellWidth, isMobileReaderFullscreen]);
-
-  const mobileScale = useMemo(() => {
-    if (!isMobile) {
-      return undefined;
-    }
-
-    return Number(effectiveZoom.toFixed(2));
-  }, [isMobile, effectiveZoom]);
-
   const desktopScale = useMemo(() => {
     return Number((DESKTOP_BASE_SCALE * effectiveZoom).toFixed(2));
   }, [effectiveZoom]);
@@ -737,21 +795,24 @@ export default function PdfReader({
   const renderDevicePixelRatio = useMemo(() => {
     const qualityFactor =
       effectiveZoom <= 1
-        ? 1.6
+        ? 1.8
         : effectiveZoom <= 1.5
-        ? 2
+        ? 2.2
         : effectiveZoom <= 2
-        ? 2.5
-        : 3;
+        ? 2.8
+        : 3.2;
 
     return Math.min(Math.max(devicePixelRatio * qualityFactor, 1.5), 5);
   }, [devicePixelRatio, effectiveZoom]);
 
-  const pageKey = `${pageNumber}-${
-    isMobile ? mobileBasePageWidth ?? 0 : "desktop"
-  }-${Math.round(effectiveZoom * 100)}-${Math.round(
+  const pageKey = `${pageNumber}-${isMobile ? "mobile" : "desktop"}-${Math.round(
     renderDevicePixelRatio * 100
-  )}`;
+  )}-${mobileBaseWidth}-${mobileBaseHeight}`;
+
+  const mobileScaledWidth =
+    mobileBaseWidth > 0 ? Math.round(mobileBaseWidth * effectiveZoom) : 0;
+  const mobileScaledHeight =
+    mobileBaseHeight > 0 ? Math.round(mobileBaseHeight * effectiveZoom) : 0;
 
   return (
     <div
@@ -1014,8 +1075,8 @@ export default function PdfReader({
                   <p className="mt-2 text-xs text-amber-400">{gestureHint}</p>
                 ) : isMobile ? (
                   <p className="mt-2 text-xs text-zinc-500">
-                    Deslize para os lados para trocar de página. Use dois dedos
-                    para ampliar.
+                    Use dois dedos para ampliar. Com zoom acima de 100%, arraste
+                    a página livremente com o dedo.
                   </p>
                 ) : (
                   <p className="mt-3 text-xs text-zinc-500">
@@ -1049,6 +1110,10 @@ export default function PdfReader({
             }
           }}
           onWheel={handleWheelZoom}
+          style={{
+            touchAction: isMobile ? "pan-x pan-y" : "auto",
+            WebkitOverflowScrolling: "touch",
+          }}
         >
           {!isDesktopFullscreen ? (
             <>
@@ -1098,15 +1163,12 @@ export default function PdfReader({
 
           <div
             className={`flex min-h-full ${
-              isMobile ? "justify-start" : "justify-center"
+              isMobile ? "items-start justify-start" : "justify-center"
             } ${isDesktopFullscreen ? "items-center" : ""}`}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
-            style={{
-              touchAction: isMobile ? "none" : "auto",
-            }}
           >
             <Document
               file={fileUrl}
@@ -1122,14 +1184,51 @@ export default function PdfReader({
                 </div>
               }
             >
-              {isMobile && !mobileBasePageWidth ? (
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-zinc-300">
-                  Ajustando leitura para o celular...
-                </div>
+              {isMobile ? (
+                mobileBaseWidth > 0 && mobileBaseHeight > 0 ? (
+                  <div
+                    className={`${
+                      isMobileReaderFullscreen
+                        ? "bg-white"
+                        : "rounded-xl bg-white shadow-2xl"
+                    }`}
+                    style={{
+                      width: `${mobileScaledWidth}px`,
+                      height: `${mobileScaledHeight}px`,
+                      position: "relative",
+                      transformOrigin: "top left",
+                      flex: "0 0 auto",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${mobileBaseWidth}px`,
+                        height: `${mobileBaseHeight}px`,
+                        transform: `scale(${effectiveZoom})`,
+                        transformOrigin: "top left",
+                      }}
+                    >
+                      <Page
+                        key={pageKey}
+                        pageNumber={pageNumber}
+                        width={mobileBaseWidth}
+                        scale={1}
+                        devicePixelRatio={renderDevicePixelRatio}
+                        renderAnnotationLayer
+                        renderTextLayer
+                        onLoadSuccess={onPageLoadSuccess}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-zinc-300">
+                    Ajustando leitura para o celular...
+                  </div>
+                )
               ) : (
                 <div
                   className={`mx-auto ${
-                    isDesktopFullscreen || isMobileReaderFullscreen
+                    isDesktopFullscreen
                       ? "bg-white shadow-none"
                       : "rounded-xl bg-white shadow-2xl"
                   }`}
@@ -1137,8 +1236,7 @@ export default function PdfReader({
                   <Page
                     key={pageKey}
                     pageNumber={pageNumber}
-                    width={isMobile ? mobileBasePageWidth : undefined}
-                    scale={isMobile ? mobileScale : desktopScale}
+                    scale={desktopScale}
                     devicePixelRatio={renderDevicePixelRatio}
                     renderAnnotationLayer
                     renderTextLayer
