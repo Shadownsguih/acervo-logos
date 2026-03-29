@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import CategorySearchToggle from "@/app/components/category-search-toggle";
+import BibleDictionaryExplorer from "@/app/components/bible-dictionary-explorer";
+import { isBibleDictionaryCategory } from "@/lib/bible-dictionary";
 
 type Category = {
   id: string;
@@ -89,6 +91,38 @@ export default async function CategoryPage({
           >
             Voltar para categorias
           </Link>
+        </div>
+      </main>
+    );
+  }
+
+  if (isBibleDictionaryCategory(category)) {
+    return (
+      <main className="min-h-screen bg-[#0a0a0f] px-6 py-16 text-white">
+        <div className="mx-auto max-w-6xl">
+          <Link
+            href="/categorias"
+            className="mb-8 inline-block text-sm font-medium text-amber-400 hover:text-amber-300"
+          >
+            ← Voltar para categorias
+          </Link>
+
+          <section className="mb-10 max-w-3xl">
+            <p className="text-sm uppercase tracking-[0.35em] text-amber-400">
+              Acervo Logos
+            </p>
+
+            <h1 className="mt-3 text-4xl font-bold md:text-5xl">
+              {category.name}
+            </h1>
+
+            <p className="mt-4 text-lg text-zinc-300">
+              Área especial de consulta bíblica com pesquisa por termos em
+              português, grego, hebraico e Strong.
+            </p>
+          </section>
+
+          <BibleDictionaryExplorer />
         </div>
       </main>
     );
