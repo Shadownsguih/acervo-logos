@@ -104,7 +104,10 @@ export default async function HomePage() {
             <div className="relative">
               <div className="absolute -inset-4 rounded-[2rem] bg-amber-400/5 blur-2xl sm:-inset-5" />
               <div className="relative">
-                <HomeMostReadCarousel materials={materiais ?? []} />
+                <HomeMostReadCarousel
+                  materials={materiais ?? []}
+                  isLoggedIn={isLoggedIn}
+                />
               </div>
             </div>
           </div>
