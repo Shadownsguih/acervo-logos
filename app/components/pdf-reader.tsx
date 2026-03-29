@@ -59,7 +59,7 @@ const DESKTOP_BASE_SCALE = 1.2;
 const MOBILE_BREAKPOINT = 768;
 const SWIPE_THRESHOLD = 70;
 const SWIPE_MAX_VERTICAL_DRIFT = 60;
-const MOBILE_UI_AUTO_HIDE_DELAY = 1500;
+const MOBILE_UI_AUTO_HIDE_DELAY = 1800;
 const DESKTOP_UI_AUTO_HIDE_DELAY = 1400;
 const MOBILE_PINCH_SENSITIVITY = 1.15;
 const FALLBACK_PAGE_RATIO = 1.4142;
@@ -89,7 +89,8 @@ export default function PdfReader({
   fullscreenToolbarSlot,
 }: PdfReaderProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const pageShellRef = useRef<HTMLDivElement | null>(null);
+  const normalPageShellRef = useRef<HTMLDivElement | null>(null);
+  const mobileFullscreenShellRef = useRef<HTMLDivElement | null>(null);
   const pinchStateRef = useRef<PinchState | null>(null);
   const swipeStateRef = useRef<SwipeState | null>(null);
   const gestureHandledRef = useRef(false);
@@ -98,6 +99,9 @@ export default function PdfReader({
   const desktopUiHideTimerRef = useRef<number | null>(null);
   const wheelLockRef = useRef(false);
   const mobileScrollRestoreRef = useRef(0);
+  const mobileViewportRef = useRef<{ width: number; height: number } | null>(
+    null
+  );
 
   const [isMounted, setIsMounted] = useState(false);
   const [numPages, setNumPages] = useState<number>(0);
@@ -129,6 +133,14 @@ export default function PdfReader({
     ? showMobileOverlayUi
     : shouldShowDesktopOverlayUi;
   const shouldShowImmersiveMessage = Boolean(pageError || gestureHint);
+
+  function getActiveShell() {
+    if (isMobile && isMobileReaderFullscreen) {
+      return mobileFullscreenShellRef.current;
+    }
+
+    return normalPageShellRef.current;
+  }
 
   function getSavedPage(): number | null {
     if (!readingProgressKey || typeof window === "undefined") {
@@ -162,7 +174,7 @@ export default function PdfReader({
     try {
       window.localStorage.setItem(readingProgressKey, String(page));
     } catch {
-      // evita quebrar a interface se o localStorage falhar
+      // evita quebrar se o localStorage falhar
     }
   }
 
@@ -235,9 +247,56 @@ export default function PdfReader({
     showMobileUiTemporarily();
   }
 
+  function recomputeMobileBaseSize() {
+    if (!isMobile) {
+      return;
+    }
+
+    const shell = getActiveShell();
+
+    if (!shell) {
+      return;
+    }
+
+    const viewport = mobileViewportRef.current;
+    const shellWidth = shell.clientWidth;
+
+    if (!shellWidth) {
+      return;
+    }
+
+    const horizontalPadding = isMobileReaderFullscreen ? 0 : 16;
+    const availableWidth = Math.max(240, shellWidth - horizontalPadding);
+
+    if (!viewport) {
+      setMobileBaseWidth(availableWidth);
+      setMobileBaseHeight(Math.floor(availableWidth * FALLBACK_PAGE_RATIO));
+      return;
+    }
+
+    const fitScale = availableWidth / viewport.width;
+
+    setMobileBaseWidth(Math.floor(viewport.width * fitScale));
+    setMobileBaseHeight(Math.floor(viewport.height * fitScale));
+  }
+
+  function resetActiveShellPosition() {
+    const shell = getActiveShell();
+
+    if (!shell) {
+      return;
+    }
+
+    shell.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
+  }
+
   function applyZoom(nextZoom: number, hint?: string) {
     const safeZoom = clampZoom(nextZoom);
-    const shell = pageShellRef.current;
+    const shell = getActiveShell();
 
     if (isMobile && shell && mobileBaseWidth > 0 && mobileBaseHeight > 0) {
       const oldZoom = committedZoomLevel || 1;
@@ -282,18 +341,18 @@ export default function PdfReader({
   }
 
   function onPageLoadSuccess(page: MobilePageLoadSuccess) {
-    if (!isMobile || !pageShellRef.current) {
+    if (!isMobile) {
       return;
     }
 
     const viewport = page.getViewport({ scale: 1 });
-    const shellWidth = pageShellRef.current.clientWidth;
-    const horizontalPadding = isMobileReaderFullscreen ? 0 : 16;
-    const availableWidth = Math.max(240, shellWidth - horizontalPadding);
-    const fitScale = availableWidth / viewport.width;
 
-    setMobileBaseWidth(Math.floor(viewport.width * fitScale));
-    setMobileBaseHeight(Math.floor(viewport.height * fitScale));
+    mobileViewportRef.current = {
+      width: viewport.width,
+      height: viewport.height,
+    };
+
+    recomputeMobileBaseSize();
   }
 
   function goToPage(targetPage: number) {
@@ -308,8 +367,10 @@ export default function PdfReader({
     setPageInput(String(targetPage));
     setPageError("");
 
-    if (isMobile && pageShellRef.current) {
-      pageShellRef.current.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    if (isMobile) {
+      requestAnimationFrame(() => {
+        resetActiveShellPosition();
+      });
     }
 
     showReaderUiTemporarily();
@@ -323,8 +384,10 @@ export default function PdfReader({
     setPageInput(String(nextPage));
     setPageError("");
 
-    if (isMobile && pageShellRef.current) {
-      pageShellRef.current.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    if (isMobile) {
+      requestAnimationFrame(() => {
+        resetActiveShellPosition();
+      });
     }
 
     showReaderUiTemporarily();
@@ -338,8 +401,10 @@ export default function PdfReader({
     setPageInput(String(nextPage));
     setPageError("");
 
-    if (isMobile && pageShellRef.current) {
-      pageShellRef.current.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    if (isMobile) {
+      requestAnimationFrame(() => {
+        resetActiveShellPosition();
+      });
     }
 
     showReaderUiTemporarily();
@@ -414,7 +479,7 @@ export default function PdfReader({
         await document.exitFullscreen();
       }
     } catch {
-      // evita quebrar a interface se o fullscreen falhar
+      // evita quebrar a interface se fullscreen falhar
     }
   }
 
@@ -426,7 +491,7 @@ export default function PdfReader({
     showReaderUiTemporarily();
 
     if (event.touches.length === 2) {
-      const shell = pageShellRef.current;
+      const shell = getActiveShell();
       const distance = getDistanceBetweenTouches(
         event.touches[0],
         event.touches[1]
@@ -469,7 +534,7 @@ export default function PdfReader({
     if (event.touches.length === 2 && pinchStateRef.current) {
       event.preventDefault();
 
-      const shell = pageShellRef.current;
+      const shell = getActiveShell();
       const currentDistance = getDistanceBetweenTouches(
         event.touches[0],
         event.touches[1]
@@ -648,6 +713,14 @@ export default function PdfReader({
     if (isMobileReaderFullscreen) {
       setIsMobileUiVisible(true);
       showMobileUiTemporarily();
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          recomputeMobileBaseSize();
+          resetActiveShellPosition();
+        });
+      });
+
       return;
     }
 
@@ -709,18 +782,20 @@ export default function PdfReader({
   }, [fullscreenTargetId, isDesktopFullscreen]);
 
   useEffect(() => {
-    const element = pageShellRef.current;
+    const element = getActiveShell();
 
     if (!element) {
       return;
     }
 
     function updateWidth() {
-      if (!pageShellRef.current) {
+      const shell = getActiveShell();
+
+      if (!shell) {
         return;
       }
 
-      setPageShellWidth(pageShellRef.current.clientWidth);
+      setPageShellWidth(shell.clientWidth);
     }
 
     updateWidth();
@@ -742,33 +817,15 @@ export default function PdfReader({
     return () => {
       window.removeEventListener("resize", updateWidth);
     };
-  }, [isImmersive, isMobileUiVisible, isDesktopUiVisible]);
+  }, [isImmersive, isMobileUiVisible, isDesktopUiVisible, isMobileReaderFullscreen]);
 
   useEffect(() => {
     if (!isMobile || pageShellWidth <= 0) {
       return;
     }
 
-    const horizontalPadding = isMobileReaderFullscreen ? 0 : 16;
-    const availableWidth = Math.max(
-      240,
-      Math.floor(pageShellWidth - horizontalPadding)
-    );
-
-    if (mobileBaseWidth === 0) {
-      setMobileBaseWidth(availableWidth);
-    }
-
-    if (mobileBaseHeight === 0) {
-      setMobileBaseHeight(Math.floor(availableWidth * FALLBACK_PAGE_RATIO));
-    }
-  }, [
-    isMobile,
-    pageShellWidth,
-    isMobileReaderFullscreen,
-    mobileBaseWidth,
-    mobileBaseHeight,
-  ]);
+    recomputeMobileBaseSize();
+  }, [isMobile, pageShellWidth, isMobileReaderFullscreen]);
 
   useEffect(() => {
     function handleKeyNavigation(
@@ -814,6 +871,7 @@ export default function PdfReader({
     setIsPinching(false);
     setMobileBaseWidth(0);
     setMobileBaseHeight(0);
+    mobileViewportRef.current = null;
   }, [readingProgressKey, fileUrl]);
 
   useEffect(() => {
@@ -856,7 +914,7 @@ export default function PdfReader({
     html.style.overscrollBehavior = "contain";
     body.style.overflow = "hidden";
     body.style.overscrollBehavior = "contain";
-    body.style.touchAction = "manipulation";
+    body.style.touchAction = "none";
 
     return () => {
       html.style.overflow = previousHtmlOverflow;
@@ -871,6 +929,16 @@ export default function PdfReader({
       });
     };
   }, [isMobile, isMobileReaderFullscreen]);
+
+  useEffect(() => {
+    if (!isMobile) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      recomputeMobileBaseSize();
+    });
+  }, [pageNumber, isMobileReaderFullscreen, isMobile]);
 
   const visibleZoomPercent = useMemo(
     () => Math.round(zoomLevel * 100),
@@ -898,7 +966,7 @@ export default function PdfReader({
 
   const pageKey = `${pageNumber}-${isMobile ? "mobile" : "desktop"}-${Math.round(
     renderDevicePixelRatio * 100
-  )}-${mobileBaseWidth}-${mobileBaseHeight}`;
+  )}-${mobileBaseWidth}-${mobileBaseHeight}-${isMobileReaderFullscreen ? "fullscreen" : "normal"}`;
 
   const mobileScaledWidth =
     mobileBaseWidth > 0 ? Math.round(mobileBaseWidth * effectiveZoom) : 0;
@@ -908,28 +976,50 @@ export default function PdfReader({
   const canRenderMobilePage =
     isMobile && mobileBaseWidth > 0 && mobileBaseHeight > 0;
 
+  const mobilePageElement = canRenderMobilePage ? (
+    <div
+      className={isMobileReaderFullscreen ? "bg-white" : "rounded-xl bg-white shadow-2xl"}
+      style={{
+        width: `${mobileScaledWidth}px`,
+        height: `${mobileScaledHeight}px`,
+        position: "relative",
+        transformOrigin: "top left",
+        display: "block",
+        flex: "0 0 auto",
+      }}
+    >
+      <div
+        style={{
+          width: `${mobileBaseWidth}px`,
+          height: `${mobileBaseHeight}px`,
+          transform: `scale(${effectiveZoom})`,
+          transformOrigin: "top left",
+        }}
+      >
+        <Page
+          key={pageKey}
+          pageNumber={pageNumber}
+          width={mobileBaseWidth}
+          scale={1}
+          devicePixelRatio={renderDevicePixelRatio}
+          renderAnnotationLayer
+          renderTextLayer
+          onLoadSuccess={onPageLoadSuccess}
+        />
+      </div>
+    </div>
+  ) : (
+    <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-zinc-300">
+      Ajustando leitura para o celular...
+    </div>
+  );
+
   const readerContent = (
     <div
       ref={containerRef}
       className={`relative flex flex-col ${
         isNativeFullscreen ? "h-screen w-screen bg-black p-0" : "gap-3 md:gap-4"
-      } ${
-        isMobileReaderFullscreen
-          ? "fixed inset-0 z-[9999] bg-black p-0"
-          : ""
-      } ${
-        isDesktopFullscreen && !isDesktopUiVisible ? "cursor-none" : ""
-      }`}
-      style={
-        isMobileReaderFullscreen
-          ? {
-              width: "100vw",
-              height: "100dvh",
-              maxWidth: "100vw",
-              maxHeight: "100dvh",
-            }
-          : undefined
-      }
+      } ${isDesktopFullscreen && !isDesktopUiVisible ? "cursor-none" : ""}`}
       onMouseMove={() => {
         if (isDesktopFullscreen) {
           showDesktopUiTemporarily();
@@ -941,24 +1031,18 @@ export default function PdfReader({
         }
       }}
     >
-      <div
-        className={`${
-          isMobileReaderFullscreen || isDesktopFullscreen
-            ? "flex h-full min-h-0 flex-col"
-            : "contents"
-        }`}
-      >
+      <div className={`${isDesktopFullscreen ? "flex h-full min-h-0 flex-col" : "contents"}`}>
         <div
           className={`${
-            isDesktopFullscreen || isMobileReaderFullscreen
+            isDesktopFullscreen
               ? "pointer-events-none absolute inset-x-0 top-0 z-30 flex justify-center px-2 pt-2 sm:px-4"
               : ""
           }`}
         >
           <div
             className={`w-full transition-all duration-300 ${
-              isDesktopFullscreen || isMobileReaderFullscreen
-                ? showTopToolbar
+              isDesktopFullscreen
+                ? shouldShowDesktopOverlayUi
                   ? "pointer-events-auto translate-y-0 opacity-100"
                   : "pointer-events-none -translate-y-4 opacity-0"
                 : ""
@@ -966,13 +1050,9 @@ export default function PdfReader({
           >
             <div
               className={`${
-                isMobileReaderFullscreen || isDesktopFullscreen
-                  ? ""
-                  : "sticky top-0"
+                isDesktopFullscreen ? "" : "sticky top-0"
               } z-20 rounded-2xl border border-white/10 bg-[#11131a]/88 backdrop-blur-xl ${
-                isDesktopFullscreen || isMobileReaderFullscreen
-                  ? "px-3 py-2"
-                  : "p-2.5 sm:p-3"
+                isDesktopFullscreen ? "px-3 py-2" : "p-2.5 sm:p-3"
               }`}
             >
               <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
@@ -1171,13 +1251,11 @@ export default function PdfReader({
                   <p className="mt-2 text-xs text-amber-400">{gestureHint}</p>
                 ) : isMobile ? (
                   <p className="mt-2 text-xs text-zinc-500">
-                    Use dois dedos para ampliar. Com zoom acima de 100%, arraste
-                    a página livremente com o dedo.
+                    Use dois dedos para ampliar. Com zoom acima de 100%, arraste a página livremente com o dedo.
                   </p>
                 ) : (
                   <p className="mt-3 text-xs text-zinc-500">
-                    Role o scroll do mouse para dar zoom, use ← → para trocar de
-                    página ou digite a página e pressione Enter.
+                    Role o scroll do mouse para dar zoom, use ← → para trocar de página ou digite a página e pressione Enter.
                   </p>
                 )
               ) : null}
@@ -1186,21 +1264,13 @@ export default function PdfReader({
         </div>
 
         <div
-          ref={pageShellRef}
+          ref={normalPageShellRef}
           className={`relative overflow-auto ${
             isDesktopFullscreen
               ? "flex-1 min-h-0 border-0 bg-black p-0"
               : "rounded-2xl border border-white/10 bg-zinc-900 p-2 sm:rounded-3xl sm:p-4"
-          } ${
-            isMobileReaderFullscreen
-              ? "flex-1 min-h-0 border-0 bg-black p-0"
-              : ""
-          } ${showMobileOverlayUi && !isDesktopFullscreen ? "mt-3" : "mt-0"}`}
+          } ${!isDesktopFullscreen ? "mt-3" : "mt-0"}`}
           onClick={() => {
-            if (isMobileReaderFullscreen) {
-              toggleMobileUiVisibility();
-            }
-
             if (isDesktopFullscreen) {
               showDesktopUiTemporarily();
             }
@@ -1281,46 +1351,7 @@ export default function PdfReader({
               }
             >
               {isMobile ? (
-                canRenderMobilePage ? (
-                  <div
-                    className={`${
-                      isMobileReaderFullscreen
-                        ? "bg-white"
-                        : "rounded-xl bg-white shadow-2xl"
-                    }`}
-                    style={{
-                      width: `${mobileScaledWidth}px`,
-                      height: `${mobileScaledHeight}px`,
-                      position: "relative",
-                      transformOrigin: "top left",
-                      flex: "0 0 auto",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: `${mobileBaseWidth}px`,
-                        height: `${mobileBaseHeight}px`,
-                        transform: `scale(${effectiveZoom})`,
-                        transformOrigin: "top left",
-                      }}
-                    >
-                      <Page
-                        key={pageKey}
-                        pageNumber={pageNumber}
-                        width={mobileBaseWidth}
-                        scale={1}
-                        devicePixelRatio={renderDevicePixelRatio}
-                        renderAnnotationLayer
-                        renderTextLayer
-                        onLoadSuccess={onPageLoadSuccess}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-zinc-300">
-                    Ajustando leitura para o celular...
-                  </div>
-                )
+                mobilePageElement
               ) : (
                 <div
                   className={`mx-auto ${
@@ -1346,9 +1377,219 @@ export default function PdfReader({
     </div>
   );
 
-  if (isMobile && isMobileReaderFullscreen && isMounted) {
-    return createPortal(readerContent, document.body);
-  }
+  const mobileFullscreenOverlay =
+    isMounted && isMobile && isMobileReaderFullscreen
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[9999] bg-black"
+            style={{
+              width: "100vw",
+              height: "100dvh",
+              maxWidth: "100vw",
+              maxHeight: "100dvh",
+            }}
+          >
+            <div className="relative flex h-full min-h-0 flex-col bg-black">
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center px-2 pt-2">
+                <div
+                  className={`w-full transition-all duration-300 ${
+                    showTopToolbar
+                      ? "pointer-events-auto translate-y-0 opacity-100"
+                      : "pointer-events-none -translate-y-4 opacity-0"
+                  }`}
+                >
+                  <div className="rounded-2xl border border-white/10 bg-[#11131a]/88 px-3 py-2 backdrop-blur-xl">
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="flex items-center rounded-xl border border-white/10 bg-black/20">
+                        <button
+                          type="button"
+                          onClick={handlePreviousPage}
+                          disabled={pageNumber <= 1}
+                          className="rounded-l-xl px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                          aria-label="Página anterior"
+                          title="Página anterior"
+                        >
+                          ←
+                        </button>
 
-  return readerContent;
+                        <div className="h-8 w-px bg-white/10" />
+
+                        <div className="flex items-center gap-2 px-3 py-2">
+                          <input
+                            type="number"
+                            min={1}
+                            max={numPages || 1}
+                            value={pageInput}
+                            onChange={(e) => {
+                              setPageInput(e.target.value);
+                              if (pageError) setPageError("");
+                            }}
+                            onKeyDown={handlePageInputKeyDown}
+                            className="w-14 border-none bg-transparent text-center text-sm font-semibold text-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                            aria-label="Página atual"
+                            title="Digite a página"
+                          />
+
+                          <span className="text-sm text-zinc-400">/</span>
+
+                          <span className="min-w-[2rem] text-sm text-zinc-300">
+                            {numPages || "-"}
+                          </span>
+                        </div>
+
+                        <div className="h-8 w-px bg-white/10" />
+
+                        <button
+                          type="button"
+                          onClick={handleNextPage}
+                          disabled={pageNumber >= numPages}
+                          className="rounded-r-xl px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                          aria-label="Próxima página"
+                          title="Próxima página"
+                        >
+                          →
+                        </button>
+                      </div>
+
+                      <div className="flex items-center rounded-xl border border-white/10 bg-black/20">
+                        <button
+                          type="button"
+                          onClick={handleZoomOut}
+                          className="rounded-l-xl px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/5"
+                          aria-label="Diminuir zoom"
+                          title="Diminuir zoom"
+                        >
+                          −
+                        </button>
+
+                        <div className="h-8 w-px bg-white/10" />
+
+                        <div className="px-3 py-2 text-sm font-semibold text-white">
+                          {visibleZoomPercent}%
+                        </div>
+
+                        <div className="h-8 w-px bg-white/10" />
+
+                        <button
+                          type="button"
+                          onClick={handleZoomIn}
+                          className="px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/5"
+                          aria-label="Aumentar zoom"
+                          title="Aumentar zoom"
+                        >
+                          +
+                        </button>
+
+                        <div className="h-8 w-px bg-white/10" />
+
+                        <button
+                          type="button"
+                          onClick={handleResetZoom}
+                          className="rounded-r-xl px-3 py-2.5 text-xs font-medium text-zinc-300 transition hover:bg-white/5 hover:text-white"
+                          aria-label="Ajustar zoom"
+                          title="Ajustar zoom"
+                        >
+                          Ajustar
+                        </button>
+                      </div>
+
+                      <div className="flex justify-end gap-2">
+                        {fullscreenToolbarSlot ? (
+                          <div className="shrink-0">{fullscreenToolbarSlot}</div>
+                        ) : null}
+
+                        <button
+                          type="button"
+                          onClick={handleToggleFullscreen}
+                          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/5"
+                          title="Sair do modo imersivo"
+                        >
+                          <span aria-hidden="true">🗗</span>
+                          <span>Sair</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {pageError ? (
+                      <p className="mt-2 text-xs text-red-400">{pageError}</p>
+                    ) : gestureHint ? (
+                      <p className="mt-2 text-xs text-amber-400">{gestureHint}</p>
+                    ) : (
+                      <p className="mt-2 text-xs text-zinc-500">
+                        Toque na tela para mostrar ou ocultar os controles. Use dois dedos para ampliar.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {shouldShowImmersiveMessage ? (
+                <div className="pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center px-4">
+                  <div
+                    className={`rounded-full border px-3 py-1.5 text-xs shadow-lg backdrop-blur ${
+                      pageError
+                        ? "border-red-500/25 bg-red-500/10 text-red-300"
+                        : "border-white/10 bg-[#11131a]/70 text-amber-300"
+                    }`}
+                  >
+                    {pageError || gestureHint}
+                  </div>
+                </div>
+              ) : null}
+
+              <div
+                ref={mobileFullscreenShellRef}
+                className="relative flex-1 min-h-0 overflow-auto bg-black"
+                onClick={toggleMobileUiVisibility}
+                style={{
+                  touchAction: "pan-x pan-y",
+                  WebkitOverflowScrolling: "touch",
+                  overscrollBehavior: "contain",
+                }}
+              >
+                <div
+                  className="min-h-full min-w-full"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
+                >
+                  <Document
+                    file={fileUrl}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    loading={
+                      <div className="px-4 py-6 text-zinc-300">
+                        Carregando PDF...
+                      </div>
+                    }
+                    error={
+                      <div className="px-4 py-6 text-red-400">
+                        Erro ao carregar o PDF.
+                      </div>
+                    }
+                  >
+                    <div
+                      className="block"
+                      style={{
+                        width: `${mobileScaledWidth || 0}px`,
+                        minHeight: `${mobileScaledHeight || 0}px`,
+                      }}
+                    >
+                      {mobilePageElement}
+                    </div>
+                  </Document>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
+  return (
+    <>
+      {readerContent}
+      {mobileFullscreenOverlay}
+    </>
+  );
 }
