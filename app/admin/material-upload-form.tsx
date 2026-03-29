@@ -13,6 +13,52 @@ type MaterialUploadFormProps = {
   categories: Category[];
 };
 
+type ApiResult = {
+  error?: string;
+  publicUrl?: string;
+  success?: boolean;
+};
+
+async function readResponseSafely(response: Response): Promise<ApiResult> {
+  const rawText = await response.text();
+
+  if (!rawText) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(rawText) as ApiResult;
+  } catch {
+    const normalizedText = rawText.toLowerCase();
+
+    if (
+      normalizedText.includes("request entity too large") ||
+      normalizedText.includes("payload too large") ||
+      response.status === 413
+    ) {
+      return {
+        error:
+          "O arquivo PDF é grande demais para este envio. Tente um arquivo menor ou ajuste o limite de upload do servidor.",
+      };
+    }
+
+    if (
+      normalizedText.includes("unauthorized") ||
+      normalizedText.includes("forbidden") ||
+      response.status === 401 ||
+      response.status === 403
+    ) {
+      return {
+        error: "Sua sessão não tem permissão para realizar esse upload.",
+      };
+    }
+
+    return {
+      error: rawText,
+    };
+  }
+}
+
 export default function MaterialUploadForm({
   categories,
 }: MaterialUploadFormProps) {
@@ -21,7 +67,6 @@ export default function MaterialUploadForm({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [displayOrder, setDisplayOrder] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,17 +103,6 @@ export default function MaterialUploadForm({
       return;
     }
 
-    if (displayOrder.trim()) {
-      const parsedDisplayOrder = Number(displayOrder);
-
-      if (!Number.isInteger(parsedDisplayOrder) || parsedDisplayOrder <= 0) {
-        setErrorMessage(
-          "A posição de exibição deve ser um número inteiro maior que zero."
-        );
-        return;
-      }
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -84,10 +118,14 @@ export default function MaterialUploadForm({
         body: uploadFormData,
       });
 
-      const uploadResult = await uploadResponse.json();
+      const uploadResult = await readResponseSafely(uploadResponse);
 
       if (!uploadResponse.ok) {
         throw new Error(uploadResult?.error || "Falha ao enviar PDF.");
+      }
+
+      if (!uploadResult.publicUrl) {
+        throw new Error("O upload foi concluído, mas a URL do PDF não foi retornada.");
       }
 
       const saveResponse = await fetch("/api/admin/materials", {
@@ -101,11 +139,10 @@ export default function MaterialUploadForm({
           description: description.trim(),
           categoryId,
           pdfUrl: uploadResult.publicUrl,
-          displayOrder: displayOrder.trim() ? Number(displayOrder) : null,
         }),
       });
 
-      const saveResult = await saveResponse.json();
+      const saveResult = await readResponseSafely(saveResponse);
 
       if (!saveResponse.ok) {
         throw new Error(saveResult?.error || "Falha ao salvar material.");
@@ -115,7 +152,6 @@ export default function MaterialUploadForm({
       setTitle("");
       setDescription("");
       setCategoryId("");
-      setDisplayOrder("");
       setFile(null);
 
       const fileInput = document.getElementById(
@@ -204,50 +240,26 @@ export default function MaterialUploadForm({
           />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="material-category"
-              className="mb-2 block text-sm font-medium text-zinc-200"
-            >
-              Categoria
-            </label>
-            <select
-              id="material-category"
-              value={categoryId}
-              onChange={(event) => setCategoryId(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
-            >
-              <option value="">Selecione uma categoria</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="material-display-order"
-              className="mb-2 block text-sm font-medium text-zinc-200"
-            >
-              Posição na categoria
-            </label>
-            <input
-              id="material-display-order"
-              type="number"
-              min={1}
-              value={displayOrder}
-              onChange={(event) => setDisplayOrder(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
-              placeholder="Ex.: 2"
-            />
-            <p className="mt-2 text-xs text-zinc-500">
-              Se deixar vazio, o material será colocado no final. Se informar 2,
-              ele entra na posição 2 e empurra os demais para baixo.
-            </p>
-          </div>
+        <div>
+          <label
+            htmlFor="material-category"
+            className="mb-2 block text-sm font-medium text-zinc-200"
+          >
+            Categoria
+          </label>
+          <select
+            id="material-category"
+            value={categoryId}
+            onChange={(event) => setCategoryId(event.target.value)}
+            className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
+          >
+            <option value="">Selecione uma categoria</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
