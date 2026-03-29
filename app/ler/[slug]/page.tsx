@@ -7,6 +7,7 @@ import RegisterView from "@/app/components/register-view";
 import StudyNotesPanel from "@/app/components/study-notes-panel";
 import ReaderVolumeSwitcher from "@/app/components/reader-volume-switcher";
 import ReaderQuickSwitcher from "@/app/components/reader-quick-switcher";
+import ReaderDictionaryPanel from "@/app/components/reader-dictionary-panel";
 
 type MaterialVolume = {
   id: string;
@@ -171,6 +172,8 @@ export default async function ReadPage({
                 />
               }
             />
+
+            <ReaderDictionaryPanel />
           </div>
         </div>
       </main>
@@ -303,6 +306,8 @@ export default async function ReadPage({
               />
             }
           />
+
+          <ReaderDictionaryPanel />
         </div>
       </div>
     </main>

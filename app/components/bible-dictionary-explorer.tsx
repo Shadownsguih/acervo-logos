@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  BIBLE_DICTIONARY_ENTRIES,
   BibleDictionaryEntry,
   getBibleDictionaryEntryById,
   searchBibleDictionaryEntries,
@@ -16,19 +15,22 @@ function languageLabel(language: BibleDictionaryEntry["language"]) {
 
 export default function BibleDictionaryExplorer() {
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string>(
-    BIBLE_DICTIONARY_ENTRIES[0]?.id ?? ""
-  );
+  const [selectedId, setSelectedId] = useState<string>("");
   const [mobileMode, setMobileMode] = useState<"search" | "entry">("search");
+
+  const hasQuery = query.trim().length > 0;
 
   const results = useMemo(() => {
     return searchBibleDictionaryEntries(query);
   }, [query]);
 
+  const mobileResults = useMemo(() => {
+    return results.slice(0, 3);
+  }, [results]);
+
   const selectedEntry =
     results.find((entry) => entry.id === selectedId) ??
-    BIBLE_DICTIONARY_ENTRIES.find((entry) => entry.id === selectedId) ??
-    results[0] ??
+    (selectedId ? getBibleDictionaryEntryById(selectedId) : null) ??
     null;
 
   const relatedEntries = useMemo(() => {
@@ -43,6 +45,7 @@ export default function BibleDictionaryExplorer() {
 
   useEffect(() => {
     if (results.length === 0) {
+      setSelectedId("");
       return;
     }
 
@@ -64,7 +67,6 @@ export default function BibleDictionaryExplorer() {
 
   function handleOpenRelatedEntry(entryId: string) {
     setSelectedId(entryId);
-    setQuery("");
     setMobileMode("entry");
   }
 
@@ -91,10 +93,63 @@ export default function BibleDictionaryExplorer() {
                 </h2>
 
                 <p className="mt-4 text-sm leading-7 text-zinc-300">
-                  Pesquise termos bíblicos em português, grego, hebraico ou por
-                  número Strong.
+                  Pesquise termos bíblicos em português, grego, hebraico ou por número Strong.
                 </p>
               </div>
+
+              {hasQuery ? (
+                <div className="mt-6 space-y-3">
+                  {mobileResults.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-6 text-center">
+                      <p className="text-sm font-medium text-white">
+                        Esta palavra não existe no dicionário.
+                      </p>
+                      <p className="mt-2 text-sm text-zinc-400">
+                        Tente buscar pelo termo principal, transliteração ou número Strong.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {mobileResults.map((entry) => (
+                        <button
+                          key={entry.id}
+                          type="button"
+                          onClick={() => handleSelectEntry(entry.id)}
+                          className="w-full rounded-2xl border border-white/10 bg-black/20 p-4 text-left transition hover:border-amber-400/40 hover:bg-white/5"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-base font-semibold text-white">
+                                {entry.displayTerm}
+                              </p>
+
+                              <p className="mt-1 text-xs uppercase tracking-[0.2em] text-zinc-500">
+                                {languageLabel(entry.language)}
+                              </p>
+                            </div>
+
+                            {entry.strong ? (
+                              <span className="shrink-0 rounded-full border border-white/10 px-2.5 py-1 text-[11px] text-zinc-300">
+                                {entry.strong}
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-200">
+                            {entry.shortDefinition}
+                          </p>
+                        </button>
+                      ))}
+
+                      {results.length > 3 ? (
+                        <p className="px-1 text-xs text-zinc-500">
+                          Mostrando os 3 primeiros resultados.
+                        </p>
+                      ) : null}
+                    </>
+                  )}
+                </div>
+              ) : null}
 
               <div className="mt-6">
                 <label htmlFor="dictionary-search-mobile" className="sr-only">
@@ -115,7 +170,7 @@ export default function BibleDictionaryExplorer() {
                     type="button"
                     onClick={() => {
                       setQuery("");
-                      setSelectedId(BIBLE_DICTIONARY_ENTRIES[0]?.id ?? "");
+                      setSelectedId("");
                     }}
                     className="rounded-2xl border border-white/10 px-5 py-4 text-sm font-medium text-white transition hover:bg-white/10"
                   >
@@ -124,55 +179,9 @@ export default function BibleDictionaryExplorer() {
                 </div>
 
                 <p className="mt-3 text-sm text-zinc-400">
-                  Digite em português, original, transliteração ou Strong.
+                  Digite a palavra principal, transliteração, original ou Strong.
                 </p>
               </div>
-
-              {query.trim() ? (
-                <div className="mt-6 space-y-3">
-                  {results.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-8 text-center">
-                      <p className="text-sm font-medium text-white">
-                        Nenhum termo encontrado
-                      </p>
-                      <p className="mt-2 text-sm text-zinc-400">
-                        Tente outra palavra ou outro formato de busca.
-                      </p>
-                    </div>
-                  ) : (
-                    results.map((entry) => (
-                      <button
-                        key={entry.id}
-                        type="button"
-                        onClick={() => handleSelectEntry(entry.id)}
-                        className="w-full rounded-2xl border border-white/10 bg-black/20 p-4 text-left transition hover:border-amber-400/40 hover:bg-white/5"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate text-base font-semibold text-white">
-                              {entry.displayTerm}
-                            </p>
-
-                            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-zinc-500">
-                              {languageLabel(entry.language)}
-                            </p>
-                          </div>
-
-                          {entry.strong ? (
-                            <span className="shrink-0 rounded-full border border-white/10 px-2.5 py-1 text-[11px] text-zinc-300">
-                              {entry.strong}
-                            </span>
-                          ) : null}
-                        </div>
-
-                        <p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-200">
-                          {entry.shortDefinition}
-                        </p>
-                      </button>
-                    ))
-                  )}
-                </div>
-              ) : null}
             </div>
           </div>
 
@@ -187,10 +196,7 @@ export default function BibleDictionaryExplorer() {
               {!selectedEntry ? (
                 <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-10 text-center">
                   <p className="text-lg font-semibold text-white">
-                    Selecione um termo
-                  </p>
-                  <p className="mt-2 text-zinc-400">
-                    Ao selecionar um resultado, o verbete aparecerá aqui.
+                    Nenhum verbete selecionado
                   </p>
                 </div>
               ) : (
@@ -353,9 +359,7 @@ export default function BibleDictionaryExplorer() {
             </h2>
 
             <p className="mt-4 text-base leading-7 text-zinc-300 md:text-lg">
-              Pesquise termos bíblicos em português, grego, hebraico ou por número
-              Strong. Os resultados priorizam a apresentação em português e
-              mostram resumo imediato para facilitar a consulta.
+              Pesquise termos bíblicos em português, grego, hebraico ou por número Strong.
             </p>
           </div>
 
@@ -370,7 +374,7 @@ export default function BibleDictionaryExplorer() {
                 type="text"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Ex.: graça, paz, igreja, arrependimento, G3056..."
+                placeholder="Ex.: graça, paz, igreja, G3056..."
                 className="w-full rounded-2xl border border-white/10 bg-[#0d0d14] px-5 py-4 text-sm text-white placeholder:text-zinc-500 outline-none transition focus:border-amber-400/40"
               />
 
@@ -378,7 +382,7 @@ export default function BibleDictionaryExplorer() {
                 type="button"
                 onClick={() => {
                   setQuery("");
-                  setSelectedId(BIBLE_DICTIONARY_ENTRIES[0]?.id ?? "");
+                  setSelectedId("");
                 }}
                 className="rounded-2xl border border-white/10 px-5 py-4 text-sm font-medium text-white transition hover:bg-white/10"
               >
@@ -387,8 +391,7 @@ export default function BibleDictionaryExplorer() {
             </div>
 
             <p className="mt-3 text-sm text-zinc-400">
-              Você pode buscar por palavra em português, termo original,
-              transliteração ou número Strong.
+              Você pode buscar pela palavra principal, transliteração, original ou Strong.
             </p>
           </div>
         </div>
@@ -398,17 +401,23 @@ export default function BibleDictionaryExplorer() {
             <div className="mb-4 flex items-center justify-between gap-3">
               <h3 className="text-lg font-semibold text-white">Resultados</h3>
               <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400">
-                {results.length} encontrados
+                {hasQuery ? results.length : 0} encontrados
               </span>
             </div>
 
-            {results.length === 0 ? (
+            {!hasQuery ? (
               <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-8 text-center">
                 <p className="text-sm font-medium text-white">
-                  Nenhum termo encontrado
+                  Digite uma palavra para pesquisar no dicionário.
+                </p>
+              </div>
+            ) : results.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-8 text-center">
+                <p className="text-sm font-medium text-white">
+                  Esta palavra não existe no dicionário.
                 </p>
                 <p className="mt-2 text-sm text-zinc-400">
-                  Tente buscar por outra palavra, tradução ou número Strong.
+                  Tente buscar pelo termo principal, transliteração ou número Strong.
                 </p>
               </div>
             ) : (
@@ -485,13 +494,16 @@ export default function BibleDictionaryExplorer() {
           </aside>
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-5 md:p-8">
-            {!selectedEntry ? (
+            {!hasQuery ? (
               <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-10 text-center">
                 <p className="text-lg font-semibold text-white">
-                  Selecione um termo
+                  Digite uma palavra para consultar o dicionário
                 </p>
-                <p className="mt-2 text-zinc-400">
-                  Ao selecionar um resultado, o verbete aparecerá aqui.
+              </div>
+            ) : !selectedEntry ? (
+              <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-10 text-center">
+                <p className="text-lg font-semibold text-white">
+                  Nenhum verbete encontrado
                 </p>
               </div>
             ) : (
@@ -610,10 +622,7 @@ export default function BibleDictionaryExplorer() {
                         <button
                           key={entry.id}
                           type="button"
-                          onClick={() => {
-                            setSelectedId(entry.id);
-                            setQuery("");
-                          }}
+                          onClick={() => handleOpenRelatedEntry(entry.id)}
                           className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-amber-400/40 hover:bg-amber-400/10"
                         >
                           <p className="text-sm font-semibold text-white">

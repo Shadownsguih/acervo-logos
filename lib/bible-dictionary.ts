@@ -58,81 +58,65 @@ function getLanguagePriority(language: BibleDictionaryEntry["language"]) {
   return 2;
 }
 
-function scoreFieldMatch(fieldValue: string, normalizedQuery: string) {
-  if (!fieldValue) return 0;
-
-  const normalizedField = normalizeDictionaryText(fieldValue);
-
-  if (!normalizedField) return 0;
-  if (normalizedField === normalizedQuery) return 100;
-  if (normalizedField.startsWith(normalizedQuery)) return 60;
-  if (normalizedField.includes(normalizedQuery)) return 30;
-
-  return 0;
+function buildStrictSearchFields(entry: BibleDictionaryEntry) {
+  return [
+    entry.displayTerm,
+    entry.term,
+    entry.normalizedTerm,
+    entry.transliteration ?? "",
+    entry.strong ?? "",
+    ...entry.aliases,
+  ]
+    .map((item) => normalizeDictionaryText(item))
+    .filter(Boolean);
 }
 
-function scoreEntry(entry: BibleDictionaryEntry, normalizedQuery: string) {
-  let score = 0;
+function scoreStrictField(field: string, query: string) {
+  if (!field) return 0;
 
-  score += scoreFieldMatch(entry.displayTerm, normalizedQuery) * 10;
-  score += scoreFieldMatch(entry.term, normalizedQuery) * 7;
-  score += scoreFieldMatch(entry.normalizedTerm, normalizedQuery) * 8;
-  score += scoreFieldMatch(entry.transliteration ?? "", normalizedQuery) * 6;
-  score += scoreFieldMatch(entry.strong ?? "", normalizedQuery) * 9;
-  score += scoreFieldMatch(entry.shortDefinition, normalizedQuery) * 3;
+  if (field === query) return 1000;
 
-  for (const alias of entry.aliases) {
-    score += scoreFieldMatch(alias, normalizedQuery) * 5;
-  }
+  const words = field.split(/\s+/).filter(Boolean);
 
-  for (const reference of entry.references) {
-    score += scoreFieldMatch(reference, normalizedQuery);
-  }
+  if (words.includes(query)) return 700;
 
-  for (const relatedTerm of entry.relatedTerms ?? []) {
-    score += scoreFieldMatch(relatedTerm, normalizedQuery);
-  }
+  if (field.startsWith(query)) return 500;
 
-  const normalizedFullDefinition = normalizeDictionaryText(entry.fullDefinition);
-  if (normalizedFullDefinition.includes(normalizedQuery)) {
-    score += 10;
-  }
+  if (words.some((word) => word.startsWith(query))) return 350;
 
-  // bônus por idioma para favorecer experiência em português
-  if (entry.language === "portugues") {
-    score += 20;
-  } else if (entry.language === "grego") {
-    score += 8;
-  } else if (entry.language === "hebraico") {
-    score += 6;
-  }
+  if (field.includes(query)) return 150;
 
-  return score;
+  return 0;
 }
 
 export function searchBibleDictionaryEntries(query: string) {
   const normalizedQuery = normalizeDictionaryText(query);
 
   if (!normalizedQuery) {
-    return [...BIBLE_DICTIONARY_ENTRIES].sort((a, b) => {
-      const languageDiff =
-        getLanguagePriority(a.language) - getLanguagePriority(b.language);
-
-      if (languageDiff !== 0) {
-        return languageDiff;
-      }
-
-      return a.displayTerm.localeCompare(b.displayTerm, "pt-BR", {
-        sensitivity: "base",
-      });
-    });
+    return [];
   }
 
-  return BIBLE_DICTIONARY_ENTRIES.map((entry) => ({
-    entry,
-    score: scoreEntry(entry, normalizedQuery),
-  }))
-    .filter((item) => item.score > 0)
+  const scored = BIBLE_DICTIONARY_ENTRIES.map((entry) => {
+    const fields = buildStrictSearchFields(entry);
+
+    let score = 0;
+
+    for (const field of fields) {
+      score = Math.max(score, scoreStrictField(field, normalizedQuery));
+    }
+
+    if (score === 0) {
+      return null;
+    }
+
+    score += entry.language === "portugues" ? 30 : entry.language === "grego" ? 15 : 10;
+
+    return { entry, score };
+  }).filter(
+    (item): item is { entry: BibleDictionaryEntry; score: number } => item !== null
+  );
+
+  return scored
     .sort((a, b) => {
       if (b.score !== a.score) {
         return b.score - a.score;
@@ -146,11 +130,9 @@ export function searchBibleDictionaryEntries(query: string) {
         return languageDiff;
       }
 
-      return a.entry.displayTerm.localeCompare(
-        b.entry.displayTerm,
-        "pt-BR",
-        { sensitivity: "base" }
-      );
+      return a.entry.displayTerm.localeCompare(b.entry.displayTerm, "pt-BR", {
+        sensitivity: "base",
+      });
     })
     .map((item) => item.entry);
 }
