@@ -1,7 +1,7 @@
 import Link from "next/link";
-import HomeMostReadCarousel from "@/app/components/home-most-read-carousel";
-import { createClient } from "@/lib/supabase-server";
 import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
+import HomeMostReadCarousel from "@/app/components/home-most-read-carousel";
 
 export default async function HomePage() {
   const authClient = await createClient();
@@ -24,20 +24,15 @@ export default async function HomePage() {
     ? "Você já está logado. Entre nas categorias e continue sua leitura no Acervo Logos."
     : "O acesso às categorias, materiais, leitura e download dos PDFs exige login.";
 
-  const accessCardTitle = isLoggedIn
-    ? "Acesso liberado"
-    : "Acesso restrito";
-
+  const accessCardTitle = isLoggedIn ? "Acesso liberado" : "Acesso restrito";
   const accessCardDescription = isLoggedIn
-    ? "Seu acesso ao acervo está ativo para abrir materiais, ler e baixar os PDFs."
+    ? "Seu acesso ao acervo está ativo para abrir materiais, ler e baixar os PDFs disponíveis."
     : "Entre com sua conta para abrir materiais, ler e baixar os PDFs do acervo.";
 
   const ctaEyebrow = isLoggedIn ? "Seu acervo" : "Acesso ao acervo";
-  const ctaTitle = isLoggedIn
-    ? "Continue sua leitura"
-    : "Entre para continuar";
+  const ctaTitle = isLoggedIn ? "Continue sua leitura" : "Entre para continuar";
   const ctaDescription = isLoggedIn
-    ? "Você já está logado. Acesse agora os materiais disponíveis no Acervo Logos."
+    ? "Você já está com acesso liberado. Entre agora nas categorias e continue estudando no Acervo Logos."
     : "Faça login para acessar o conteúdo completo do Acervo Logos.";
   const ctaButtonLabel = isLoggedIn ? "Acessar materiais" : "Fazer login";
 
@@ -138,7 +133,9 @@ export default async function HomePage() {
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm sm:p-6">
-              <p className="text-sm font-medium text-white">{accessCardTitle}</p>
+              <p className="text-sm font-medium text-white">
+                {accessCardTitle}
+              </p>
               <p className="mt-3 text-sm leading-6 text-zinc-400 sm:leading-7">
                 {accessCardDescription}
               </p>
