@@ -47,22 +47,6 @@ export function getR2PublicUrl(key: string) {
   return `${r2PublicBaseUrl}/${key}`;
 }
 
-export async function uploadPdfToR2(params: {
-  key: string;
-  body: Uint8Array;
-}) {
-  await r2.send(
-    new PutObjectCommand({
-      Bucket: r2BucketName,
-      Key: params.key,
-      Body: params.body,
-      ContentType: "application/pdf",
-    })
-  );
-
-  return getR2PublicUrl(params.key);
-}
-
 export async function createPresignedPdfUpload(params: {
   key: string;
   expiresIn?: number;
