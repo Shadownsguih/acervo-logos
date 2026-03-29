@@ -1,4 +1,5 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const r2AccountId = process.env.R2_ACCOUNT_ID!;
 const r2AccessKeyId = process.env.R2_ACCESS_KEY_ID!;
@@ -25,6 +26,27 @@ export function sanitizeFileName(value: string) {
     .slice(0, 80);
 }
 
+export function buildMaterialPdfKey(params: {
+  materialId: string;
+  title: string;
+}) {
+  const fileName = sanitizeFileName(params.title);
+  return `materials/${params.materialId}/${fileName}.pdf`;
+}
+
+export function buildVolumePdfKey(params: {
+  materialId: string;
+  volumeId: string;
+  title: string;
+}) {
+  const fileName = sanitizeFileName(params.title);
+  return `volumes/${params.materialId}/${params.volumeId}/${fileName}.pdf`;
+}
+
+export function getR2PublicUrl(key: string) {
+  return `${r2PublicBaseUrl}/${key}`;
+}
+
 export async function uploadPdfToR2(params: {
   key: string;
   body: Uint8Array;
@@ -38,5 +60,26 @@ export async function uploadPdfToR2(params: {
     })
   );
 
-  return `${r2PublicBaseUrl}/${params.key}`;
+  return getR2PublicUrl(params.key);
+}
+
+export async function createPresignedPdfUpload(params: {
+  key: string;
+  expiresIn?: number;
+}) {
+  const command = new PutObjectCommand({
+    Bucket: r2BucketName,
+    Key: params.key,
+    ContentType: "application/pdf",
+  });
+
+  const uploadUrl = await getSignedUrl(r2, command, {
+    expiresIn: params.expiresIn ?? 900,
+  });
+
+  return {
+    key: params.key,
+    uploadUrl,
+    publicUrl: getR2PublicUrl(params.key),
+  };
 }

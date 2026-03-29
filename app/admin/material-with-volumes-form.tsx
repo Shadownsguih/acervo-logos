@@ -21,6 +21,14 @@ type MaterialWithVolumesFormProps = {
   categories: Category[];
 };
 
+type ApiResult = {
+  error?: string;
+  success?: boolean;
+  uploadUrl?: string;
+  publicUrl?: string;
+  key?: string;
+};
+
 function createEmptyVolume(index: number): VolumeFormItem {
   return {
     localId: crypto.randomUUID(),
@@ -31,6 +39,72 @@ function createEmptyVolume(index: number): VolumeFormItem {
   };
 }
 
+async function readResponseSafely(response: Response): Promise<ApiResult> {
+  const rawText = await response.text();
+
+  if (!rawText) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(rawText) as ApiResult;
+  } catch {
+    return {
+      error: rawText,
+    };
+  }
+}
+
+async function getVolumeUploadTarget(params: {
+  materialId: string;
+  volumeId: string;
+  title: string;
+  fileType: string;
+}) {
+  const response = await fetch("/api/admin/volumes/upload-url", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+
+  const result = await readResponseSafely(response);
+
+  if (!response.ok) {
+    throw new Error(result.error || "Falha ao preparar o upload do volume.");
+  }
+
+  if (!result.uploadUrl || !result.publicUrl) {
+    throw new Error("A URL assinada do volume não foi retornada.");
+  }
+
+  return {
+    uploadUrl: result.uploadUrl,
+    publicUrl: result.publicUrl,
+  };
+}
+
+async function uploadPdfDirectly(params: {
+  uploadUrl: string;
+  file: File;
+}) {
+  const response = await fetch(params.uploadUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/pdf",
+    },
+    body: params.file,
+  });
+
+  if (!response.ok) {
+    const responseText = await response.text().catch(() => "");
+    throw new Error(
+      responseText || "Falha ao enviar o PDF diretamente para o R2."
+    );
+  }
+}
+
 export default function MaterialWithVolumesForm({
   categories,
 }: MaterialWithVolumesFormProps) {
@@ -39,12 +113,12 @@ export default function MaterialWithVolumesForm({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [displayOrder, setDisplayOrder] = useState("");
   const [volumes, setVolumes] = useState<VolumeFormItem[]>([
     createEmptyVolume(1),
   ]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -90,6 +164,7 @@ export default function MaterialWithVolumesForm({
 
     setSuccessMessage("");
     setErrorMessage("");
+    setStatusMessage("");
 
     if (!title.trim()) {
       setErrorMessage("Informe o título da obra.");
@@ -99,17 +174,6 @@ export default function MaterialWithVolumesForm({
     if (!categoryId) {
       setErrorMessage("Selecione uma categoria.");
       return;
-    }
-
-    if (displayOrder.trim()) {
-      const parsedDisplayOrder = Number(displayOrder);
-
-      if (!Number.isInteger(parsedDisplayOrder) || parsedDisplayOrder <= 0) {
-        setErrorMessage(
-          "A posição de exibição deve ser um número inteiro maior que zero."
-        );
-        return;
-      }
     }
 
     if (volumes.length === 0) {
@@ -152,34 +216,40 @@ export default function MaterialWithVolumesForm({
         pdfUrl: string;
       }[] = [];
 
-      for (const volume of volumes) {
+      for (let index = 0; index < volumes.length; index++) {
+        const volume = volumes[index];
         const volumeId = crypto.randomUUID();
 
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", volume.file as File);
-        uploadFormData.append("materialId", materialId);
-        uploadFormData.append("volumeId", volumeId);
-        uploadFormData.append("title", volume.title.trim());
+        setStatusMessage(
+          `Preparando upload do volume ${index + 1} de ${volumes.length}...`
+        );
 
-        const uploadResponse = await fetch("/api/admin/volumes/upload", {
-          method: "POST",
-          body: uploadFormData,
+        const target = await getVolumeUploadTarget({
+          materialId,
+          volumeId,
+          title: volume.title.trim(),
+          fileType: (volume.file as File).type,
         });
 
-        const uploadResult = await uploadResponse.json();
+        setStatusMessage(
+          `Enviando volume ${index + 1} de ${volumes.length} para o R2...`
+        );
 
-        if (!uploadResponse.ok) {
-          throw new Error(uploadResult?.error || "Falha ao enviar volume.");
-        }
+        await uploadPdfDirectly({
+          uploadUrl: target.uploadUrl,
+          file: volume.file as File,
+        });
 
         uploadedVolumes.push({
           id: volumeId,
           title: volume.title.trim(),
           volumeNumber: Number(volume.volumeNumber),
           description: volume.description.trim(),
-          pdfUrl: uploadResult.publicUrl,
+          pdfUrl: target.publicUrl,
         });
       }
+
+      setStatusMessage("Salvando obra e volumes no banco...");
 
       const saveResponse = await fetch("/api/admin/volumes", {
         method: "POST",
@@ -191,12 +261,11 @@ export default function MaterialWithVolumesForm({
           title: title.trim(),
           description: description.trim(),
           categoryId,
-          displayOrder: displayOrder.trim() ? Number(displayOrder) : null,
           volumes: uploadedVolumes,
         }),
       });
 
-      const saveResult = await saveResponse.json();
+      const saveResult = await readResponseSafely(saveResponse);
 
       if (!saveResponse.ok) {
         throw new Error(
@@ -206,10 +275,10 @@ export default function MaterialWithVolumesForm({
 
       setSuccessMessage("Material com volumes publicado com sucesso.");
       setErrorMessage("");
+      setStatusMessage("");
       setTitle("");
       setDescription("");
       setCategoryId("");
-      setDisplayOrder("");
       setVolumes([createEmptyVolume(1)]);
 
       router.refresh();
@@ -220,6 +289,7 @@ export default function MaterialWithVolumesForm({
           : "Erro ao publicar material com volumes.";
 
       setErrorMessage(message);
+      setStatusMessage("");
     } finally {
       setIsSubmitting(false);
     }
@@ -237,12 +307,8 @@ export default function MaterialWithVolumesForm({
         </h2>
 
         <p className="mt-4 text-zinc-400">
-          Use este formulário para publicar uma obra principal sem PDF próprio e
-          vários volumes em
-          <code className="mx-1 rounded bg-black/30 px-1.5 py-0.5 text-zinc-200">
-            material_volumes
-          </code>
-          .
+          A obra principal será criada sem PDF próprio, e cada volume será
+          enviado diretamente ao R2.
         </p>
       </div>
 
@@ -255,6 +321,12 @@ export default function MaterialWithVolumesForm({
       {errorMessage ? (
         <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           {errorMessage}
+        </div>
+      ) : null}
+
+      {statusMessage ? (
+        <div className="mt-6 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
+          {statusMessage}
         </div>
       ) : null}
 
@@ -293,50 +365,26 @@ export default function MaterialWithVolumesForm({
           />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="mv-category"
-              className="mb-2 block text-sm font-medium text-zinc-200"
-            >
-              Categoria
-            </label>
-            <select
-              id="mv-category"
-              value={categoryId}
-              onChange={(event) => setCategoryId(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
-            >
-              <option value="">Selecione uma categoria</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="mv-display-order"
-              className="mb-2 block text-sm font-medium text-zinc-200"
-            >
-              Posição na categoria
-            </label>
-            <input
-              id="mv-display-order"
-              type="number"
-              min={1}
-              value={displayOrder}
-              onChange={(event) => setDisplayOrder(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
-              placeholder="Ex.: 2"
-            />
-            <p className="mt-2 text-xs text-zinc-500">
-              Se deixar vazio, a obra entra no final. Se informar uma posição já
-              ocupada, os demais cards serão empurrados para baixo.
-            </p>
-          </div>
+        <div>
+          <label
+            htmlFor="mv-category"
+            className="mb-2 block text-sm font-medium text-zinc-200"
+          >
+            Categoria
+          </label>
+          <select
+            id="mv-category"
+            value={categoryId}
+            onChange={(event) => setCategoryId(event.target.value)}
+            className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
+          >
+            <option value="">Selecione uma categoria</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
@@ -364,17 +412,18 @@ export default function MaterialWithVolumesForm({
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
               >
                 <div className="mb-4 flex items-center justify-between gap-4">
-                  <p className="font-semibold text-white">Volume {index + 1}</p>
+                  <p className="font-semibold text-white">
+                    Volume {index + 1}
+                  </p>
 
-                  {volumes.length > 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => removeVolume(volume.localId)}
-                      className="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300 transition hover:bg-red-500/20"
-                    >
-                      Remover
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => removeVolume(volume.localId)}
+                    disabled={volumes.length === 1}
+                    className="text-sm text-red-300 transition hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Remover
+                  </button>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -407,7 +456,7 @@ export default function MaterialWithVolumesForm({
                       onChange={(event) =>
                         updateVolume(volume.localId, (current) => ({
                           ...current,
-                          volumeNumber: Number(event.target.value || 0),
+                          volumeNumber: Number(event.target.value),
                         }))
                       }
                       className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
@@ -420,6 +469,7 @@ export default function MaterialWithVolumesForm({
                     Descrição do volume
                   </label>
                   <textarea
+                    rows={3}
                     value={volume.description}
                     onChange={(event) =>
                       updateVolume(volume.localId, (current) => ({
@@ -427,7 +477,6 @@ export default function MaterialWithVolumesForm({
                         description: event.target.value,
                       }))
                     }
-                    rows={3}
                     className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
                     placeholder="Descrição breve do volume"
                   />
@@ -450,6 +499,12 @@ export default function MaterialWithVolumesForm({
                     }}
                     className="block w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-sm text-zinc-300 file:mr-4 file:rounded-full file:border-0 file:bg-amber-400 file:px-4 file:py-2 file:font-semibold file:text-black hover:file:bg-amber-300"
                   />
+
+                  {volume.file ? (
+                    <p className="mt-2 text-xs text-zinc-500">
+                      Tamanho: {(volume.file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -466,7 +521,8 @@ export default function MaterialWithVolumesForm({
           </button>
 
           <p className="text-sm text-zinc-500">
-            Os PDFs serão enviados ao R2 e a obra será cadastrada no Supabase.
+            Os volumes serão enviados direto para o R2 antes do salvamento no
+            banco.
           </p>
         </div>
       </form>

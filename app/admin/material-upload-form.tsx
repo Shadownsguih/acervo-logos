@@ -13,10 +13,18 @@ type MaterialUploadFormProps = {
   categories: Category[];
 };
 
+type DirectUploadTarget = {
+  uploadUrl: string;
+  publicUrl: string;
+  key: string;
+};
+
 type ApiResult = {
   error?: string;
-  publicUrl?: string;
   success?: boolean;
+  uploadUrl?: string;
+  publicUrl?: string;
+  key?: string;
 };
 
 async function readResponseSafely(response: Response): Promise<ApiResult> {
@@ -38,24 +46,59 @@ async function readResponseSafely(response: Response): Promise<ApiResult> {
     ) {
       return {
         error:
-          "O arquivo PDF é grande demais para este envio. Tente um arquivo menor ou ajuste o limite de upload do servidor.",
-      };
-    }
-
-    if (
-      normalizedText.includes("unauthorized") ||
-      normalizedText.includes("forbidden") ||
-      response.status === 401 ||
-      response.status === 403
-    ) {
-      return {
-        error: "Sua sessão não tem permissão para realizar esse upload.",
+          "O arquivo é grande demais para o método antigo de upload. Use o envio direto para o R2.",
       };
     }
 
     return {
       error: rawText,
     };
+  }
+}
+
+async function getDirectUploadTarget(params: {
+  materialId: string;
+  title: string;
+  fileType: string;
+}) {
+  const response = await fetch("/api/admin/upload-url", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+
+  const result = await readResponseSafely(response);
+
+  if (!response.ok) {
+    throw new Error(result.error || "Falha ao preparar o upload do PDF.");
+  }
+
+  if (!result.uploadUrl || !result.publicUrl) {
+    throw new Error("A URL assinada do upload não foi retornada.");
+  }
+
+  return result as Required<DirectUploadTarget>;
+}
+
+async function uploadPdfDirectly(params: {
+  uploadUrl: string;
+  file: File;
+}) {
+  const response = await fetch(params.uploadUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/pdf",
+    },
+    body: params.file,
+  });
+
+  if (!response.ok) {
+    const responseText = await response.text().catch(() => "");
+    throw new Error(
+      responseText || "Falha ao enviar o PDF diretamente para o R2."
+    );
   }
 }
 
@@ -70,6 +113,7 @@ export default function MaterialUploadForm({
   const [file, setFile] = useState<File | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -82,6 +126,7 @@ export default function MaterialUploadForm({
 
     setSuccessMessage("");
     setErrorMessage("");
+    setStatusMessage("");
 
     if (!title.trim()) {
       setErrorMessage("Informe o título do material.");
@@ -108,25 +153,22 @@ export default function MaterialUploadForm({
     try {
       const materialId = crypto.randomUUID();
 
-      const uploadFormData = new FormData();
-      uploadFormData.append("file", file);
-      uploadFormData.append("materialId", materialId);
-      uploadFormData.append("title", title.trim());
+      setStatusMessage("Preparando upload direto no R2...");
 
-      const uploadResponse = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: uploadFormData,
+      const target = await getDirectUploadTarget({
+        materialId,
+        title: title.trim(),
+        fileType: file.type,
       });
 
-      const uploadResult = await readResponseSafely(uploadResponse);
+      setStatusMessage("Enviando PDF diretamente para o R2...");
 
-      if (!uploadResponse.ok) {
-        throw new Error(uploadResult?.error || "Falha ao enviar PDF.");
-      }
+      await uploadPdfDirectly({
+        uploadUrl: target.uploadUrl,
+        file,
+      });
 
-      if (!uploadResult.publicUrl) {
-        throw new Error("O upload foi concluído, mas a URL do PDF não foi retornada.");
-      }
+      setStatusMessage("Salvando material no banco...");
 
       const saveResponse = await fetch("/api/admin/materials", {
         method: "POST",
@@ -138,7 +180,7 @@ export default function MaterialUploadForm({
           title: title.trim(),
           description: description.trim(),
           categoryId,
-          pdfUrl: uploadResult.publicUrl,
+          pdfUrl: target.publicUrl,
         }),
       });
 
@@ -149,6 +191,7 @@ export default function MaterialUploadForm({
       }
 
       setSuccessMessage("Material publicado com sucesso.");
+      setStatusMessage("");
       setTitle("");
       setDescription("");
       setCategoryId("");
@@ -170,6 +213,7 @@ export default function MaterialUploadForm({
           : "Ocorreu um erro ao publicar o material.";
 
       setErrorMessage(message);
+      setStatusMessage("");
     } finally {
       setIsSubmitting(false);
     }
@@ -185,11 +229,8 @@ export default function MaterialUploadForm({
         <h2 className="mt-3 text-2xl font-bold">Adicionar material simples</h2>
 
         <p className="mt-4 text-zinc-400">
-          Use este formulário para publicar materiais com um único PDF direto em
-          <code className="mx-1 rounded bg-black/30 px-1.5 py-0.5 text-zinc-200">
-            materials.pdf_url
-          </code>
-          .
+          Agora o PDF é enviado diretamente para o Cloudflare R2, ideal para
+          arquivos grandes.
         </p>
       </div>
 
@@ -202,6 +243,12 @@ export default function MaterialUploadForm({
       {errorMessage ? (
         <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           {errorMessage}
+        </div>
+      ) : null}
+
+      {statusMessage ? (
+        <div className="mt-6 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
+          {statusMessage}
         </div>
       ) : null}
 
@@ -279,6 +326,12 @@ export default function MaterialUploadForm({
             }}
             className="block w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-sm text-zinc-300 file:mr-4 file:rounded-full file:border-0 file:bg-amber-400 file:px-4 file:py-2 file:font-semibold file:text-black hover:file:bg-amber-300"
           />
+
+          {file ? (
+            <p className="mt-2 text-xs text-zinc-500">
+              Tamanho selecionado: {(file.size / 1024 / 1024).toFixed(2)} MB
+            </p>
+          ) : null}
         </div>
 
         <div className="flex items-center gap-4">
@@ -291,7 +344,8 @@ export default function MaterialUploadForm({
           </button>
 
           <p className="text-sm text-zinc-500">
-            O PDF será enviado ao R2 e o material será cadastrado no Supabase.
+            O PDF será enviado direto para o R2 e depois o material será salvo
+            no Supabase.
           </p>
         </div>
       </form>
