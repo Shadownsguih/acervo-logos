@@ -1,317 +1,750 @@
 [
-  {
-    "id": "logos-g3056",
-    "displayTerm": "Palavra",
-    "term": "λόγος",
-    "normalizedTerm": "logos",
+{"id":"aarao-h175","displayTerm":"Aarão","term":"אַהֲרֹן","normalizedTerm":"aarao","language":"hebraico","transliteration":"Aharon","strong":"H0175","pronunciation":"a-ha-RON","shortDefinition":"Primeiro sumo sacerdote de Israel","fullDefinition":"Aarão significa possivelmente “exaltado” ou “iluminado”. Foi irmão de Moisés e escolhido por Deus como porta-voz diante de Faraó. Tornou-se o primeiro sumo sacerdote de Israel, estabelecendo o sacerdócio aarônico.","references":["Êxodo 4:14"],"aliases":["Arão"],"relatedTerms":["Sacerdócio","Moisés"]},
+
+{"id":"ab-h1","displayTerm":"Ab","term":"אָב","normalizedTerm":"ab","language":"hebraico","transliteration":"ab","strong":"H0001","pronunciation":"av","shortDefinition":"Pai ou origem","fullDefinition":"Ab significa “pai” e é usado tanto para paternidade literal quanto para ancestralidade e autoridade. Também aparece em nomes compostos indicando relação com Deus.","references":["Gênesis 2:24"],"aliases":[],"relatedTerms":[]},
+
+{"id":"abaddon-h11","displayTerm":"Abadom","term":"אֲבַדּוֹן","normalizedTerm":"abadom","language":"hebraico","transliteration":"Abaddon","strong":"H0011","pronunciation":"a-ba-DON","shortDefinition":"Lugar de destruição","fullDefinition":"Abadom significa “destruição”. No Antigo Testamento refere-se ao lugar dos mortos. No Novo Testamento é associado ao anjo do abismo.","references":["Apocalipse 9:11"],"aliases":["Abaddon"],"relatedTerms":[]},
+
+{"id":"abel-h1893","displayTerm":"Abel","term":"הֶבֶל","normalizedTerm":"abel","language":"hebraico","transliteration":"Hevel","strong":"H1893","pronunciation":"HE-vel","shortDefinition":"Filho de Adão morto por Caim","fullDefinition":"Abel significa “vapor” ou “transitoriedade”. Foi o segundo filho de Adão, cuja oferta agradou a Deus, sendo assassinado por seu irmão Caim.","references":["Gênesis 4:2"],"aliases":[],"relatedTerms":["Caim"]},
+
+{"id":"abel-mizraim-h67","displayTerm":"Abel-Mizraim","term":"אָבֵל מִצְרַיִם","normalizedTerm":"abelmizraim","language":"hebraico","transliteration":"Avel Mitsrayim","strong":"H0067","pronunciation":"a-bel-mis-RA-im","shortDefinition":"Lugar de lamento","fullDefinition":"Abel-Mizraim significa “pranto do Egito”. Local onde Jacó foi lamentado após sua morte.","references":["Gênesis 50:11"],"aliases":[],"relatedTerms":[]},
+
+{"id":"abel-meola-h65","displayTerm":"Abel-Meolá","term":"אָבֵל מְחוֹלָה","normalizedTerm":"abelmeola","language":"hebraico","transliteration":"Avel Mecholah","strong":"H0065","pronunciation":"a-bel-me-O-la","shortDefinition":"Cidade de Eliseu","fullDefinition":"Abel-Meolá significa “prado da dança”. Foi cidade natal do profeta Eliseu.","references":["1 Reis 19:16"],"aliases":[],"relatedTerms":["Eliseu"]},
+
+{"id":"abia-h29","displayTerm":"Abias","term":"אֲבִיָּה","normalizedTerm":"abias","language":"hebraico","transliteration":"Aviyyah","strong":"H0029","pronunciation":"a-BI-as","shortDefinition":"Nome de vários personagens","fullDefinition":"Abias significa “meu pai é o Senhor”. Nome de reis e sacerdotes em Israel e Judá.","references":["1 Reis 15:1"],"aliases":[],"relatedTerms":[]},
+
+{"id":"abigail-h26","displayTerm":"Abigail","term":"אֲבִיגַיִל","normalizedTerm":"abigail","language":"hebraico","transliteration":"Avigayil","strong":"H0026","pronunciation":"a-bi-GA-il","shortDefinition":"Esposa de Davi","fullDefinition":"Abigail significa “alegria do pai”. Mulher sábia que se tornou esposa de Davi após a morte de Nabal.","references":["1 Samuel 25:3"],"aliases":[],"relatedTerms":["Davi"]},
+
+{"id":"abner-h74","displayTerm":"Abner","term":"אַבְנֵר","normalizedTerm":"abner","language":"hebraico","transliteration":"Avner","strong":"H0074","pronunciation":"AB-ner","shortDefinition":"General de Saul","fullDefinition":"Abner significa “pai da luz”. Foi comandante do exército do rei Saul.","references":["1 Samuel 14:50"],"aliases":[],"relatedTerms":["Saul"]},
+
+{"id":"abraao-h85","displayTerm":"Abraão","term":"אַבְרָהָם","normalizedTerm":"abraao","language":"hebraico","transliteration":"Avraham","strong":"H0085","pronunciation":"a-bra-RA-ão","shortDefinition":"Patriarca de Israel","fullDefinition":"Abraão significa “pai de muitas nações”. Foi chamado por Deus para ser o fundador do povo de Israel.","references":["Gênesis 12:1"],"aliases":["Abrão"],"relatedTerms":["Isaque"]},
+
+{"id":"absalao-h53","displayTerm":"Absalão","term":"אַבְשָׁלוֹם","normalizedTerm":"absalao","language":"hebraico","transliteration":"Avshalom","strong":"H0053","pronunciation":"ab-sa-LOM","shortDefinition":"Filho rebelde de Davi","fullDefinition":"Absalão significa “pai da paz”. Rebelou-se contra Davi e morreu durante a batalha.","references":["2 Samuel 15:1"],"aliases":[],"relatedTerms":["Davi"]},
+
+{"id":"acabe-h256","displayTerm":"Acabe","term":"אַחְאָב","normalizedTerm":"acabe","language":"hebraico","transliteration":"Achav","strong":"H0256","pronunciation":"a-CAB","shortDefinition":"Rei de Israel","fullDefinition":"Acabe significa “irmão do pai”. Foi rei ímpio de Israel, influenciado por Jezabel.","references":["1 Reis 16:30"],"aliases":[],"relatedTerms":["Jezabel"]},
+
+{"id":"acam-h5912","displayTerm":"Acã","term":"עָכָן","normalizedTerm":"acan","language":"hebraico","transliteration":"Akan","strong":"H5912","pronunciation":"a-CAN","shortDefinition":"Israelita desobediente","fullDefinition":"Acã significa “perturbador”. Pecou ao tomar despojos proibidos, trazendo derrota a Israel.","references":["Josué 7:1"],"aliases":[],"relatedTerms":[]},
+
+{"id":"acaz-h271","displayTerm":"Acaz","term":"אָחָז","normalizedTerm":"acaz","language":"hebraico","transliteration":"Achaz","strong":"H0271","pronunciation":"a-CAZ","shortDefinition":"Rei de Judá","fullDefinition":"Acaz significa “segurou”. Foi rei conhecido por sua idolatria e infidelidade.","references":["2 Reis 16:2"],"aliases":[],"relatedTerms":[]},
+
+{"id":"adao-h120","displayTerm":"Adão","term":"אָדָם","normalizedTerm":"adao","language":"hebraico","transliteration":"Adam","strong":"H0120","pronunciation":"a-DAM","shortDefinition":"Primeiro homem","fullDefinition":"Adão significa “homem” ou “terra”. Foi o primeiro ser humano criado por Deus.","references":["Gênesis 2:7"],"aliases":[],"relatedTerms":["Eva"]},
+
+{"id":"adonai-h136","displayTerm":"Adonai","term":"אֲדֹנָי","normalizedTerm":"adonai","language":"hebraico","transliteration":"Adonai","strong":"H0136","pronunciation":"a-do-NAI","shortDefinition":"Senhor","fullDefinition":"Adonai significa “Senhor” ou “meu Senhor”. É um título reverente usado para Deus.","references":["Salmos 8:1"],"aliases":[],"relatedTerms":["Deus"]},
+
+{"id":"aggelos-g32","displayTerm":"Anjo","term":"ἄγγελος","normalizedTerm":"anjo","language":"grego","transliteration":"angelos","strong":"G0032","pronunciation":"AN-ge-los","shortDefinition":"Mensageiro de Deus","fullDefinition":"Anjo significa “mensageiro”. São seres espirituais enviados por Deus para cumprir sua vontade.","references":["Hebreus 1:14"],"aliases":[],"relatedTerms":[]},
+
+{"id":"aleph","displayTerm":"Alef","term":"אָלֶף","normalizedTerm":"alef","language":"hebraico","transliteration":"Aleph","strong":"","pronunciation":"A-lef","shortDefinition":"Primeira letra hebraica","fullDefinition":"Alef é a primeira letra do alfabeto hebraico, simbolizando origem e unidade.","references":["Salmos 119:1"],"aliases":[],"relatedTerms":[]},
+
+{"id":"aleluia-g239","displayTerm":"Aleluia","term":"ἀλληλούϊα","normalizedTerm":"aleluia","language":"grego","transliteration":"allelouia","strong":"G0239","pronunciation":"a-le-LU-ia","shortDefinition":"Louvai ao Senhor","fullDefinition":"Aleluia significa “louvai ao Senhor”. Expressão de adoração e alegria.","references":["Apocalipse 19:1"],"aliases":[],"relatedTerms":[]},
+
+{"id":"alma-h5315","displayTerm":"Alma","term":"נֶפֶשׁ","normalizedTerm":"alma","language":"hebraico","transliteration":"nephesh","strong":"H5315","pronunciation":"NE-fesh","shortDefinition":"Vida ou ser","fullDefinition":"Alma significa “vida” ou “ser vivente”. Refere-se ao ser completo do homem.","references":["Gênesis 2:7"],"aliases":[],"relatedTerms":[]},
+
+{"id":"altar-h4196","displayTerm":"Altar","term":"מִזְבֵּחַ","normalizedTerm":"altar","language":"hebraico","transliteration":"mizbeach","strong":"H4196","pronunciation":"miz-BE-ach","shortDefinition":"Lugar de sacrifício","fullDefinition":"Altar é o local onde eram oferecidos sacrifícios a Deus no Antigo Testamento.","references":["Êxodo 27:1"],"aliases":[],"relatedTerms":[]},
+
+{"id":"amem-g281","displayTerm":"Amém","term":"ἀμήν","normalizedTerm":"amem","language":"grego","transliteration":"amēn","strong":"G0281","pronunciation":"a-MEN","shortDefinition":"Assim seja","fullDefinition":"Amém significa “verdadeiramente”. Usado para confirmar orações e declarações.","references":["Apocalipse 22:20"],"aliases":[],"relatedTerms":[]},
+
+{"id":"amor","displayTerm":"Amor","term":"ἀγάπη","normalizedTerm":"amor","language":"grego","transliteration":"agapē","strong":"G0026","pronunciation":"a-GA-pe","shortDefinition":"Amor divino","fullDefinition":"Amor, especialmente ágape, representa o amor sacrificial e incondicional de Deus.","references":["1 João 4:8"],"aliases":[],"relatedTerms":["Ágape"]},
+
+{"id":"amaleque-h6002","displayTerm":"Amaleque","term":"עֲמָלֵק","normalizedTerm":"amaleque","language":"hebraico","transliteration":"Amaleq","strong":"H6002","pronunciation":"a-ma-LEK","shortDefinition":"Povo inimigo de Israel","fullDefinition":"Amaleque significa possivelmente “povo que habita no vale”. Foi inimigo constante de Israel.","references":["Êxodo 17:8"],"aliases":[],"relatedTerms":[]},
+
+{"id":"amos-h5986","displayTerm":"Amós","term":"עָמוֹס","normalizedTerm":"amos","language":"hebraico","transliteration":"Amos","strong":"H5986","pronunciation":"a-MOS","shortDefinition":"Profeta do AT","fullDefinition":"Amós significa “carregador de fardos”. Profeta que denunciou injustiças sociais em Israel.","references":["Amós 1:1"],"aliases":[],"relatedTerms":[]},
+{"id":"amorreu-h567","displayTerm":"Amorreu","term":"אֱמֹרִי","normalizedTerm":"amorreu","language":"hebraico","transliteration":"Emori","strong":"H0567","pronunciation":"e-mo-RI","shortDefinition":"Povo cananeu","fullDefinition":"Amorreu significa possivelmente “montanhês”. Era um dos principais povos de Canaã que habitavam regiões montanhosas e foram frequentemente inimigos de Israel.","references":["Gênesis 15:16"],"aliases":[],"relatedTerms":["Canaã"]},
+
+{"id":"amom-h5983","displayTerm":"Amom","term":"עַמּוֹן","normalizedTerm":"amom","language":"hebraico","transliteration":"Ammon","strong":"H5983","pronunciation":"a-MOM","shortDefinition":"Povo descendente de Ló","fullDefinition":"Amom significa “filho do meu povo”. Descendentes de Ló por meio de sua filha mais nova, frequentemente em conflito com Israel.","references":["Gênesis 19:38"],"aliases":[],"relatedTerms":["Moabe"]},
+
+{"id":"ana-h6034","displayTerm":"Aná","term":"עֲנָה","normalizedTerm":"ana","language":"hebraico","transliteration":"Anah","strong":"H6034","pronunciation":"a-NA","shortDefinition":"Personagem edomita","fullDefinition":"Aná significa “resposta” ou “aflição”. Nome de personagens ligados aos edomitas, incluindo aquele que encontrou fontes no deserto.","references":["Gênesis 36:24"],"aliases":[],"relatedTerms":[]},
+
+{"id":"anaias-g367","displayTerm":"Ananias","term":"Ἀνανίας","normalizedTerm":"ananias","language":"grego","transliteration":"Ananias","strong":"G0367","pronunciation":"a-na-NI-as","shortDefinition":"Nome de vários personagens","fullDefinition":"Ananias significa “Deus é gracioso”. Nome de personagens no Novo Testamento, incluindo um discípulo de Damasco e um membro da igreja primitiva.","references":["Atos 9:10"],"aliases":[],"relatedTerms":[]},
+
+{"id":"andre-g406","displayTerm":"André","term":"Ἀνδρέας","normalizedTerm":"andre","language":"grego","transliteration":"Andreas","strong":"G0406","pronunciation":"AN-dre-as","shortDefinition":"Apóstolo de Jesus","fullDefinition":"André significa “viril” ou “corajoso”. Foi um dos doze apóstolos e irmão de Pedro, conhecido por levar pessoas a Jesus.","references":["Mateus 4:18"],"aliases":[],"relatedTerms":["Pedro"]},
+
+{"id":"antioquia-g490","displayTerm":"Antioquia","term":"Ἀντιόχεια","normalizedTerm":"antioquia","language":"grego","transliteration":"Antiocheia","strong":"G0490","pronunciation":"an-ti-O-qui-a","shortDefinition":"Importante cidade cristã","fullDefinition":"Antioquia foi uma importante cidade do Império Romano e centro missionário da igreja primitiva, onde os discípulos foram chamados cristãos pela primeira vez.","references":["Atos 11:26"],"aliases":[],"relatedTerms":[]},
+
+{"id":"anticristo-g500","displayTerm":"Anticristo","term":"ἀντίχριστος","normalizedTerm":"anticristo","language":"grego","transliteration":"antichristos","strong":"G0500","pronunciation":"an-ti-KRIS-tos","shortDefinition":"Opositor de Cristo","fullDefinition":"Anticristo significa “contra Cristo” ou “no lugar de Cristo”. Refere-se a qualquer um que se oponha a Cristo, especialmente uma figura futura de oposição.","references":["1 João 2:18"],"aliases":[],"relatedTerms":[]},
+
+{"id":"arca-h727","displayTerm":"Arca","term":"אֲרוֹן","normalizedTerm":"arca","language":"hebraico","transliteration":"aron","strong":"H0727","pronunciation":"a-RON","shortDefinition":"Caixa sagrada","fullDefinition":"Arca significa “caixa”. Refere-se especialmente à Arca da Aliança, onde estavam as tábuas da lei e que simbolizava a presença de Deus.","references":["Êxodo 25:10"],"aliases":["Arca da Aliança"],"relatedTerms":["Aliança"]},
+
+{"id":"aramaico","displayTerm":"Aramaico","term":"אֲרָמִית","normalizedTerm":"aramaico","language":"hebraico","transliteration":"Aramit","strong":"","pronunciation":"a-ra-MAI-co","shortDefinition":"Língua semítica","fullDefinition":"Aramaico é uma língua semítica amplamente usada no Oriente Próximo e em partes da Bíblia, especialmente em Daniel e Esdras.","references":["Daniel 2:4"],"aliases":[],"relatedTerms":[]},
+
+{"id":"arama-h758","displayTerm":"Arã","term":"אֲרָם","normalizedTerm":"ara","language":"hebraico","transliteration":"Aram","strong":"H0758","pronunciation":"a-RAM","shortDefinition":"Região e povo","fullDefinition":"Arã significa “alto” ou “exaltado”. Região ao norte de Israel e também nome de um povo frequentemente em conflito com Israel.","references":["Gênesis 10:22"],"aliases":["Síria"],"relatedTerms":[]},
+
+{"id":"araxade-h775","displayTerm":"Arfaxade","term":"אַרְפַּכְשַׁד","normalizedTerm":"arfaxade","language":"hebraico","transliteration":"Arpachshad","strong":"H0775","pronunciation":"ar-fak-SHAD","shortDefinition":"Descendente de Sem","fullDefinition":"Arfaxade significa possivelmente “fortaleza dos caldeus”. Foi filho de Sem e ancestral de Abraão.","references":["Gênesis 10:22"],"aliases":[],"relatedTerms":["Sem"]},
+
+{"id":"ariano","displayTerm":"Arianismo","term":"","normalizedTerm":"arianismo","language":"portugues","transliteration":"","strong":"","pronunciation":"a-ri-a-NIS-mo","shortDefinition":"Heresia cristológica","fullDefinition":"Arianismo foi uma doutrina que negava a plena divindade de Cristo, considerada heresia pela igreja primitiva.","references":[],"aliases":[],"relatedTerms":[]},
+
+{"id":"arimateia-g707","displayTerm":"Arimateia","term":"Ἀριμαθαία","normalizedTerm":"arimateia","language":"grego","transliteration":"Arimathaia","strong":"G0707","pronunciation":"a-ri-ma-TEI-a","shortDefinition":"Cidade de José","fullDefinition":"Arimateia foi a cidade de José, discípulo que sepultou Jesus.","references":["Mateus 27:57"],"aliases":[],"relatedTerms":["José de Arimateia"]},
+
+{"id":"aristoteles","displayTerm":"Aristóteles","term":"","normalizedTerm":"aristoteles","language":"portugues","transliteration":"","strong":"","pronunciation":"a-ris-TO-te-les","shortDefinition":"Filósofo grego","fullDefinition":"Aristóteles foi filósofo grego cuja influência filosófica impactou o pensamento teológico posterior.","references":[],"aliases":[],"relatedTerms":[]},
+
+{"id":"armagedom-g717","displayTerm":"Armagedom","term":"Ἁρμαγεδών","normalizedTerm":"armagedom","language":"grego","transliteration":"Harmagedōn","strong":"G0717","pronunciation":"ar-ma-GE-dom","shortDefinition":"Lugar da batalha final","fullDefinition":"Armagedom significa “monte de Megido”. Refere-se ao local simbólico da batalha final entre o bem e o mal.","references":["Apocalipse 16:16"],"aliases":[],"relatedTerms":[]},
+
+{"id":"arrepender-g3340","displayTerm":"Arrepender-se","term":"μετανοέω","normalizedTerm":"arrepender","language":"grego","transliteration":"metanoeō","strong":"G3340","pronunciation":"me-ta-no-E-o","shortDefinition":"Mudar de mente","fullDefinition":"Arrepender-se significa mudar de mente e direção espiritual, voltando-se para Deus.","references":["Mateus 4:17"],"aliases":[],"relatedTerms":["Arrependimento"]},
+
+{"id":"arrependimento-g3341","displayTerm":"Arrependimento","term":"μετάνοια","normalizedTerm":"arrependimento","language":"grego","transliteration":"metanoia","strong":"G3341","pronunciation":"me-ta-NOI-a","shortDefinition":"Mudança interior","fullDefinition":"Arrependimento significa transformação interior que leva à mudança de vida e retorno a Deus.","references":["Atos 2:38"],"aliases":[],"relatedTerms":["Arrepender-se"]},
+
+{"id":"asa-h609","displayTerm":"Asa","term":"אָסָא","normalizedTerm":"asa","language":"hebraico","transliteration":"Asa","strong":"H0609","pronunciation":"A-sa","shortDefinition":"Rei de Judá","fullDefinition":"Asa significa “cura”. Foi rei de Judá que promoveu reformas religiosas e buscou a Deus.","references":["1 Reis 15:9"],"aliases":[],"relatedTerms":[]},
+
+{"id":"asadias","displayTerm":"Asadias","term":"","normalizedTerm":"asadias","language":"portugues","transliteration":"","strong":"","pronunciation":"a-sa-DI-as","shortDefinition":"Nome bíblico","fullDefinition":"Asadias significa possivelmente “feito pelo Senhor”. Nome de personagem bíblico pouco mencionado.","references":[],"aliases":[],"relatedTerms":[]},
+
+{"id":"asafe-h623","displayTerm":"Asafe","term":"אָסָף","normalizedTerm":"asafe","language":"hebraico","transliteration":"Asaf","strong":"H0623","pronunciation":"A-saf","shortDefinition":"Salmodista","fullDefinition":"Asafe significa “ajuntador”. Foi levita e autor de vários salmos.","references":["Salmos 73:1"],"aliases":[],"relatedTerms":["Salmos"]},
+
+{"id":"ascalom-h831","displayTerm":"Ascalom","term":"אַשְׁקְלוֹן","normalizedTerm":"ascalom","language":"hebraico","transliteration":"Ashqelon","strong":"H0831","pronunciation":"as-CA-lon","shortDefinition":"Cidade filisteia","fullDefinition":"Ascalom foi uma das cinco principais cidades dos filisteus, localizada na costa.","references":["Juízes 1:18"],"aliases":[],"relatedTerms":["Filisteus"]},
+
+{"id":"asher-h836","displayTerm":"Aser","term":"אָשֵׁר","normalizedTerm":"aser","language":"hebraico","transliteration":"Asher","strong":"H0836","pronunciation":"A-sher","shortDefinition":"Filho de Jacó","fullDefinition":"Aser significa “feliz”. Foi filho de Jacó e deu origem a uma das tribos de Israel.","references":["Gênesis 30:13"],"aliases":[],"relatedTerms":["Jacó"]},
+
+{"id":"asia-g773","displayTerm":"Ásia","term":"Ἀσία","normalizedTerm":"asia","language":"grego","transliteration":"Asia","strong":"G0773","pronunciation":"A-si-a","shortDefinition":"Província romana","fullDefinition":"Ásia era uma província romana onde ocorreram várias atividades missionárias no Novo Testamento.","references":["Atos 19:10"],"aliases":[],"relatedTerms":[]},
+
+{"id":"assiria-h804","displayTerm":"Assíria","term":"אַשּׁוּר","normalizedTerm":"assiria","language":"hebraico","transliteration":"Ashur","strong":"H0804","pronunciation":"as-SI-ri-a","shortDefinition":"Império antigo","fullDefinition":"Assíria foi um poderoso império do Antigo Oriente que conquistou o Reino do Norte de Israel.","references":["2 Reis 17:6"],"aliases":[],"relatedTerms":[]},
+
+{"id":"atarote-h5852","displayTerm":"Atarote","term":"עֲטָרוֹת","normalizedTerm":"atarote","language":"hebraico","transliteration":"Atarot","strong":"H5852","pronunciation":"a-ta-ROT","shortDefinition":"Cidade bíblica","fullDefinition":"Atarote significa “coroas”. Nome de várias cidades em Israel.","references":["Josué 16:2"],"aliases":[],"relatedTerms":[]},
+
+{"id":"atalaia","displayTerm":"Atalaia","term":"","normalizedTerm":"atalaia","language":"portugues","transliteration":"","strong":"","pronunciation":"a-ta-LAI-a","shortDefinition":"Vigia ou sentinela","fullDefinition":"Atalaia significa “vigia”. Refere-se àquele que observa e alerta sobre perigos espirituais ou físicos.","references":["Ezequiel 33:7"],"aliases":[],"relatedTerms":[]},
+
+{"id":"atenienses","displayTerm":"Atenienses","term":"Ἀθηναῖοι","normalizedTerm":"atenienses","language":"grego","transliteration":"Athēnaioi","strong":"","pronunciation":"a-te-ni-EN-ses","shortDefinition":"Habitantes de Atenas","fullDefinition":"Atenienses eram os habitantes da cidade de Atenas, conhecida por sua cultura e filosofia.","references":["Atos 17:21"],"aliases":[],"relatedTerms":[]},
+{"id":"augusto-g828","displayTerm":"Augusto","term":"Αὔγουστος","normalizedTerm":"augusto","language":"grego","transliteration":"Augoustos","strong":"G0828","pronunciation":"au-GUS-tos","shortDefinition":"Imperador romano","fullDefinition":"Augusto significa “venerável” ou “majestoso”. Foi o primeiro imperador romano, sob cujo governo ocorreu o nascimento de Jesus, marcando o contexto político do Novo Testamento.","references":["Lucas 2:1"],"aliases":["César Augusto"],"relatedTerms":[]},
+
+{"id":"autoridade","displayTerm":"Autoridade","term":"ἐξουσία","normalizedTerm":"autoridade","language":"grego","transliteration":"exousia","strong":"G1849","pronunciation":"ex-ou-SI-a","shortDefinition":"Poder ou direito de governar","fullDefinition":"Autoridade significa poder legítimo para governar ou agir. Na Bíblia, refere-se tanto à autoridade divina quanto à autoridade delegada aos homens.","references":["Mateus 28:18"],"aliases":[],"relatedTerms":["Poder"]},
+
+{"id":"avareza-g4124","displayTerm":"Avareza","term":"πλεονεξία","normalizedTerm":"avareza","language":"grego","transliteration":"pleonexia","strong":"G4124","pronunciation":"ple-o-ne-XI-a","shortDefinition":"Desejo excessivo","fullDefinition":"Avareza significa desejo insaciável por bens materiais. É condenada nas Escrituras como forma de idolatria.","references":["Colossenses 3:5"],"aliases":[],"relatedTerms":["Ganância"]},
+
+{"id":"avivamento","displayTerm":"Avivamento","term":"","normalizedTerm":"avivamento","language":"portugues","transliteration":"","strong":"","pronunciation":"a-vi-va-MEN-to","shortDefinition":"Renovação espiritual","fullDefinition":"Avivamento refere-se a um despertar espiritual promovido por Deus, trazendo renovação de fé, arrependimento e retorno à obediência.","references":["Habacuque 3:2"],"aliases":[],"relatedTerms":["Arrependimento"]},
+
+{"id":"azeite-h8081","displayTerm":"Azeite","term":"שֶׁמֶן","normalizedTerm":"azeite","language":"hebraico","transliteration":"shemen","strong":"H8081","pronunciation":"SHE-men","shortDefinition":"Óleo usado na Bíblia","fullDefinition":"Azeite significa óleo, especialmente de oliva. Era usado para alimentação, iluminação, unção e rituais religiosos no Antigo Testamento.","references":["Êxodo 27:20"],"aliases":["Óleo"],"relatedTerms":["Unção"]},
+
+{"id":"azarias-h5838","displayTerm":"Azarias","term":"עֲזַרְיָה","normalizedTerm":"azarias","language":"hebraico","transliteration":"Azaryah","strong":"H5838","pronunciation":"a-za-RI-as","shortDefinition":"Nome de vários personagens","fullDefinition":"Azarias significa “o Senhor ajudou”. Nome de vários personagens bíblicos, incluindo sacerdotes e reis de Judá.","references":["2 Reis 15:1"],"aliases":["Uzias"],"relatedTerms":[]},
+
+{"id":"azazel-h5799","displayTerm":"Azazel","term":"עֲזָאזֵל","normalizedTerm":"azazel","language":"hebraico","transliteration":"Azazel","strong":"H5799","pronunciation":"a-za-ZEL","shortDefinition":"Bode expiatório","fullDefinition":"Azazel refere-se ao bode expiatório no Dia da Expiação, simbolizando a remoção dos pecados do povo.","references":["Levítico 16:10"],"aliases":["Bode expiatório"],"relatedTerms":["Expiação"]},
+
+{"id":"azoto-g108","displayTerm":"Azoto","term":"Ἄζωτος","normalizedTerm":"azoto","language":"grego","transliteration":"Azōtos","strong":"G0108","pronunciation":"a-ZO-tos","shortDefinition":"Cidade filisteia","fullDefinition":"Azoto era uma cidade dos filisteus, também chamada Asdode, mencionada no Novo Testamento.","references":["Atos 8:40"],"aliases":["Asdode"],"relatedTerms":["Filisteus"]},
+
+{"id":"azul","displayTerm":"Azul","term":"תְּכֵלֶת","normalizedTerm":"azul","language":"hebraico","transliteration":"tekhelet","strong":"H8504","pronunciation":"te-QUE-let","shortDefinition":"Cor usada no tabernáculo","fullDefinition":"Azul era uma cor simbólica usada nas vestes sacerdotais e no tabernáculo, representando o céu e a presença divina.","references":["Êxodo 26:1"],"aliases":[],"relatedTerms":["Tabernáculo"]},
+
+{"id":"azur-h5809","displayTerm":"Azur","term":"עָזוּר","normalizedTerm":"azur","language":"hebraico","transliteration":"Azur","strong":"H5809","pronunciation":"a-ZUR","shortDefinition":"Personagem bíblico","fullDefinition":"Azur significa “ajudado”. Nome de personagens bíblicos mencionados no Antigo Testamento.","references":["Jeremias 28:1"],"aliases":[],"relatedTerms":[]},
+{
+    "id": "agabo-g13",
+    "displayTerm": "Ágabo",
+    "term": "Ἄγαβος",
+    "normalizedTerm": "agabo",
     "language": "grego",
-    "transliteration": "logos",
-    "strong": "G3056",
-    "pronunciation": "ló-gos",
-    "shortDefinition": "palavra, discurso, mensagem, razão",
-    "fullDefinition": "No Novo Testamento, λόγος pode significar palavra falada, mensagem, ensino, discurso ou razão. Em João 1:1, o termo assume sentido elevado e cristológico, identificando o Verbo eterno. Em outros contextos, pode indicar a mensagem de Deus, a pregação do evangelho ou uma palavra dita com propósito e conteúdo.",
-    "references": ["João 1:1", "João 1:14", "Hebreus 4:12", "Atos 6:7"],
-    "aliases": ["logos", "palavra", "verbo", "mensagem", "discurso", "G3056"],
-    "relatedTerms": ["rhema-g4487"]
+    "transliteration": "Agabos",
+    "strong": "G0013",
+    "pronunciation": "A-ga-bos",
+    "shortDefinition": "Profeta cristão do Novo Testamento",
+    "fullDefinition": "Ágabo é o nome de um profeta cristão do período apostólico. O nome identifica um mensageiro inspirado que anunciou uma grande fome e depois profetizou a prisão de Paulo em Jerusalém. Seu papel bíblico é o de confirmar a direção profética na igreja primitiva.",
+    "references": ["Atos 11:28", "Atos 21:10-11"],
+    "aliases": [],
+    "relatedTerms": ["Profeta", "Paulo"]
   },
   {
-    "id": "rhema-g4487",
-    "displayTerm": "Palavra Falada",
-    "term": "ῥῆμα",
-    "normalizedTerm": "rhema",
-    "language": "grego",
-    "transliteration": "rhema",
-    "strong": "G4487",
-    "pronunciation": "rhê-ma",
-    "shortDefinition": "palavra falada, declaração, enunciado",
-    "fullDefinition": "ῥῆμα geralmente aponta para uma palavra pronunciada, uma declaração específica ou uma fala expressa. Em certos textos, destaca a palavra comunicada em situação concreta, enquanto λόγος pode aparecer com sentido mais amplo. A distinção nem sempre é absoluta, mas ῥῆμα frequentemente carrega a ideia de palavra dita, anunciada ou aplicada.",
-    "references": ["Lucas 1:38", "Romanos 10:17", "Efésios 6:17"],
-    "aliases": ["rhema", "rema", "palavra falada", "declaracao", "G4487"],
-    "relatedTerms": ["logos-g3056"]
+    "id": "agague-h90",
+    "displayTerm": "Agague",
+    "term": "אֲגַג",
+    "normalizedTerm": "agague",
+    "language": "hebraico",
+    "transliteration": "Agag",
+    "strong": "H0090",
+    "pronunciation": "A-gag",
+    "shortDefinition": "Rei dos amalequitas",
+    "fullDefinition": "Agague é o nome de reis amalequitas e provavelmente significa algo ligado a posição elevada ou majestade. O Agague mais conhecido foi rei dos amalequitas poupado por Saul em desobediência à ordem divina, sendo depois executado por Samuel. O nome ficou associado à oposição de Amaleque contra Israel.",
+    "references": ["1 Samuel 15:8", "1 Samuel 15:32-33"],
+    "aliases": [],
+    "relatedTerms": ["Amaleque", "Saul", "Samuel"]
+  },
+  {
+    "id": "agagita-h91",
+    "displayTerm": "Agagita",
+    "term": "אֲגָגִי",
+    "normalizedTerm": "agagita",
+    "language": "hebraico",
+    "transliteration": "Agagi",
+    "strong": "H0091",
+    "pronunciation": "a-ga-GUI-ta",
+    "shortDefinition": "Descendente ou ligado a Agague",
+    "fullDefinition": "Agagita significa “pertencente a Agague”. O termo identifica especialmente Hamã, inimigo dos judeus no livro de Ester, sugerindo ligação simbólica ou étnica com a antiga hostilidade amalequita. Assim, o nome reforça o conflito entre os inimigos do povo de Deus e Israel.",
+    "references": ["Ester 3:1", "Ester 8:3"],
+    "aliases": [],
+    "relatedTerms": ["Hamã", "Agague", "Ester"]
+  },
+  {
+    "id": "ageu-h2292",
+    "displayTerm": "Ageu",
+    "term": "חַגַּי",
+    "normalizedTerm": "ageu",
+    "language": "hebraico",
+    "transliteration": "Chaggay",
+    "strong": "H2292",
+    "pronunciation": "Ra-GUEU",
+    "shortDefinition": "Profeta pós-exílico",
+    "fullDefinition": "Ageu significa “festivo” ou “nascido em dia de festa”. Foi o profeta que exortou os judeus repatriados a retomarem a reconstrução do templo após o exílio babilônico. Seu ministério destacou a prioridade da casa de Deus, da obediência e da esperança messiânica.",
+    "references": ["Ageu 1:1", "Esdras 5:1"],
+    "aliases": [],
+    "relatedTerms": ["Zorobabel", "Josué", "Templo"]
+  },
+  {
+    "id": "ageu-livro",
+    "displayTerm": "Ageu, Livro de",
+    "term": "חַגַּי",
+    "normalizedTerm": "ageu livro de",
+    "language": "hebraico",
+    "transliteration": "Chaggay",
+    "strong": "H2292",
+    "pronunciation": "Ra-GUEU",
+    "shortDefinition": "Livro profético do Antigo Testamento",
+    "fullDefinition": "Ageu, Livro de, recebe esse nome do profeta cujo nome significa “festivo”. O livro registra mensagens dirigidas aos judeus que voltaram do exílio, conclamando-os a reconstruir o templo e a reorganizar sua vida espiritual. Seu conteúdo enfatiza santidade, prioridade da adoração e promessa futura de glória.",
+    "references": ["Ageu 1:1", "Ageu 2:9"],
+    "aliases": ["Livro de Ageu"],
+    "relatedTerms": ["Ageu", "Profetas Menores", "Templo"]
+  },
+  {
+    "id": "agar-h1904",
+    "displayTerm": "Agar",
+    "term": "הָגָר",
+    "normalizedTerm": "agar",
+    "language": "hebraico",
+    "transliteration": "Hagar",
+    "strong": "H1904",
+    "pronunciation": "A-gar",
+    "shortDefinition": "Serva egípcia de Sara e mãe de Ismael",
+    "fullDefinition": "Agar significa provavelmente “fuga” ou “fugitiva”. Foi serva egípcia de Sara e dada a Abraão para gerar descendência, vindo a ser mãe de Ismael. Sua história envolve conflito doméstico, sofrimento no deserto e a intervenção misericordiosa de Deus, sendo usada por Paulo como figura alegórica da antiga aliança.",
+    "references": ["Gênesis 16:1", "Gálatas 4:24"],
+    "aliases": [],
+    "relatedTerms": ["Sara", "Abraão", "Ismael"]
   },
   {
     "id": "agape-g26",
-    "displayTerm": "Amor",
+    "displayTerm": "Ágape",
     "term": "ἀγάπη",
     "normalizedTerm": "agape",
     "language": "grego",
     "transliteration": "agape",
-    "strong": "G26",
-    "pronunciation": "a-gá-pe",
-    "shortDefinition": "amor, benevolência, afeição sacrificial",
-    "fullDefinition": "ἀγάπη é um dos termos mais conhecidos do Novo Testamento para amor. Em muitos contextos, descreve amor voluntário, generoso e orientado pelo caráter de Deus. O termo aparece com força especial em textos que tratam do amor divino, da vida cristã e da ética da igreja.",
-    "references": ["João 3:16", "1 Coríntios 13:1-13", "1 João 4:8"],
-    "aliases": ["agape", "amor", "amor sacrificial", "G26"],
-    "relatedTerms": []
+    "strong": "G0026",
+    "pronunciation": "A-ga-pe",
+    "shortDefinition": "Amor sacrificial e devotado",
+    "fullDefinition": "Ágape significa “amor”, especialmente no sentido elevado, voluntário e sacrificial. No Novo Testamento, a palavra expressa o amor de Deus revelado em Cristo e o amor que deve caracterizar a vida cristã. Em contexto histórico cristão, também se aplicou à refeição fraternal ligada à comunhão da igreja.",
+    "references": ["João 13:35", "1 Coríntios 13:1-13"],
+    "aliases": ["Festa do amor", "Banquete ágape"],
+    "relatedTerms": ["Amor", "Caridade", "Comunhão"]
   },
   {
-    "id": "charis-g5485",
-    "displayTerm": "Graça",
-    "term": "χάρις",
-    "normalizedTerm": "charis",
-    "language": "grego",
-    "transliteration": "charis",
-    "strong": "G5485",
-    "pronunciation": "khá-ris",
-    "shortDefinition": "graça, favor, benevolência imerecida",
-    "fullDefinition": "χάρις expressa graça, favor e benevolência. No Novo Testamento, frequentemente indica o favor imerecido de Deus concedido ao pecador. Também pode aparecer no sentido de gratidão, benefício ou dom dado por Deus.",
-    "references": ["Efésios 2:8", "Romanos 3:24", "2 Coríntios 12:9"],
-    "aliases": ["charis", "graca", "graça", "favor", "G5485"],
-    "relatedTerms": []
+    "id": "agostinho",
+    "displayTerm": "Agostinho",
+    "term": "",
+    "normalizedTerm": "agostinho",
+    "language": "portugues",
+    "transliteration": "",
+    "strong": "",
+    "pronunciation": "a-gos-TI-nho",
+    "shortDefinition": "Teólogo cristão antigo",
+    "fullDefinition": "Agostinho significa a forma portuguesa de Augustinus, nome ligado a ideia de venerável ou augusto. Foi um importante teólogo e escritor cristão da Antiguidade, amplamente influente na história da interpretação bíblica e da teologia da igreja. Sua menção costuma ocorrer em discussões históricas e doutrinárias.",
+    "references": [],
+    "aliases": ["Agostinho de Hipona", "Augustinus"],
+    "relatedTerms": ["Teologia", "Igreja"]
   },
   {
-    "id": "pistis-g4102",
-    "displayTerm": "Fé",
-    "term": "πίστις",
-    "normalizedTerm": "pistis",
-    "language": "grego",
-    "transliteration": "pistis",
-    "strong": "G4102",
-    "pronunciation": "pís-tis",
-    "shortDefinition": "fé, confiança, fidelidade",
-    "fullDefinition": "πίστις pode significar fé, confiança, convicção e fidelidade. No Novo Testamento, é central na salvação e na vida cristã, descrevendo a confiança em Deus e em Cristo, bem como a perseverança do crente.",
-    "references": ["Hebreus 11:1", "Romanos 10:17", "Efésios 2:8"],
-    "aliases": ["pistis", "fe", "fé", "confianca", "fidelidade", "G4102"],
-    "relatedTerms": []
-  },
-  {
-    "id": "dikaiosyne-g1343",
-    "displayTerm": "Justiça",
-    "term": "δικαιοσύνη",
-    "normalizedTerm": "dikaiosyne",
-    "language": "grego",
-    "transliteration": "dikaiosyne",
-    "strong": "G1343",
-    "pronunciation": "di-kai-o-sý-ne",
-    "shortDefinition": "justiça, retidão",
-    "fullDefinition": "δικαιοσύνη refere-se à justiça, retidão e conformidade com o padrão de Deus. Em Paulo, o termo pode apontar tanto para a justiça de Deus quanto para a justiça imputada ao crente mediante a fé.",
-    "references": ["Romanos 1:17", "Mateus 5:6", "2 Coríntios 5:21"],
-    "aliases": ["dikaiosyne", "justica", "justiça", "retidao", "G1343"],
-    "relatedTerms": []
-  },
-  {
-    "id": "ekklesia-g1577",
-    "displayTerm": "Igreja",
-    "term": "ἐκκλησία",
-    "normalizedTerm": "ekklesia",
-    "language": "grego",
-    "transliteration": "ekklesia",
-    "strong": "G1577",
-    "pronunciation": "ek-kle-sí-a",
-    "shortDefinition": "igreja, assembleia chamada para fora",
-    "fullDefinition": "ἐκκλησία é usada no Novo Testamento para designar a igreja, a assembleia dos chamados por Deus. Pode referir-se tanto à congregação local quanto ao corpo de Cristo em sentido mais amplo.",
-    "references": ["Mateus 16:18", "Atos 2:47", "Efésios 5:25"],
-    "aliases": ["ekklesia", "igreja", "assembleia", "assembleia dos santos", "G1577"],
-    "relatedTerms": []
-  },
-  {
-    "id": "hamartia-g266",
-    "displayTerm": "Pecado",
-    "term": "ἁμαρτία",
-    "normalizedTerm": "hamartia",
-    "language": "grego",
-    "transliteration": "hamartia",
-    "strong": "G266",
-    "pronunciation": "ha-mar-tí-a",
-    "shortDefinition": "pecado, errar o alvo",
-    "fullDefinition": "ἁμαρτία é o termo comum para pecado no Novo Testamento. Descreve tanto atos pecaminosos quanto a condição humana caída diante de Deus. A ideia de errar o alvo ajuda a entender sua dimensão moral e espiritual.",
-    "references": ["Romanos 3:23", "Romanos 6:23", "1 João 1:8"],
-    "aliases": ["hamartia", "pecado", "errar o alvo", "G266"],
-    "relatedTerms": []
-  },
-  {
-    "id": "metanoia-g3341",
-    "displayTerm": "Arrependimento",
-    "term": "μετάνοια",
-    "normalizedTerm": "metanoia",
-    "language": "grego",
-    "transliteration": "metanoia",
-    "strong": "G3341",
-    "pronunciation": "me-ta-nói-a",
-    "shortDefinition": "arrependimento, mudança de mente",
-    "fullDefinition": "μετάνοια expressa arrependimento, isto é, mudança de mente e direção diante de Deus. No contexto bíblico, envolve não apenas remorso, mas retorno sincero ao Senhor, com mudança de vida.",
-    "references": ["Marcos 1:15", "Atos 2:38", "2 Coríntios 7:10"],
-    "aliases": ["metanoia", "arrependimento", "mudanca de mente", "G3341"],
-    "relatedTerms": []
-  },
-  {
-    "id": "parakletos-g3875",
-    "displayTerm": "Consolador",
-    "term": "παράκλητος",
-    "normalizedTerm": "parakletos",
-    "language": "grego",
-    "transliteration": "parakletos",
-    "strong": "G3875",
-    "pronunciation": "pa-rá-kle-tos",
-    "shortDefinition": "consolador, advogado, auxiliador",
-    "fullDefinition": "παράκλητος é usado especialmente nos escritos joaninos para o Espírito Santo como Consolador, Auxiliador e Advogado. O termo traz a ideia de alguém chamado para estar ao lado, socorrer e defender.",
-    "references": ["João 14:16", "João 14:26", "1 João 2:1"],
-    "aliases": ["parakletos", "consolador", "advogado", "auxiliador", "G3875"],
-    "relatedTerms": []
-  },
-  {
-    "id": "euangelion-g2098",
-    "displayTerm": "Evangelho",
-    "term": "εὐαγγέλιον",
-    "normalizedTerm": "euangelion",
-    "language": "grego",
-    "transliteration": "euangelion",
-    "strong": "G2098",
-    "pronunciation": "eu-an-gé-li-on",
-    "shortDefinition": "evangelho, boas-novas",
-    "fullDefinition": "εὐαγγέλιον significa boas-novas. No Novo Testamento, refere-se à mensagem da salvação em Cristo, centrada em sua vida, morte, ressurreição e senhorio.",
-    "references": ["Marcos 1:1", "Romanos 1:16", "1 Coríntios 15:1-4"],
-    "aliases": ["euangelion", "evangelho", "boas novas", "boa noticia", "G2098"],
-    "relatedTerms": []
-  },
-  {
-    "id": "soteria-g4991",
-    "displayTerm": "Salvação",
-    "term": "σωτηρία",
-    "normalizedTerm": "soteria",
-    "language": "grego",
-    "transliteration": "soteria",
-    "strong": "G4991",
-    "pronunciation": "so-te-rí-a",
-    "shortDefinition": "salvação, livramento",
-    "fullDefinition": "σωτηρία significa salvação, livramento e resgate. No contexto bíblico, aponta para a obra salvadora de Deus em Cristo, abrangendo perdão, reconciliação e esperança eterna.",
-    "references": ["Atos 4:12", "Romanos 1:16", "Hebreus 2:3"],
-    "aliases": ["soteria", "salvacao", "salvação", "livramento", "G4991"],
-    "relatedTerms": []
-  },
-  {
-    "id": "shalom-h7965",
-    "displayTerm": "Paz",
-    "term": "שָׁלוֹם",
-    "normalizedTerm": "shalom",
+    "id": "agur-h94",
+    "displayTerm": "Agur",
+    "term": "אָגוּר",
+    "normalizedTerm": "agur",
     "language": "hebraico",
-    "transliteration": "shalom",
-    "strong": "H7965",
-    "pronunciation": "sha-lom",
-    "shortDefinition": "paz, inteireza, bem-estar, plenitude",
-    "fullDefinition": "שָׁלוֹם vai além da simples ausência de conflito. No Antigo Testamento, pode indicar paz, integridade, plenitude, bem-estar, prosperidade e harmonia nas relações sob a bênção de Deus.",
-    "references": ["Números 6:26", "Isaías 9:6", "Salmos 29:11"],
-    "aliases": ["shalom", "salom", "paz", "plenitude", "H7965"],
-    "relatedTerms": []
+    "transliteration": "Agur",
+    "strong": "H0094",
+    "pronunciation": "A-gur",
+    "shortDefinition": "Sábio mencionado em Provérbios",
+    "fullDefinition": "Agur significa possivelmente “ajuntado” ou “colecionador”. É apresentado como filho de Jaque e associado às palavras sapienciais de Provérbios 30. Seu nome está ligado à humildade diante de Deus, à reverência pela palavra divina e à sabedoria prática.",
+    "references": ["Provérbios 30:1"],
+    "aliases": [],
+    "relatedTerms": ["Provérbios", "Sabedoria"]
   },
   {
-    "id": "hesed-h2617",
-    "displayTerm": "Misericórdia Leal",
-    "term": "חֶסֶד",
-    "normalizedTerm": "hesed",
+    "id": "aias-h281",
+    "displayTerm": "Aías",
+    "term": "אֲחִיָּה",
+    "normalizedTerm": "aias",
     "language": "hebraico",
-    "transliteration": "hesed",
-    "strong": "H2617",
-    "pronunciation": "khé-sed",
-    "shortDefinition": "bondade leal, misericórdia, amor fiel",
-    "fullDefinition": "חֶסֶד é um termo rico do Antigo Testamento, frequentemente usado para expressar misericórdia, bondade, fidelidade e lealdade no contexto da aliança. Em muitos textos, descreve o amor firme de Deus.",
-    "references": ["Êxodo 34:6", "Salmos 136:1", "Miquéias 6:8"],
-    "aliases": ["hesed", "chesed", "misericordia", "bondade", "amor fiel", "H2617"],
-    "relatedTerms": []
+    "transliteration": "Achiyyah",
+    "strong": "H0281",
+    "pronunciation": "a-I-as",
+    "shortDefinition": "Nome de vários personagens bíblicos",
+    "fullDefinition": "Aías significa “o Senhor é meu irmão” ou “irmão de Yah”. O nome pertence a vários personagens bíblicos, especialmente ao profeta de Siló que anunciou a Jeroboão a divisão do reino. Seu papel mais importante é o de mensageiro profético no período da monarquia.",
+    "references": ["1 Reis 11:29-31", "1 Samuel 14:3"],
+    "aliases": ["Aías de Siló"],
+    "relatedTerms": ["Jeroboão", "Salomão", "Profeta"]
   },
   {
-    "id": "emet-h571",
-    "displayTerm": "Verdade",
-    "term": "אֱמֶת",
-    "normalizedTerm": "emet",
+    "id": "ai-h5857",
+    "displayTerm": "Ai",
+    "term": "הָעַי",
+    "normalizedTerm": "ai",
     "language": "hebraico",
-    "transliteration": "emet",
-    "strong": "H571",
-    "pronunciation": "e-mét",
-    "shortDefinition": "verdade, firmeza, fidelidade",
-    "fullDefinition": "אֱמֶת pode indicar verdade, confiabilidade, estabilidade e fidelidade. O termo não se limita à ideia abstrata de veracidade, mas envolve firmeza moral, constância e confiabilidade nas ações e palavras.",
-    "references": ["Salmos 119:160", "Provérbios 12:19", "Zacarias 8:16"],
-    "aliases": ["emet", "verdade", "fidelidade", "firmeza", "H571"],
-    "relatedTerms": []
+    "transliteration": "ha-Ay",
+    "strong": "H5857",
+    "pronunciation": "A-i",
+    "shortDefinition": "Cidade cananeia conquistada por Israel",
+    "fullDefinition": "Ai significa “ruína”. Foi uma cidade de Canaã cuja conquista está ligada ao episódio do pecado de Acã e à estratégia militar de Josué. O nome combina bem com o estado ou destino do lugar e se tornou marco da entrada israelita na terra prometida.",
+    "references": ["Josué 7:2", "Josué 8:1-29"],
+    "aliases": [],
+    "relatedTerms": ["Josué", "Acã"]
   },
   {
-    "id": "torah-h8451",
-    "displayTerm": "Lei",
-    "term": "תּוֹרָה",
-    "normalizedTerm": "torah",
+    "id": "aijalom-h357",
+    "displayTerm": "Aijalom",
+    "term": "אַיָּלוֹן",
+    "normalizedTerm": "aijalom",
     "language": "hebraico",
-    "transliteration": "torah",
-    "strong": "H8451",
-    "pronunciation": "to-rá",
-    "shortDefinition": "lei, instrução, ensino",
-    "fullDefinition": "תּוֹרָה significa lei, instrução ou ensino. Pode referir-se à Lei de Moisés em sentido específico, mas também à instrução divina como direção para a vida do povo de Deus.",
-    "references": ["Salmos 1:2", "Josué 1:8", "Deuteronômio 6:1"],
-    "aliases": ["torah", "tora", "lei", "instrucao", "ensino", "H8451"],
-    "relatedTerms": []
+    "transliteration": "Ayyalon",
+    "strong": "H0357",
+    "pronunciation": "ai-a-LOM",
+    "shortDefinition": "Cidade e vale em Israel",
+    "fullDefinition": "Aijalom significa “lugar dos cervos” ou “campo dos veados”. Foi nome de cidade e vale estratégicos em Israel, célebres na narrativa em que Josué ordena que o sol se detenha. O local aparece em contextos militares, tribais e geográficos importantes.",
+    "references": ["Josué 10:12", "Juízes 1:35"],
+    "aliases": [],
+    "relatedTerms": ["Josué", "Vale de Aijalom"]
   },
   {
-    "id": "adonai-h136",
-    "displayTerm": "Senhor",
-    "term": "אֲדֹנָי",
-    "normalizedTerm": "adonai",
+    "id": "aim-h5869",
+    "displayTerm": "Aim",
+    "term": "עַיִם",
+    "normalizedTerm": "aim",
     "language": "hebraico",
-    "transliteration": "adonai",
-    "strong": "H136",
-    "pronunciation": "a-do-nái",
-    "shortDefinition": "Senhor, soberano",
-    "fullDefinition": "אֲדֹנָי é um título de reverência usado para Deus, com o sentido de Senhor e Soberano. Expressa domínio, autoridade e majestade.",
-    "references": ["Salmos 8:1", "Isaías 6:1", "Gênesis 15:2"],
-    "aliases": ["adonai", "senhor", "soberano", "H136"],
-    "relatedTerms": []
+    "transliteration": "Ayim",
+    "strong": "H5869",
+    "pronunciation": "A-im",
+    "shortDefinition": "Cidade do sul de Judá",
+    "fullDefinition": "Aim significa “fontes” ou “nascentes”. Foi uma cidade mencionada entre os lugares do território meridional de Judá. O nome sugere abundância de águas ou fontes locais, característica comum em topônimos bíblicos.",
+    "references": ["Josué 15:29"],
+    "aliases": ["Ain"],
+    "relatedTerms": ["Judá"]
   },
   {
-    "id": "elohim-h430",
-    "displayTerm": "Deus",
-    "term": "אֱלֹהִים",
-    "normalizedTerm": "elohim",
+    "id": "aira-h5896",
+    "displayTerm": "Airá",
+    "term": "עִירָא",
+    "normalizedTerm": "aira",
     "language": "hebraico",
-    "transliteration": "elohim",
-    "strong": "H430",
-    "pronunciation": "e-lo-him",
-    "shortDefinition": "Deus, deuses, o Poderoso",
-    "fullDefinition": "אֱלֹהִים é um dos termos mais frequentes para Deus no Antigo Testamento. Embora tenha forma plural, muitas vezes é usado com verbo no singular para se referir ao Deus único de Israel.",
-    "references": ["Gênesis 1:1", "Deuteronômio 6:4", "Salmos 19:1"],
-    "aliases": ["elohim", "deus", "poderoso", "H430"],
-    "relatedTerms": []
+    "transliteration": "Ira",
+    "strong": "H5896",
+    "pronunciation": "ai-RA",
+    "shortDefinition": "Nome de personagens do Antigo Testamento",
+    "fullDefinition": "Airá significa possivelmente “vigilante” ou “cidadão”. O nome pertence a personagens mencionados especialmente entre os valentes de Davi e oficiais reais. Seu uso bíblico está ligado ao serviço militar e administrativo.",
+    "references": ["2 Samuel 20:26", "2 Samuel 23:38"],
+    "aliases": ["Ira"],
+    "relatedTerms": ["Davi"]
   },
   {
-    "id": "yahweh-h3068",
-    "displayTerm": "SENHOR",
-    "term": "יהוה",
-    "normalizedTerm": "yahweh",
+    "id": "aitofel-h302",
+    "displayTerm": "Aitofel",
+    "term": "אֲחִיתֹפֶל",
+    "normalizedTerm": "aitofel",
     "language": "hebraico",
-    "transliteration": "yahweh",
-    "strong": "H3068",
-    "pronunciation": "yah-weh",
-    "shortDefinition": "nome pactual de Deus",
-    "fullDefinition": "יהוה é o nome pessoal e pactual de Deus no Antigo Testamento, associado à autoexistência, fidelidade e aliança. Em muitas traduções, aparece representado por SENHOR em letras maiúsculas.",
-    "references": ["Êxodo 3:14-15", "Salmos 23:1", "Isaías 42:8"],
-    "aliases": ["yahweh", "jeova", "jeová", "senhor", "H3068"],
-    "relatedTerms": []
+    "transliteration": "Achitofel",
+    "strong": "H0302",
+    "pronunciation": "ai-TO-fel",
+    "shortDefinition": "Conselheiro de Davi que apoiou Absalão",
+    "fullDefinition": "Aitofel significa possivelmente “irmão da insensatez” ou “irmão da loucura”, embora a etimologia seja discutida. Foi conselheiro de Davi, famoso por sua prudência, mas passou a apoiar a revolta de Absalão. Seu fim trágico marcou a ruína de uma sabedoria usada contra o ungido do Senhor.",
+    "references": ["2 Samuel 15:12", "2 Samuel 17:23"],
+    "aliases": ["Aitófel"],
+    "relatedTerms": ["Davi", "Absalão"]
   },
   {
-    "id": "berith-h1285",
-    "displayTerm": "Aliança",
-    "term": "בְּרִית",
-    "normalizedTerm": "berith",
+    "id": "aiudo-h164",
+    "displayTerm": "Aiúde",
+    "term": "אֵהוּד",
+    "normalizedTerm": "aiude",
     "language": "hebraico",
-    "transliteration": "berith",
-    "strong": "H1285",
-    "pronunciation": "be-rith",
-    "shortDefinition": "aliança, pacto",
-    "fullDefinition": "בְּרִית significa aliança ou pacto. É central para a teologia bíblica, pois descreve a forma como Deus se relaciona com seu povo mediante promessas, compromissos e sinais pactuais.",
-    "references": ["Gênesis 15:18", "Êxodo 24:8", "Jeremias 31:31"],
-    "aliases": ["berith", "berit", "alianca", "aliança", "pacto", "H1285"],
-    "relatedTerms": []
+    "transliteration": "Ehud",
+    "strong": "H0164",
+    "pronunciation": "ai-U-de",
+    "shortDefinition": "Juiz libertador de Israel",
+    "fullDefinition": "Aiúde significa possivelmente “unido” ou “forte”. Foi o juiz benjamita que matou Eglom, rei de Moabe, e libertou Israel da opressão estrangeira. Sua história destaca coragem, estratégia e a ação libertadora de Deus por meio de instrumentos improváveis.",
+    "references": ["Juízes 3:15-30"],
+    "aliases": ["Eúde"],
+    "relatedTerms": ["Juízes", "Moabe"]
   },
   {
-    "id": "ruach-h7307",
-    "displayTerm": "Espírito",
-    "term": "רוּחַ",
-    "normalizedTerm": "ruach",
+    "id": "alamote-h5961",
+    "displayTerm": "Alamote",
+    "term": "עֲלָמוֹת",
+    "normalizedTerm": "alamote",
     "language": "hebraico",
-    "transliteration": "ruach",
-    "strong": "H7307",
-    "pronunciation": "ru-akh",
-    "shortDefinition": "espírito, vento, sopro",
-    "fullDefinition": "רוּחַ pode significar espírito, vento ou sopro. Dependendo do contexto, pode referir-se ao Espírito de Deus, ao espírito humano ou ao vento como força invisível em movimento.",
-    "references": ["Gênesis 1:2", "Ezequiel 37:9-10", "Salmos 51:11"],
-    "aliases": ["ruach", "espirito", "espírito", "vento", "sopro", "H7307"],
-    "relatedTerms": []
-  }
+    "transliteration": "alamoth",
+    "strong": "H5961",
+    "pronunciation": "a-la-MOT",
+    "shortDefinition": "Termo musical hebraico",
+    "fullDefinition": "Alamote significa literalmente “moças” ou “virgens”. No título musical bíblico, a palavra provavelmente indica vozes agudas, soprano, ou um estilo musical específico usado no culto. O termo aparece em contexto levítico e salmódico.",
+    "references": ["1 Crônicas 15:20", "Salmos 46:1"],
+    "aliases": [],
+    "relatedTerms": ["Música", "Salmos", "Levitas"]
+  },
+  {
+    "id": "alef",
+    "displayTerm": "Alefe",
+    "term": "א",
+    "normalizedTerm": "alefe",
+    "language": "hebraico",
+    "transliteration": "aleph",
+    "strong": "",
+    "pronunciation": "A-lef",
+    "shortDefinition": "Primeira letra do alfabeto hebraico",
+    "fullDefinition": "Alefe significa o nome da primeira letra do alfabeto hebraico. Como letra inicial, representa começo ou princípio e aparece em estudos textuais, acrósticos poéticos e análises linguísticas do Antigo Testamento. Seu valor é sobretudo alfabético e filológico.",
+    "references": ["Salmos 119:1"],
+    "aliases": ["Alef", "Aleph"],
+    "relatedTerms": ["Hebraico", "Alfabeto"]
+  },
+  {
+    "id": "alexandre-g223",
+    "displayTerm": "Alexandre",
+    "term": "Ἀλέξανδρος",
+    "normalizedTerm": "alexandre",
+    "language": "grego",
+    "transliteration": "Alexandros",
+    "strong": "G0223",
+    "pronunciation": "a-le-XAN-dre",
+    "shortDefinition": "Nome de vários personagens bíblicos",
+    "fullDefinition": "Alexandre significa “defensor dos homens”. O nome pertence a diferentes personagens citados no Novo Testamento, incluindo um judeu em Éfeso e um opositor ligado às cartas pastorais. Seu valor bíblico depende do contexto de cada passagem.",
+    "references": ["Atos 19:33", "1 Timóteo 1:20", "2 Timóteo 4:14"],
+    "aliases": [],
+    "relatedTerms": ["Paulo", "Éfeso"]
+  },
+  {
+    "id": "alexandria-g221",
+    "displayTerm": "Alexandria",
+    "term": "Ἀλεξάνδρεια",
+    "normalizedTerm": "alexandria",
+    "language": "grego",
+    "transliteration": "Alexandreia",
+    "strong": "G0221",
+    "pronunciation": "a-le-XAN-dri-a",
+    "shortDefinition": "Cidade importante do Egito helenístico",
+    "fullDefinition": "Alexandria significa a cidade de Alexandre, nomeada em honra de Alexandre, o Grande. Tornou-se um grande centro cultural, comercial e judaico do mundo antigo, exercendo enorme influência sobre a tradução grega do Antigo Testamento e o judaísmo helenista.",
+    "references": ["Atos 18:24", "Atos 27:6"],
+    "aliases": [],
+    "relatedTerms": ["Egito", "Apolo", "Septuaginta"]
+  },
+  {
+    "id": "alfa-g1",
+    "displayTerm": "Alfa",
+    "term": "ἄλφα",
+    "normalizedTerm": "alfa",
+    "language": "grego",
+    "transliteration": "alpha",
+    "strong": "G0001",
+    "pronunciation": "AL-fa",
+    "shortDefinition": "Primeira letra do alfabeto grego",
+    "fullDefinition": "Alfa é a primeira letra do alfabeto grego. Na Bíblia, seu significado se amplia quando Deus ou Cristo é chamado “o Alfa e o Ômega”, expressão que comunica origem, primazia e soberania sobre todas as coisas. O termo une valor linguístico e forte conteúdo teológico.",
+    "references": ["Apocalipse 1:8", "Apocalipse 22:13"],
+    "aliases": [],
+    "relatedTerms": ["Ômega", "Apocalipse"]
+  },
+  {
+    "id": "almugue-h484",
+    "displayTerm": "Almugue",
+    "term": "אַלְמוּגִּים",
+    "normalizedTerm": "almugue",
+    "language": "hebraico",
+    "transliteration": "almuggim",
+    "strong": "H0484",
+    "pronunciation": "al-MU-guê",
+    "shortDefinition": "Madeira preciosa usada no templo e no palácio",
+    "fullDefinition": "Almugue designa uma madeira valiosa e bela usada por Salomão em obras do templo, do palácio e em instrumentos musicais. O nome está ligado a material nobre importado, associado ao esplendor real e ao culto. Em algumas traduções aparece como almugue ou algum.",
+    "references": ["1 Reis 10:11-12", "2 Crônicas 2:8"],
+    "aliases": ["Algum"],
+    "relatedTerms": ["Salomão", "Templo"]
+  },
+   {
+    "id": "abiu-h30",
+    "displayTerm": "Abiú",
+    "term": "אֲבִיהוּא",
+    "normalizedTerm": "abiu",
+    "language": "hebraico",
+    "transliteration": "Avihu",
+    "strong": "H0030",
+    "pronunciation": "a-bi-U",
+    "shortDefinition": "Filho de Aarão que morreu por desobediência",
+    "fullDefinition": "Abiú significa “meu pai é Ele (Deus)”. Foi filho de Aarão e sacerdote que ofereceu fogo estranho diante do Senhor, sendo consumido pelo juízo divino. Sua história enfatiza a santidade de Deus e a necessidade de obediência no culto.",
+    "references": ["Levítico 10:1-2"],
+    "aliases": [],
+    "relatedTerms": ["Aarão", "Nadabe", "Sacerdócio"]
+  },
+  {
+    "id": "abisai-h52",
+    "displayTerm": "Abisai",
+    "term": "אֲבִישַׁי",
+    "normalizedTerm": "abisai",
+    "language": "hebraico",
+    "transliteration": "Avishai",
+    "strong": "H0052",
+    "pronunciation": "a-bi-SAI",
+    "shortDefinition": "Sobrinho e guerreiro de Davi",
+    "fullDefinition": "Abisai significa “meu pai é Jessé” ou “pai do presente”. Foi sobrinho de Davi e um de seus principais guerreiros, conhecido por sua bravura em batalhas e lealdade ao rei.",
+    "references": ["1 Samuel 26:6", "2 Samuel 23:18"],
+    "aliases": [],
+    "relatedTerms": ["Davi", "Joabe"]
+  },
+  {
+    "id": "abisague-h49",
+    "displayTerm": "Abisague",
+    "term": "אֲבִישַׁג",
+    "normalizedTerm": "abisague",
+    "language": "hebraico",
+    "transliteration": "Avishag",
+    "strong": "H0049",
+    "pronunciation": "a-bi-SHAG",
+    "shortDefinition": "Jovem sunamita que serviu Davi",
+    "fullDefinition": "Abisague significa possivelmente “meu pai erra” ou “pai do engano”. Foi uma jovem escolhida para cuidar do rei Davi em sua velhice. Sua história também aparece na disputa pelo trono após a morte de Davi.",
+    "references": ["1 Reis 1:3-4"],
+    "aliases": [],
+    "relatedTerms": ["Davi", "Adonias"]
+  },
+  {
+    "id": "abisur-h53",
+    "displayTerm": "Abisur",
+    "term": "אֲבִישׁוּר",
+    "normalizedTerm": "abisur",
+    "language": "hebraico",
+    "transliteration": "Avishur",
+    "strong": "H0053",
+    "pronunciation": "a-bi-SUR",
+    "shortDefinition": "Descendente de Judá",
+    "fullDefinition": "Abisur significa “meu pai é muro” ou “proteção”. Foi um descendente da tribo de Judá mencionado nas genealogias bíblicas.",
+    "references": ["1 Crônicas 2:28"],
+    "aliases": [],
+    "relatedTerms": ["Judá"]
+  },
+  {
+    "id": "abisua-h50",
+    "displayTerm": "Abisua",
+    "term": "אֲבִישׁוּעַ",
+    "normalizedTerm": "abisua",
+    "language": "hebraico",
+    "transliteration": "Avishua",
+    "strong": "H0050",
+    "pronunciation": "a-bi-SU-a",
+    "shortDefinition": "Descendente sacerdotal",
+    "fullDefinition": "Abisua significa “meu pai é salvação”. Foi descendente de Aarão na linhagem sacerdotal, contribuindo para a continuidade do sacerdócio em Israel.",
+    "references": ["1 Crônicas 6:4"],
+    "aliases": [],
+    "relatedTerms": ["Aarão", "Sacerdócio"]
+  },
+  {
+    "id": "abital-h37",
+    "displayTerm": "Abital",
+    "term": "אֲבִיטַל",
+    "normalizedTerm": "abital",
+    "language": "hebraico",
+    "transliteration": "Avital",
+    "strong": "H0037",
+    "pronunciation": "a-bi-TAL",
+    "shortDefinition": "Esposa de Davi",
+    "fullDefinition": "Abital significa “meu pai é orvalho”. Foi uma das esposas de Davi e mãe de Sefatias. Seu nome reflete bênção e provisão divina.",
+    "references": ["2 Samuel 3:4"],
+    "aliases": [],
+    "relatedTerms": ["Davi"]
+  },
+  {
+    "id": "abube-h24",
+    "displayTerm": "Abibe",
+    "term": "אָבִיב",
+    "normalizedTerm": "abibe",
+    "language": "hebraico",
+    "transliteration": "Aviv",
+    "strong": "H0024",
+    "pronunciation": "a-VIV",
+    "shortDefinition": "Primeiro mês do calendário hebraico",
+    "fullDefinition": "Abibe significa “espigas verdes”. Era o primeiro mês do calendário religioso de Israel, associado à celebração da Páscoa e posteriormente chamado de Nisã.",
+    "references": ["Êxodo 13:4"],
+    "aliases": ["Nisã"],
+    "relatedTerms": ["Páscoa"]
+  },
+  {
+    "id": "abominaçao-h8441",
+    "displayTerm": "Abominação",
+    "term": "תּוֹעֵבָה",
+    "normalizedTerm": "abominacao",
+    "language": "hebraico",
+    "transliteration": "toevah",
+    "strong": "H8441",
+    "pronunciation": "to-e-VA",
+    "shortDefinition": "Algo detestável para Deus",
+    "fullDefinition": "Abominação significa aquilo que é repugnante ou detestável diante de Deus, especialmente práticas idólatras ou pecaminosas. O termo enfatiza a santidade divina e a rejeição do pecado.",
+    "references": ["Deuteronômio 7:25"],
+    "aliases": [],
+    "relatedTerms": ["Pecado", "Idolatria"]
+  },
+  {
+    "id": "abominacao-desoladora",
+    "displayTerm": "Abominação da Desolação",
+    "term": "",
+    "normalizedTerm": "abominacao da desolacao",
+    "language": "portugues",
+    "transliteration": "",
+    "strong": "",
+    "pronunciation": "a-bo-mi-na-CAO da de-so-la-CAO",
+    "shortDefinition": "Profanação extrema no templo",
+    "fullDefinition": "Abominação da desolação refere-se a um ato de profanação extrema ligado ao templo, mencionado em Daniel e nos Evangelhos. O termo envolve idolatria e juízo, sendo interpretado historicamente e escatologicamente.",
+    "references": ["Daniel 9:27", "Mateus 24:15"],
+    "aliases": [],
+    "relatedTerms": ["Daniel", "Escatologia"]
+  },
+  {
+    "id": "aborto",
+    "displayTerm": "Aborto",
+    "term": "",
+    "normalizedTerm": "aborto",
+    "language": "portugues",
+    "transliteration": "",
+    "strong": "",
+    "pronunciation": "a-BOR-to",
+    "shortDefinition": "Nascimento prematuro ou perda fetal",
+    "fullDefinition": "Aborto refere-se à perda de uma gestação antes do nascimento. Na linguagem bíblica, aparece em contextos legais e poéticos, refletindo a fragilidade da vida humana.",
+    "references": ["Êxodo 21:22"],
+    "aliases": [],
+    "relatedTerms": ["Vida"]
+  },
+  {
+    "id": "abundancia",
+    "displayTerm": "Abundância",
+    "term": "",
+    "normalizedTerm": "abundancia",
+    "language": "portugues",
+    "transliteration": "",
+    "strong": "",
+    "pronunciation": "a-bun-DAN-cia",
+    "shortDefinition": "Grande quantidade ou plenitude",
+    "fullDefinition": "Abundância significa grande quantidade ou plenitude, frequentemente associada às bênçãos de Deus, tanto materiais quanto espirituais.",
+    "references": ["João 10:10"],
+    "aliases": [],
+    "relatedTerms": ["Bênção"]
+  },
+  {"id":"abundante","displayTerm":"Abundante","term":"περισσός","normalizedTerm":"abundante","language":"grego","transliteration":"perissos","strong":"G4053","pronunciation":"pe-ris-SOS","shortDefinition":"Em grande quantidade","fullDefinition":"Abundante significa “excedente” ou “em grande quantidade”. No contexto bíblico, refere-se especialmente à vida plena concedida por Deus, indicando não apenas quantidade, mas qualidade espiritual elevada.","references":["João 10:10"],"aliases":[],"relatedTerms":["Abundância"]},
+
+{"id":"acampamento-h4264","displayTerm":"Acampamento","term":"מַחֲנֶה","normalizedTerm":"acampamento","language":"hebraico","transliteration":"machaneh","strong":"H4264","pronunciation":"ma-ra-NE","shortDefinition":"Local de habitação temporária","fullDefinition":"Acampamento significa local onde um grupo se instala temporariamente. Em Israel, o acampamento no deserto tinha organização específica ao redor do tabernáculo, simbolizando a presença de Deus no meio do povo.","references":["Números 2:2"],"aliases":[],"relatedTerms":["Tabernáculo"]},
+
+{"id":"acaso","displayTerm":"Acaso","term":"","normalizedTerm":"acaso","language":"portugues","transliteration":"","strong":"","pronunciation":"a-CA-so","shortDefinition":"Evento sem planejamento humano","fullDefinition":"Acaso refere-se a eventos que parecem aleatórios ao ser humano, mas que na teologia bíblica estão sob a soberania de Deus, que governa todas as coisas.","references":["Provérbios 16:33"],"aliases":[],"relatedTerms":["Providência"]},
+
+{"id":"accade-h390","displayTerm":"Acade","term":"אַכַּד","normalizedTerm":"acade","language":"hebraico","transliteration":"Akkad","strong":"H390","pronunciation":"a-KAD","shortDefinition":"Cidade antiga da Mesopotâmia","fullDefinition":"Acade foi uma importante cidade da antiga Mesopotâmia, associada ao reino de Ninrode. Seu nome está ligado ao surgimento de grandes civilizações antigas.","references":["Gênesis 10:10"],"aliases":["Akkad"],"relatedTerms":["Babilônia"]},
+
+{"id":"acao","displayTerm":"Ação","term":"","normalizedTerm":"acao","language":"portugues","transliteration":"","strong":"","pronunciation":"a-CAO","shortDefinition":"Atitude ou prática","fullDefinition":"Ação refere-se ao comportamento ou prática de uma pessoa. Na Bíblia, frequentemente está ligada à obediência ou desobediência à vontade de Deus.","references":["Tiago 2:17"],"aliases":[],"relatedTerms":["Obras"]},
+
+{"id":"acazias-h274","displayTerm":"Acazias","term":"אֲחַזְיָה","normalizedTerm":"acazias","language":"hebraico","transliteration":"Achazyah","strong":"H0274","pronunciation":"a-ca-ZI-as","shortDefinition":"Rei de Israel e Judá","fullDefinition":"Acazias significa “o Senhor sustenta”. Nome de dois reis bíblicos, um de Israel e outro de Judá, ambos marcados por práticas idólatras.","references":["2 Reis 1:2","2 Crônicas 22:1"],"aliases":[],"relatedTerms":["Acabe"]},
+
+{"id":"aceldama-g184","displayTerm":"Aceldama","term":"Ἀκελδαμά","normalizedTerm":"aceldama","language":"grego","transliteration":"akeldama","strong":"G0184","pronunciation":"a-kel-da-MA","shortDefinition":"Campo de sangue","fullDefinition":"Aceldama significa “campo de sangue”. Foi o lugar comprado com o dinheiro da traição de Judas e usado para sepultamento de estrangeiros.","references":["Atos 1:19"],"aliases":[],"relatedTerms":["Judas"]},
+
+{"id":"acerto","displayTerm":"Acerto","term":"","normalizedTerm":"acerto","language":"portugues","transliteration":"","strong":"","pronunciation":"a-CER-to","shortDefinition":"Correção ou ajuste","fullDefinition":"Acerto refere-se à correção de erros ou alinhamento com o que é correto. No contexto bíblico, envolve arrependimento e restauração diante de Deus.","references":["Salmos 51:10"],"aliases":[],"relatedTerms":["Arrependimento"]},
+
+{"id":"achior","displayTerm":"Aior","term":"אֲחִיאָר","normalizedTerm":"aior","language":"hebraico","transliteration":"Achi'or","strong":"","pronunciation":"ai-OR","shortDefinition":"Personagem histórico associado a Israel","fullDefinition":"Aior significa possivelmente “irmão da luz”. Nome associado a personagens em tradições antigas ligadas ao povo de Deus.","references":[],"aliases":["Aquior"],"relatedTerms":[]},
+
+{"id":"acrostico","displayTerm":"Acróstico","term":"","normalizedTerm":"acrostico","language":"portugues","transliteration":"","strong":"","pronunciation":"a-cros-TI-co","shortDefinition":"Forma literária","fullDefinition":"Acróstico é uma estrutura literária em que versos ou linhas seguem ordem alfabética, como em vários salmos. Reflete organização e ênfase didática.","references":["Salmos 119:1"],"aliases":[],"relatedTerms":["Salmos"]},
+
+{"id":"acusador-g2725","displayTerm":"Acusador","term":"κατήγορος","normalizedTerm":"acusador","language":"grego","transliteration":"kategoros","strong":"G2725","pronunciation":"ka-te-GO-ros","shortDefinition":"Quem acusa","fullDefinition":"Acusador significa aquele que apresenta acusações. Na Bíblia, pode referir-se a Satanás como acusador dos irmãos.","references":["Apocalipse 12:10"],"aliases":[],"relatedTerms":["Satanás"]},
+
+{"id":"adara","displayTerm":"Adara","term":"אֲדָרָה","normalizedTerm":"adara","language":"hebraico","transliteration":"Adarah","strong":"","pronunciation":"a-DA-ra","shortDefinition":"Nome próprio bíblico","fullDefinition":"Adara significa possivelmente “nobre” ou “poderoso”. Nome de personagem mencionado em genealogias.","references":[],"aliases":[],"relatedTerms":[]},
+
+{"id":"adar-h143","displayTerm":"Adar","term":"אֲדָר","normalizedTerm":"adar","language":"hebraico","transliteration":"Adar","strong":"H0143","pronunciation":"a-DAR","shortDefinition":"Mês do calendário hebraico","fullDefinition":"Adar significa “majestoso”. Era o último mês do calendário judaico, associado à festa de Purim.","references":["Ester 9:1"],"aliases":[],"relatedTerms":["Purim"]},
+
+{"id":"adeus","displayTerm":"Adeus","term":"","normalizedTerm":"adeus","language":"portugues","transliteration":"","strong":"","pronunciation":"a-DEUS","shortDefinition":"Despedida","fullDefinition":"Adeus expressa despedida, mas na tradição cristã pode carregar sentido de entrega a Deus.","references":[],"aliases":[],"relatedTerms":[]},
+
+{"id":"adocao-g5206","displayTerm":"Adoção","term":"υἱοθεσία","normalizedTerm":"adocao","language":"grego","transliteration":"huiothesia","strong":"G5206","pronunciation":"hui-o-te-SI-a","shortDefinition":"Tornar-se filho","fullDefinition":"Adoção significa ser recebido como filho. Na teologia bíblica, descreve a posição do crente como filho de Deus por meio de Cristo.","references":["Romanos 8:15"],"aliases":[],"relatedTerms":["Filhos de Deus"]},
+
+{"id":"adoracao-h7812","displayTerm":"Adoração","term":"שָׁחָה","normalizedTerm":"adoracao","language":"hebraico","transliteration":"shachah","strong":"H7812","pronunciation":"sha-RA","shortDefinition":"Reverência a Deus","fullDefinition":"Adoração significa inclinar-se ou reverenciar. Refere-se à atitude de honra, submissão e devoção a Deus.","references":["João 4:24"],"aliases":[],"relatedTerms":["Culto"]},
+
+{"id":"adversario","displayTerm":"Adversário","term":"","normalizedTerm":"adversario","language":"portugues","transliteration":"","strong":"","pronunciation":"ad-ver-SA-rio","shortDefinition":"Oponente","fullDefinition":"Adversário significa opositor. Pode referir-se a inimigos humanos ou espirituais, especialmente Satanás.","references":["1 Pedro 5:8"],"aliases":[],"relatedTerms":["Satanás"]},
+
+{"id":"advogado-g3875","displayTerm":"Advogado","term":"παράκλητος","normalizedTerm":"advogado","language":"grego","transliteration":"parakletos","strong":"G3875","pronunciation":"pa-ra-KLE-tos","shortDefinition":"Intercessor","fullDefinition":"Advogado significa aquele que intercede. No Novo Testamento, refere-se a Cristo e ao Espírito Santo como intercessores.","references":["1 João 2:1"],"aliases":["Consolador"],"relatedTerms":["Espírito Santo"]},
+
+{"id":"aflicao","displayTerm":"Aflição","term":"","normalizedTerm":"aflicao","language":"portugues","transliteration":"","strong":"","pronunciation":"a-fli-CAO","shortDefinition":"Sofrimento","fullDefinition":"Aflição significa sofrimento ou angústia. Na Bíblia, pode ter propósito de disciplina ou crescimento espiritual.","references":["Salmos 34:19"],"aliases":[],"relatedTerms":["Provação"]},
+
+{"id":"afronta","displayTerm":"Afronta","term":"","normalizedTerm":"afronta","language":"portugues","transliteration":"","strong":"","pronunciation":"a-FRON-ta","shortDefinition":"Desonra","fullDefinition":"Afronta significa vergonha ou insulto. Frequentemente associada à desonra causada pelo pecado.","references":["Salmos 69:7"],"aliases":[],"relatedTerms":[]},
+{"id":"afugentar","displayTerm":"Afugentar","term":"","normalizedTerm":"afugentar","language":"portugues","transliteration":"","strong":"","pronunciation":"a-fu-gen-TAR","shortDefinition":"Expulsar ou afastar","fullDefinition":"Afugentar significa expulsar ou fazer fugir. Na Bíblia, é usado tanto para afastar inimigos quanto para descrever a ação divina de proteger seu povo, fazendo recuar os adversários.","references":["Deuteronômio 28:7"],"aliases":[],"relatedTerms":["Proteção"]},
+
+{"id":"afundar","displayTerm":"Afundar","term":"","normalizedTerm":"afundar","language":"portugues","transliteration":"","strong":"","pronunciation":"a-fun-DAR","shortDefinition":"Submergir","fullDefinition":"Afundar significa submergir ou descer profundamente. Em contexto bíblico, pode descrever julgamento divino ou situações de perigo, como águas profundas simbolizando aflição.","references":["Salmos 69:2"],"aliases":[],"relatedTerms":["Água","Aflição"]},
+
+{"id":"agarrar","displayTerm":"Agarrar","term":"","normalizedTerm":"agarrar","language":"portugues","transliteration":"","strong":"","pronunciation":"a-gar-RAR","shortDefinition":"Segurar firmemente","fullDefinition":"Agarrar significa segurar com firmeza. Na Bíblia, pode representar apego espiritual, fé persistente ou busca intensa por Deus.","references":["Gênesis 32:26"],"aliases":[],"relatedTerms":["Perseverança"]},
+
+{"id":"agenda","displayTerm":"Agenda","term":"","normalizedTerm":"agenda","language":"portugues","transliteration":"","strong":"","pronunciation":"a-GEN-da","shortDefinition":"Planejamento","fullDefinition":"Agenda refere-se a planejamento de ações. Na Bíblia, a ideia aparece no conceito de propósito divino e soberania de Deus sobre o tempo.","references":["Eclesiastes 3:1"],"aliases":[],"relatedTerms":["Tempo","Propósito"]},
+
+{"id":"agir","displayTerm":"Agir","term":"","normalizedTerm":"agir","language":"portugues","transliteration":"","strong":"","pronunciation":"a-GIR","shortDefinition":"Executar ação","fullDefinition":"Agir significa executar uma ação. Na Bíblia, frequentemente associado à obediência ativa à vontade de Deus.","references":["Tiago 1:22"],"aliases":[],"relatedTerms":["Obras"]},
+
+{"id":"agonia-g74","displayTerm":"Agonia","term":"ἀγωνία","normalizedTerm":"agonia","language":"grego","transliteration":"agonia","strong":"G0074","pronunciation":"a-go-NI-a","shortDefinition":"Angústia intensa","fullDefinition":"Agonia significa sofrimento profundo ou luta interior intensa. É usada para descrever a experiência de Jesus no Getsêmani.","references":["Lucas 22:44"],"aliases":[],"relatedTerms":["Sofrimento"]},
+
+{"id":"agradavel","displayTerm":"Agradável","term":"","normalizedTerm":"agradavel","language":"portugues","transliteration":"","strong":"","pronunciation":"a-gra-DA-vel","shortDefinition":"Que agrada","fullDefinition":"Agradável significa aquilo que é aceitável ou prazeroso. Na Bíblia, refere-se ao que agrada a Deus, especialmente atitudes e ofertas sinceras.","references":["Romanos 12:1"],"aliases":[],"relatedTerms":["Obediência"]},
+
+{"id":"agradar","displayTerm":"Agradar","term":"","normalizedTerm":"agradar","language":"portugues","transliteration":"","strong":"","pronunciation":"a-gra-DAR","shortDefinition":"Dar prazer","fullDefinition":"Agradar significa satisfazer ou dar prazer. No contexto bíblico, destaca-se a importância de agradar a Deus acima dos homens.","references":["Gálatas 1:10"],"aliases":[],"relatedTerms":["Obediência"]},
+
+{"id":"agravo","displayTerm":"Agravo","term":"","normalizedTerm":"agravo","language":"portugues","transliteration":"","strong":"","pronunciation":"a-GRA-vo","shortDefinition":"Ofensa ou dano","fullDefinition":"Agravo significa dano ou ofensa. Na Bíblia, pode se referir a injustiças sofridas ou cometidas.","references":["Isaías 53:4"],"aliases":[],"relatedTerms":["Injustiça"]},
+
+{"id":"agricultura","displayTerm":"Agricultura","term":"","normalizedTerm":"agricultura","language":"portugues","transliteration":"","strong":"","pronunciation":"a-gri-cul-TU-ra","shortDefinition":"Cultivo da terra","fullDefinition":"Agricultura refere-se ao cultivo da terra. Era base da economia bíblica e frequentemente usada em parábolas para ilustrar verdades espirituais.","references":["Mateus 13:3"],"aliases":[],"relatedTerms":["Semeadura"]},
+
+{"id":"agua-h4325","displayTerm":"Água","term":"מַיִם","normalizedTerm":"agua","language":"hebraico","transliteration":"mayim","strong":"H4325","pronunciation":"MA-yim","shortDefinition":"Elemento vital","fullDefinition":"Água significa elemento essencial à vida. Na Bíblia, simboliza purificação, vida e o Espírito Santo.","references":["João 4:14"],"aliases":[],"relatedTerms":["Vida","Espírito"]},
+
+{"id":"aguardar","displayTerm":"Aguardar","term":"","normalizedTerm":"aguardar","language":"portugues","transliteration":"","strong":"","pronunciation":"a-guar-DAR","shortDefinition":"Esperar","fullDefinition":"Aguardar significa esperar com paciência. Na Bíblia, frequentemente implica confiança em Deus e em seu tempo.","references":["Salmos 27:14"],"aliases":[],"relatedTerms":["Esperança"]},
+
+{"id":"agulha-g4476","displayTerm":"Agulha","term":"ῥαφίς","normalizedTerm":"agulha","language":"grego","transliteration":"rhaphis","strong":"G4476","pronunciation":"ra-FIS","shortDefinition":"Instrumento de costura","fullDefinition":"Agulha é usada na Bíblia em metáforas, como no ensino de Jesus sobre a dificuldade dos ricos entrarem no Reino de Deus.","references":["Mateus 19:24"],"aliases":[],"relatedTerms":["Riqueza"]},
+
+{"id":"agur2-h94","displayTerm":"Agur","term":"אָגוּר","normalizedTerm":"agur","language":"hebraico","transliteration":"Agur","strong":"H0094","pronunciation":"A-gur","shortDefinition":"Sábio de Provérbios","fullDefinition":"Agur significa “ajuntador”. Autor das palavras registradas em Provérbios 30, enfatizando humildade e sabedoria.","references":["Provérbios 30:1"],"aliases":[],"relatedTerms":["Sabedoria"]},
+
+{"id":"aiaco","displayTerm":"Aiaque","term":"","normalizedTerm":"aiaco","language":"portugues","transliteration":"","strong":"","pronunciation":"ai-A-co","shortDefinition":"Nome pouco frequente","fullDefinition":"Aiaque é um nome raro em registros bíblicos ou tradições relacionadas, podendo aparecer em variações textuais ou históricas.","references":[],"aliases":[],"relatedTerms":[]},
+
+{"id":"ajuda-h5828","displayTerm":"Ajuda","term":"עֶזְרָה","normalizedTerm":"ajuda","language":"hebraico","transliteration":"ezrah","strong":"H5828","pronunciation":"EZ-ra","shortDefinition":"Socorro ou auxílio","fullDefinition":"Ajuda significa auxílio ou socorro. Na Bíblia, frequentemente refere-se à ajuda divina ao seu povo em momentos de necessidade.","references":["Salmos 121:2"],"aliases":[],"relatedTerms":["Socorro"]},
+
+{"id":"ajuntar","displayTerm":"Ajuntar","term":"","normalizedTerm":"ajuntar","language":"portugues","transliteration":"","strong":"","pronunciation":"a-jun-TAR","shortDefinition":"Reunir","fullDefinition":"Ajuntar significa reunir ou coletar. Pode referir-se tanto a bens materiais quanto a pessoas ou ações espirituais.","references":["Mateus 6:20"],"aliases":[],"relatedTerms":["Tesouro"]},
+
+{"id":"ajuste","displayTerm":"Ajuste","term":"","normalizedTerm":"ajuste","language":"portugues","transliteration":"","strong":"","pronunciation":"a-JUS-te","shortDefinition":"Correção","fullDefinition":"Ajuste refere-se à correção ou alinhamento. Espiritualmente, pode indicar santificação e mudança de vida.","references":["Romanos 12:2"],"aliases":[],"relatedTerms":["Transformação"]},
+
+{"id":"alabastro-g211","displayTerm":"Alabastro","term":"ἀλάβαστρον","normalizedTerm":"alabastro","language":"grego","transliteration":"alabastron","strong":"G0211","pronunciation":"a-la-BAS-tro","shortDefinition":"Vaso precioso","fullDefinition":"Alabastro era um vaso feito de pedra fina usado para guardar perfumes caros. Tornou-se símbolo de devoção e entrega, como no caso da mulher que ungiu Jesus.","references":["Marcos 14:3"],"aliases":[],"relatedTerms":["Unção"]},
+
+{"id":"alargar","displayTerm":"Alargar","term":"","normalizedTerm":"alargar","language":"portugues","transliteration":"","strong":"","pronunciation":"a-lar-GAR","shortDefinition":"Expandir","fullDefinition":"Alargar significa expandir ou aumentar. Na Bíblia, pode indicar bênção, crescimento ou ampliação espiritual.","references":["Isaías 54:2"],"aliases":[],"relatedTerms":["Bênção"]},
+{"id":"alcaide","displayTerm":"Alcaide","term":"","normalizedTerm":"alcaide","language":"portugues","transliteration":"","strong":"","pronunciation":"al-CAI-de","shortDefinition":"Oficial ou administrador","fullDefinition":"Alcaide refere-se a um oficial responsável por administração ou custódia, especialmente em contextos antigos. Na Bíblia, funções semelhantes aparecem em administradores de cidades ou prisões, exercendo autoridade delegada.","references":["Atos 16:23"],"aliases":["Carcereiro"],"relatedTerms":["Autoridade"]},
+
+{"id":"alcance","displayTerm":"Alcance","term":"","normalizedTerm":"alcance","language":"portugues","transliteration":"","strong":"","pronunciation":"al-CAN-se","shortDefinition":"Extensão ou limite","fullDefinition":"Alcance significa extensão ou limite de ação. Na Bíblia, pode representar o alcance do poder de Deus ou da mensagem do evangelho.","references":["Romanos 10:18"],"aliases":[],"relatedTerms":["Evangelho"]},
+
+{"id":"alegria-h8057","displayTerm":"Alegria","term":"שִׂמְחָה","normalizedTerm":"alegria","language":"hebraico","transliteration":"simchah","strong":"H8057","pronunciation":"sim-RA","shortDefinition":"Contentamento espiritual","fullDefinition":"Alegria significa satisfação profunda. Na Bíblia, é frequentemente associada à presença de Deus e à salvação, indo além das circunstâncias.","references":["Salmos 16:11"],"aliases":[],"relatedTerms":["Gozo"]},
+
+{"id":"aleijado","displayTerm":"Aleijado","term":"","normalizedTerm":"aleijado","language":"portugues","transliteration":"","strong":"","pronunciation":"a-lei-JA-do","shortDefinition":"Pessoa com deficiência física","fullDefinition":"Aleijado refere-se a alguém com deficiência física. Nos evangelhos, Jesus frequentemente cura pessoas nessa condição, demonstrando compaixão e poder divino.","references":["Mateus 15:30"],"aliases":[],"relatedTerms":["Cura"]},
+
+{"id":"aleluia2","displayTerm":"Aleluia (hebraico)","term":"הַלְלוּיָהּ","normalizedTerm":"aleluia hebraico","language":"hebraico","transliteration":"halelu-yah","strong":"H1984","pronunciation":"ha-le-lu-YA","shortDefinition":"Louvai ao Senhor","fullDefinition":"Aleluia significa “louvai ao Senhor”. É uma expressão hebraica de adoração usada especialmente nos salmos.","references":["Salmos 150:1"],"aliases":["Haleluia"],"relatedTerms":["Louvor"]},
+
+{"id":"alianca-h1285","displayTerm":"Aliança","term":"בְּרִית","normalizedTerm":"alianca","language":"hebraico","transliteration":"berith","strong":"H1285","pronunciation":"be-RIT","shortDefinition":"Pacto sagrado","fullDefinition":"Aliança significa pacto ou acordo. Na Bíblia, refere-se ao relacionamento estabelecido por Deus com seu povo, incluindo promessas e responsabilidades.","references":["Gênesis 15:18"],"aliases":["Concerto"],"relatedTerms":["Promessa"]},
+
+{"id":"alimentacao","displayTerm":"Alimentação","term":"","normalizedTerm":"alimentacao","language":"portugues","transliteration":"","strong":"","pronunciation":"a-li-men-ta-CAO","shortDefinition":"Sustento físico","fullDefinition":"Alimentação refere-se ao sustento do corpo. Na Bíblia, também possui significado espiritual, como a Palavra de Deus sendo alimento para a alma.","references":["Mateus 4:4"],"aliases":[],"relatedTerms":["Pão"]},
+
+{"id":"aljava-h827","displayTerm":"Aljava","term":"אַשְׁפָּה","normalizedTerm":"aljava","language":"hebraico","transliteration":"ashpah","strong":"H0827","pronunciation":"ash-PA","shortDefinition":"Estojo de flechas","fullDefinition":"Aljava era o recipiente onde se guardavam flechas. Simboliza preparação e força, especialmente em metáforas sobre filhos e descendência.","references":["Salmos 127:5"],"aliases":[],"relatedTerms":["Flecha"]},
+
+{"id":"almofada","displayTerm":"Almofada","term":"","normalizedTerm":"almofada","language":"portugues","transliteration":"","strong":"","pronunciation":"al-mo-FA-da","shortDefinition":"Objeto de descanso","fullDefinition":"Almofada aparece em contextos de repouso, como quando Jesus dormia no barco, demonstrando sua humanidade e confiança em Deus.","references":["Marcos 4:38"],"aliases":[],"relatedTerms":["Descanso"]},
+
+{"id":"altar-incenso-h4196","displayTerm":"Altar do Incenso","term":"מִזְבֵּחַ","normalizedTerm":"altar do incenso","language":"hebraico","transliteration":"mizbeach","strong":"H4196","pronunciation":"miz-BE-ach","shortDefinition":"Altar para queimar incenso","fullDefinition":"O altar do incenso era usado no tabernáculo para queimar incenso aromático, simbolizando as orações do povo subindo a Deus.","references":["Êxodo 30:1"],"aliases":[],"relatedTerms":["Oração","Tabernáculo"]},
+
+{"id":"altura","displayTerm":"Altura","term":"","normalizedTerm":"altura","language":"portugues","transliteration":"","strong":"","pronunciation":"al-TU-ra","shortDefinition":"Elevação","fullDefinition":"Altura refere-se a elevação física ou espiritual. Na Bíblia, pode simbolizar grandeza, exaltação ou proximidade de Deus.","references":["Isaías 6:1"],"aliases":[],"relatedTerms":["Exaltação"]},
+
+{"id":"alvorecer","displayTerm":"Alvorecer","term":"","normalizedTerm":"alvorecer","language":"portugues","transliteration":"","strong":"","pronunciation":"al-vo-re-CER","shortDefinition":"Início do dia","fullDefinition":"Alvorecer indica o começo do dia. Na Bíblia, simboliza esperança, renovação e novos começos espirituais.","references":["Salmos 30:5"],"aliases":[],"relatedTerms":["Luz"]},
+
+{"id":"amado-g27","displayTerm":"Amado","term":"ἀγαπητός","normalizedTerm":"amado","language":"grego","transliteration":"agapetos","strong":"G0027","pronunciation":"a-ga-pe-TOS","shortDefinition":"Alvo de amor","fullDefinition":"Amado significa aquele que é profundamente amado. Na Bíblia, é usado para descrever Cristo e os crentes como objetos do amor de Deus.","references":["Mateus 3:17"],"aliases":[],"relatedTerms":["Amor"]},
+
+{"id":"amargura-h4751","displayTerm":"Amargura","term":"מְרֹרָה","normalizedTerm":"amargura","language":"hebraico","transliteration":"merorah","strong":"H4751","pronunciation":"me-ro-RA","shortDefinition":"Sentimento de dor","fullDefinition":"Amargura refere-se a sofrimento profundo ou ressentimento. Na Bíblia, pode ser literal ou espiritual, indicando tristeza ou pecado interior.","references":["Hebreus 12:15"],"aliases":[],"relatedTerms":["Tristeza"]},
+
+{"id":"amassar","displayTerm":"Amassar","term":"","normalizedTerm":"amassar","language":"portugues","transliteration":"","strong":"","pronunciation":"a-mas-SAR","shortDefinition":"Misturar massa","fullDefinition":"Amassar refere-se ao preparo do pão. Na Bíblia, é usado em contextos domésticos e também em parábolas, como a do fermento.","references":["Mateus 13:33"],"aliases":[],"relatedTerms":["Fermento"]},
+
+{"id":"ameaca","displayTerm":"Ameaça","term":"","normalizedTerm":"ameaca","language":"portugues","transliteration":"","strong":"","pronunciation":"a-me-A-sa","shortDefinition":"Intimidação","fullDefinition":"Ameaça significa intimidação ou advertência de dano. Na Bíblia, pode vir de inimigos ou representar juízo divino.","references":["Atos 4:29"],"aliases":[],"relatedTerms":["Perseguição"]},
+
+{"id":"amigo-g5384","displayTerm":"Amigo","term":"φίλος","normalizedTerm":"amigo","language":"grego","transliteration":"philos","strong":"G5384","pronunciation":"FI-los","shortDefinition":"Companheiro próximo","fullDefinition":"Amigo significa alguém próximo e querido. Na Bíblia, Abraão é chamado amigo de Deus, mostrando intimidade espiritual.","references":["Tiago 2:23"],"aliases":[],"relatedTerms":["Amizade"]},
+
+{"id":"amizade","displayTerm":"Amizade","term":"","normalizedTerm":"amizade","language":"portugues","transliteration":"","strong":"","pronunciation":"a-mi-ZA-de","shortDefinition":"Relacionamento próximo","fullDefinition":"Amizade refere-se a relacionamento íntimo e fiel. Na Bíblia, é valorizada, mas também alerta contra amizade com o mundo.","references":["Provérbios 17:17"],"aliases":[],"relatedTerms":["Amigo"]},
+
+{"id":"amor-fraternal-g5360","displayTerm":"Amor Fraternal","term":"φιλαδελφία","normalizedTerm":"amor fraternal","language":"grego","transliteration":"philadelphia","strong":"G5360","pronunciation":"fi-la-del-FI-a","shortDefinition":"Amor entre irmãos","fullDefinition":"Amor fraternal refere-se ao amor entre irmãos na fé, baseado em união, cuidado e comunhão.","references":["Romanos 12:10"],"aliases":[],"relatedTerms":["Comunhão"]},
+
+{"id":"amuleto","displayTerm":"Amuleto","term":"","normalizedTerm":"amuleto","language":"portugues","transliteration":"","strong":"","pronunciation":"a-mu-LE-to","shortDefinition":"Objeto de proteção supersticiosa","fullDefinition":"Amuleto refere-se a objeto usado para proteção supersticiosa. A Bíblia condena tais práticas como formas de idolatria.","references":["Isaías 3:20"],"aliases":[],"relatedTerms":["Idolatria"]},
+{
+"id": "anatema-g331",
+"displayTerm": "Anátema",
+"term": "ἀνάθεμα",
+"normalizedTerm": "anatema",
+"language": "grego",
+"transliteration": "anathema",
+"strong": "G0331",
+"pronunciation": "a-NA-te-ma",
+"shortDefinition": "Algo condenado ou separado para destruição",
+"fullDefinition": "Anátema significa algo “consagrado à destruição” ou “amaldiçoado”. No uso bíblico, refere-se àquilo que é separado para juízo divino ou rejeitado por Deus. No Novo Testamento, o termo é usado especialmente para declarar condenação sobre quem distorce o evangelho, enfatizando a seriedade da verdade doutrinária e da fidelidade à mensagem de Cristo.",
+"references": ["Gálatas 1:8", "1 Coríntios 16:22"],
+"aliases": ["Maldição", "Condenado"],
+"relatedTerms": ["Maldição", "Juízo", "Evangelho"]
+}
 ]
