@@ -1,74 +1,106 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  BibleDictionaryEntry,
-  getBibleDictionaryEntryById,
-  searchBibleDictionaryEntries,
-} from "@/lib/bible-dictionary";
 
-function languageLabel(language: BibleDictionaryEntry["language"]) {
-  if (language === "grego") return "Grego";
-  if (language === "hebraico") return "Hebraico";
-  return "Português";
-}
+type SearchResult = {
+  id: string;
+  word: string;
+  normalizedWord: string;
+  preview: string;
+};
+
+type EntryResponse = {
+  id: string;
+  word: string;
+  normalizedWord: string;
+  html: string;
+  preview: string;
+};
 
 export default function BibleDictionaryExplorer() {
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string>("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [selectedEntry, setSelectedEntry] = useState<EntryResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingEntry, setLoadingEntry] = useState(false);
   const [mobileMode, setMobileMode] = useState<"search" | "entry">("search");
 
   const hasQuery = query.trim().length > 0;
 
-  const results = useMemo(() => {
-    return searchBibleDictionaryEntries(query);
-  }, [query]);
+  useEffect(() => {
+    const controller = new AbortController();
 
-  const mobileResults = useMemo(() => {
-    return results.slice(0, 3);
-  }, [results]);
+    async function runSearch() {
+      if (!hasQuery) {
+        setResults([]);
+        setSelectedEntry(null);
+        return;
+      }
 
-  const selectedEntry =
-    results.find((entry) => entry.id === selectedId) ??
-    (selectedId ? getBibleDictionaryEntryById(selectedId) : null) ??
-    null;
+      setLoading(true);
 
-  const relatedEntries = useMemo(() => {
-    if (!selectedEntry?.relatedTerms?.length) {
-      return [];
+      try {
+        const response = await fetch(
+          `/api/dictionary/search?q=${encodeURIComponent(query)}&limit=20`,
+          { signal: controller.signal }
+        );
+        const data = await response.json();
+
+        if (data.ok) {
+          setResults(data.results || []);
+        } else {
+          setResults([]);
+        }
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    return selectedEntry.relatedTerms
-      .map((relatedId) => getBibleDictionaryEntryById(relatedId))
-      .filter((entry): entry is BibleDictionaryEntry => entry !== null);
-  }, [selectedEntry]);
+    const timer = setTimeout(runSearch, 250);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [query, hasQuery]);
 
   useEffect(() => {
-    if (results.length === 0) {
-      setSelectedId("");
+    if (!results.length) {
+      setSelectedEntry(null);
       return;
     }
 
-    const hasSelectedInResults = results.some((entry) => entry.id === selectedId);
-
-    if (!hasSelectedInResults) {
-      setSelectedId(results[0].id);
+    const first = results[0];
+    if (!selectedEntry || !results.some((item) => item.id === selectedEntry.id)) {
+      void openEntry(first.id, false);
     }
-  }, [results, selectedId]);
+  }, [results]);
 
-  function handleSelectEntry(entryId: string) {
-    setSelectedId(entryId);
-    setMobileMode("entry");
+  async function openEntry(id: string, switchMobile = true) {
+    setLoadingEntry(true);
+
+    try {
+      const response = await fetch(
+        `/api/dictionary/entry?id=${encodeURIComponent(id)}`
+      );
+      const data = await response.json();
+
+      if (data.ok) {
+        setSelectedEntry(data.entry);
+        if (switchMobile) {
+          setMobileMode("entry");
+        }
+      }
+    } catch {
+      // silêncio proposital
+    } finally {
+      setLoadingEntry(false);
+    }
   }
 
-  function handleBackToSearch() {
-    setMobileMode("search");
-  }
-
-  function handleOpenRelatedEntry(entryId: string) {
-    setSelectedId(entryId);
-    setMobileMode("entry");
-  }
+  const mobileResults = useMemo(() => results.slice(0, 3), [results]);
 
   return (
     <section className="space-y-6 md:space-y-8">
@@ -93,19 +125,23 @@ export default function BibleDictionaryExplorer() {
                 </h2>
 
                 <p className="mt-4 text-sm leading-7 text-zinc-300">
-                  Pesquise termos bíblicos em português, grego, hebraico ou por número Strong.
+                  Pesquise termos bíblicos em português e consulte o verbete completo.
                 </p>
               </div>
 
               {hasQuery ? (
                 <div className="mt-6 space-y-3">
-                  {mobileResults.length === 0 ? (
+                  {loading ? (
+                    <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-6 text-center">
+                      <p className="text-sm text-zinc-300">Buscando...</p>
+                    </div>
+                  ) : mobileResults.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-6 text-center">
                       <p className="text-sm font-medium text-white">
                         Esta palavra não existe no dicionário.
                       </p>
                       <p className="mt-2 text-sm text-zinc-400">
-                        Tente buscar pelo termo principal, transliteração ou número Strong.
+                        Tente outra palavra.
                       </p>
                     </div>
                   ) : (
@@ -114,29 +150,14 @@ export default function BibleDictionaryExplorer() {
                         <button
                           key={entry.id}
                           type="button"
-                          onClick={() => handleSelectEntry(entry.id)}
+                          onClick={() => openEntry(entry.id, true)}
                           className="w-full rounded-2xl border border-white/10 bg-black/20 p-4 text-left transition hover:border-amber-400/40 hover:bg-white/5"
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="truncate text-base font-semibold text-white">
-                                {entry.displayTerm}
-                              </p>
-
-                              <p className="mt-1 text-xs uppercase tracking-[0.2em] text-zinc-500">
-                                {languageLabel(entry.language)}
-                              </p>
-                            </div>
-
-                            {entry.strong ? (
-                              <span className="shrink-0 rounded-full border border-white/10 px-2.5 py-1 text-[11px] text-zinc-300">
-                                {entry.strong}
-                              </span>
-                            ) : null}
-                          </div>
-
+                          <p className="text-base font-semibold text-white">
+                            {entry.word}
+                          </p>
                           <p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-200">
-                            {entry.shortDefinition}
+                            {entry.preview}
                           </p>
                         </button>
                       ))}
@@ -162,7 +183,7 @@ export default function BibleDictionaryExplorer() {
                     type="text"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Ex.: graça, paz, igreja..."
+                    placeholder="Ex.: amor, graça, Abraão..."
                     className="w-full rounded-2xl border border-white/10 bg-[#0d0d14] px-5 py-4 text-sm text-white placeholder:text-zinc-500 outline-none transition focus:border-amber-400/40"
                   />
 
@@ -170,17 +191,14 @@ export default function BibleDictionaryExplorer() {
                     type="button"
                     onClick={() => {
                       setQuery("");
-                      setSelectedId("");
+                      setResults([]);
+                      setSelectedEntry(null);
                     }}
                     className="rounded-2xl border border-white/10 px-5 py-4 text-sm font-medium text-white transition hover:bg-white/10"
                   >
                     Limpar busca
                   </button>
                 </div>
-
-                <p className="mt-3 text-sm text-zinc-400">
-                  Digite a palavra principal, transliteração, original ou Strong.
-                </p>
               </div>
             </div>
           </div>
@@ -204,139 +222,33 @@ export default function BibleDictionaryExplorer() {
                   <div className="mb-5">
                     <button
                       type="button"
-                      onClick={handleBackToSearch}
+                      onClick={() => setMobileMode("search")}
                       className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition hover:bg-white/10"
                     >
                       ← Voltar à pesquisa
                     </button>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-2xl font-bold text-white">
-                      {selectedEntry.displayTerm}
-                    </h3>
-
-                    <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-300">
-                      {languageLabel(selectedEntry.language)}
-                    </span>
-                  </div>
-
-                  <div className="mt-3">
-                    <p className="text-sm leading-7 text-zinc-300">
-                      {selectedEntry.shortDefinition}
-                    </p>
-                  </div>
-
-                  <div className="mt-6 grid gap-3">
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                      <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                        Original
-                      </p>
-                      <p className="mt-2 break-words text-base text-white">
-                        {selectedEntry.term || "Não informado"}
-                      </p>
+                  <div className="overflow-hidden rounded-3xl border border-amber-400/20 bg-gradient-to-br from-amber-400/10 via-white/5 to-transparent p-5">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="text-2xl font-bold text-white">
+                        {selectedEntry.word}
+                      </h3>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                      <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                        Transliteração
-                      </p>
-                      <p className="mt-2 break-words text-base text-white">
-                        {selectedEntry.transliteration || "Não informada"}
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                      <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                        Strong
-                      </p>
-                      <p className="mt-2 break-words text-base text-white">
-                        {selectedEntry.strong || "Não informado"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                      Pronúncia
-                    </p>
-                    <p className="mt-2 text-sm text-white">
-                      {selectedEntry.pronunciation || "Não informada"}
+                    <p className="mt-4 text-sm leading-7 text-zinc-200">
+                      {selectedEntry.preview}
                     </p>
                   </div>
 
-                  <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-5">
-                    <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                      Explicação
-                    </p>
-                    <p className="mt-3 whitespace-pre-line text-sm leading-8 text-zinc-200">
-                      {selectedEntry.fullDefinition}
-                    </p>
-                  </div>
-
-                  <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-5">
-                    <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                      Referências bíblicas
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {selectedEntry.references.map((reference) => (
-                        <span
-                          key={reference}
-                          className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-200"
-                        >
-                          {reference}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-5">
-                    <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                      Buscas equivalentes
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {selectedEntry.aliases.map((item) => (
-                        <span
-                          key={item}
-                          className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-200"
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-5">
-                    <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                      Termos relacionados
-                    </p>
-
-                    {relatedEntries.length === 0 ? (
-                      <p className="mt-3 text-sm text-zinc-400">
-                        Nenhum termo relacionado cadastrado para este verbete.
-                      </p>
+                  <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5">
+                    {loadingEntry ? (
+                      <p className="text-sm text-zinc-400">Carregando verbete...</p>
                     ) : (
-                      <div className="mt-4 flex flex-wrap gap-3">
-                        {relatedEntries.map((entry) => (
-                          <button
-                            key={entry.id}
-                            type="button"
-                            onClick={() => handleOpenRelatedEntry(entry.id)}
-                            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-amber-400/40 hover:bg-amber-400/10"
-                          >
-                            <p className="text-sm font-semibold text-white">
-                              {entry.displayTerm}
-                            </p>
-                            <p className="mt-1 text-xs text-zinc-400">
-                              {entry.term !== entry.displayTerm
-                                ? `${entry.term} • ${languageLabel(entry.language)}`
-                                : languageLabel(entry.language)}
-                            </p>
-                          </button>
-                        ))}
-                      </div>
+                      <div
+                        className="prose prose-invert max-w-none prose-p:text-zinc-200 prose-strong:text-white"
+                        dangerouslySetInnerHTML={{ __html: selectedEntry.html }}
+                      />
                     )}
                   </div>
                 </article>
@@ -359,7 +271,7 @@ export default function BibleDictionaryExplorer() {
             </h2>
 
             <p className="mt-4 text-base leading-7 text-zinc-300 md:text-lg">
-              Pesquise termos bíblicos em português, grego, hebraico ou por número Strong.
+              Pesquise termos bíblicos em português e consulte o verbete completo.
             </p>
           </div>
 
@@ -374,7 +286,7 @@ export default function BibleDictionaryExplorer() {
                 type="text"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Ex.: graça, paz, igreja, G3056..."
+                placeholder="Ex.: amor, graça, Abraão..."
                 className="w-full rounded-2xl border border-white/10 bg-[#0d0d14] px-5 py-4 text-sm text-white placeholder:text-zinc-500 outline-none transition focus:border-amber-400/40"
               />
 
@@ -382,17 +294,14 @@ export default function BibleDictionaryExplorer() {
                 type="button"
                 onClick={() => {
                   setQuery("");
-                  setSelectedId("");
+                  setResults([]);
+                  setSelectedEntry(null);
                 }}
                 className="rounded-2xl border border-white/10 px-5 py-4 text-sm font-medium text-white transition hover:bg-white/10"
               >
                 Limpar busca
               </button>
             </div>
-
-            <p className="mt-3 text-sm text-zinc-400">
-              Você pode buscar pela palavra principal, transliteração, original ou Strong.
-            </p>
           </div>
         </div>
 
@@ -411,13 +320,14 @@ export default function BibleDictionaryExplorer() {
                   Digite uma palavra para pesquisar no dicionário.
                 </p>
               </div>
+            ) : loading ? (
+              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-8 text-center">
+                <p className="text-sm text-zinc-300">Buscando...</p>
+              </div>
             ) : results.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-8 text-center">
                 <p className="text-sm font-medium text-white">
                   Esta palavra não existe no dicionário.
-                </p>
-                <p className="mt-2 text-sm text-zinc-400">
-                  Tente buscar pelo termo principal, transliteração ou número Strong.
                 </p>
               </div>
             ) : (
@@ -429,63 +339,20 @@ export default function BibleDictionaryExplorer() {
                     <button
                       key={entry.id}
                       type="button"
-                      onClick={() => setSelectedId(entry.id)}
+                      onClick={() => openEntry(entry.id, false)}
                       className={`w-full rounded-2xl border p-4 text-left transition ${
                         active
                           ? "border-amber-400/40 bg-amber-400/10"
                           : "border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/5"
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-base font-semibold text-white">
-                            {entry.displayTerm}
-                          </p>
-
-                          <p className="mt-1 text-xs uppercase tracking-[0.2em] text-zinc-500">
-                            {languageLabel(entry.language)}
-                          </p>
-                        </div>
-
-                        {entry.strong ? (
-                          <span className="shrink-0 rounded-full border border-white/10 px-2.5 py-1 text-[11px] text-zinc-300">
-                            {entry.strong}
-                          </span>
-                        ) : null}
-                      </div>
-
-                      <p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-200">
-                        {entry.shortDefinition}
+                      <p className="text-base font-semibold text-white">
+                        {entry.word}
                       </p>
 
-                      <div className="mt-4 space-y-2">
-                        {entry.term !== entry.displayTerm ? (
-                          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                            <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">
-                              Original
-                            </p>
-                            <p className="mt-1 text-sm text-white">
-                              {entry.term}
-                            </p>
-                          </div>
-                        ) : null}
-
-                        {(entry.transliteration || entry.term !== entry.displayTerm) && (
-                          <div className="flex flex-wrap gap-2">
-                            {entry.transliteration ? (
-                              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-zinc-300">
-                                Transl.: {entry.transliteration}
-                              </span>
-                            ) : null}
-
-                            {entry.term !== entry.displayTerm ? (
-                              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-zinc-300">
-                                Termo bíblico
-                              </span>
-                            ) : null}
-                          </div>
-                        )}
-                      </div>
+                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-zinc-200">
+                        {entry.preview}
+                      </p>
                     </button>
                   );
                 })}
@@ -508,134 +375,24 @@ export default function BibleDictionaryExplorer() {
               </div>
             ) : (
               <article>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h3 className="text-2xl font-bold text-white md:text-3xl">
-                    {selectedEntry.displayTerm}
+                <div className="overflow-hidden rounded-3xl border border-amber-400/20 bg-gradient-to-br from-amber-400/10 via-white/5 to-transparent p-6">
+                  <h3 className="text-3xl font-bold text-white">
+                    {selectedEntry.word}
                   </h3>
 
-                  <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-300">
-                    {languageLabel(selectedEntry.language)}
-                  </span>
-                </div>
-
-                <div className="mt-3 max-w-3xl">
-                  <p className="text-sm leading-7 text-zinc-300 md:text-base">
-                    {selectedEntry.shortDefinition}
+                  <p className="mt-4 max-w-3xl text-base leading-8 text-zinc-200">
+                    {selectedEntry.preview}
                   </p>
                 </div>
 
-                <div className="mt-6 grid gap-3 md:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                      Original
-                    </p>
-                    <p className="mt-2 break-words text-base text-white md:text-lg">
-                      {selectedEntry.term || "Não informado"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                      Transliteração
-                    </p>
-                    <p className="mt-2 break-words text-base text-white md:text-lg">
-                      {selectedEntry.transliteration || "Não informada"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                      Strong
-                    </p>
-                    <p className="mt-2 break-words text-base text-white md:text-lg">
-                      {selectedEntry.strong || "Não informado"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                    Pronúncia
-                  </p>
-                  <p className="mt-2 text-sm text-white md:text-base">
-                    {selectedEntry.pronunciation || "Não informada"}
-                  </p>
-                </div>
-
-                <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-5">
-                  <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                    Explicação
-                  </p>
-                  <p className="mt-3 whitespace-pre-line text-sm leading-8 text-zinc-200 md:text-base">
-                    {selectedEntry.fullDefinition}
-                  </p>
-                </div>
-
-                <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-                    <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                      Referências bíblicas
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {selectedEntry.references.map((reference) => (
-                        <span
-                          key={reference}
-                          className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-200"
-                        >
-                          {reference}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-                    <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                      Buscas equivalentes
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {selectedEntry.aliases.map((item) => (
-                        <span
-                          key={item}
-                          className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-200"
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-5">
-                  <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                    Termos relacionados
-                  </p>
-
-                  {relatedEntries.length === 0 ? (
-                    <p className="mt-3 text-sm text-zinc-400">
-                      Nenhum termo relacionado cadastrado para este verbete.
-                    </p>
+                <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-6">
+                  {loadingEntry ? (
+                    <p className="text-sm text-zinc-400">Carregando verbete...</p>
                   ) : (
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      {relatedEntries.map((entry) => (
-                        <button
-                          key={entry.id}
-                          type="button"
-                          onClick={() => handleOpenRelatedEntry(entry.id)}
-                          className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-amber-400/40 hover:bg-amber-400/10"
-                        >
-                          <p className="text-sm font-semibold text-white">
-                            {entry.displayTerm}
-                          </p>
-                          <p className="mt-1 text-xs text-zinc-400">
-                            {entry.term !== entry.displayTerm
-                              ? `${entry.term} • ${languageLabel(entry.language)}`
-                              : languageLabel(entry.language)}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
+                    <div
+                      className="prose prose-invert max-w-none prose-p:text-zinc-200 prose-strong:text-white"
+                      dangerouslySetInnerHTML={{ __html: selectedEntry.html }}
+                    />
                   )}
                 </div>
               </article>

@@ -1,26 +1,34 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  BIBLE_DICTIONARY_ENTRIES,
-  BibleDictionaryEntry,
-  getBibleDictionaryEntryById,
-  searchBibleDictionaryEntries,
-} from "@/lib/bible-dictionary";
 
-function languageLabel(language: BibleDictionaryEntry["language"]) {
-  if (language === "grego") return "Grego";
-  if (language === "hebraico") return "Hebraico";
-  return "Português";
-}
+type SearchResult = {
+  id: string;
+  word: string;
+  normalizedWord: string;
+  preview: string;
+};
+
+type EntryResponse = {
+  id: string;
+  word: string;
+  normalizedWord: string;
+  html: string;
+  preview: string;
+};
 
 export default function ReaderDictionaryPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string>("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [selectedEntry, setSelectedEntry] = useState<EntryResponse | null>(null);
   const [mobileMode, setMobileMode] = useState<"search" | "entry">("search");
+  const [loading, setLoading] = useState(false);
+  const [loadingEntry, setLoadingEntry] = useState(false);
+
+  const hasQuery = query.trim().length > 0;
 
   useEffect(() => {
     function handleResize() {
@@ -33,43 +41,80 @@ export default function ReaderDictionaryPanel() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const hasQuery = query.trim().length > 0;
+  useEffect(() => {
+    const controller = new AbortController();
 
-  const results = useMemo(() => {
-    return searchBibleDictionaryEntries(query);
-  }, [query]);
+    async function runSearch() {
+      if (!hasQuery) {
+        setResults([]);
+        setSelectedEntry(null);
+        return;
+      }
 
-  const mobileResults = useMemo(() => {
-    return results.slice(0, 3);
-  }, [results]);
+      setLoading(true);
 
-  const selectedEntry =
-    results.find((entry) => entry.id === selectedId) ??
-    (selectedId ? getBibleDictionaryEntryById(selectedId) : null) ??
-    null;
+      try {
+        const response = await fetch(
+          `/api/dictionary/search?q=${encodeURIComponent(query)}&limit=20`,
+          { signal: controller.signal }
+        );
+        const data = await response.json();
 
-  const relatedEntries = useMemo(() => {
-    if (!selectedEntry?.relatedTerms?.length) {
-      return [];
+        if (data.ok) {
+          setResults(data.results || []);
+        } else {
+          setResults([]);
+        }
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    return selectedEntry.relatedTerms
-      .map((relatedId) => getBibleDictionaryEntryById(relatedId))
-      .filter((entry): entry is BibleDictionaryEntry => entry !== null);
-  }, [selectedEntry]);
+    const timer = setTimeout(runSearch, 250);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [query, hasQuery]);
 
   useEffect(() => {
-    if (results.length === 0) {
-      setSelectedId("");
+    if (!results.length) {
+      setSelectedEntry(null);
       return;
     }
 
-    const hasSelectedInResults = results.some((entry) => entry.id === selectedId);
-
-    if (!hasSelectedInResults) {
-      setSelectedId(results[0].id);
+    const first = results[0];
+    if (!selectedEntry || !results.some((item) => item.id === selectedEntry.id)) {
+      void openEntry(first.id, false);
     }
-  }, [results, selectedId]);
+  }, [results]);
+
+  async function openEntry(id: string, switchMobile = true) {
+    setLoadingEntry(true);
+
+    try {
+      const response = await fetch(
+        `/api/dictionary/entry?id=${encodeURIComponent(id)}`
+      );
+      const data = await response.json();
+
+      if (data.ok) {
+        setSelectedEntry(data.entry);
+        if (switchMobile) {
+          setMobileMode("entry");
+        }
+      }
+    } catch {
+      // silêncio proposital
+    } finally {
+      setLoadingEntry(false);
+    }
+  }
+
+  const mobileResults = useMemo(() => results.slice(0, 3), [results]);
 
   function openPanel() {
     setIsOpen(true);
@@ -80,26 +125,6 @@ export default function ReaderDictionaryPanel() {
     setIsOpen(false);
     setIsMinimized(false);
     setMobileMode("search");
-  }
-
-  function handleSelectEntry(entryId: string) {
-    setSelectedId(entryId);
-
-    if (isMobile) {
-      setMobileMode("entry");
-    }
-  }
-
-  function handleBackToSearch() {
-    setMobileMode("search");
-  }
-
-  function handleOpenRelatedEntry(entryId: string) {
-    setSelectedId(entryId);
-
-    if (isMobile) {
-      setMobileMode("entry");
-    }
   }
 
   return (
@@ -163,7 +188,7 @@ export default function ReaderDictionaryPanel() {
                     {isMinimized ? (
                       <div className="mt-1">
                         <h2 className="truncate text-[13px] font-semibold text-white">
-                          {selectedEntry?.displayTerm || "Consulta bíblica"}
+                          {selectedEntry?.word || "Consulta bíblica"}
                         </h2>
                         <p className="truncate text-[10px] text-zinc-400">
                           Painel minimizado
@@ -209,23 +234,10 @@ export default function ReaderDictionaryPanel() {
                     </button>
                   </div>
                 </div>
-
-                <p
-                  className={`text-zinc-500 ${
-                    isMinimized ? "mt-1 text-[10px]" : "mt-2 text-[11px]"
-                  }`}
-                >
-                  {isMobile
-                    ? "Modo móvel com foco na busca e leitura."
-                    : isMinimized
-                    ? "Painel minimizado"
-                    : "Consulte o dicionário enquanto lê o material."}
-                </p>
               </div>
 
               {!isMinimized ? (
                 <>
-                  {/* MOBILE */}
                   {isMobile ? (
                     <div className="flex-1 overflow-hidden">
                       <div className="relative h-full overflow-hidden">
@@ -238,13 +250,14 @@ export default function ReaderDictionaryPanel() {
                         >
                           {hasQuery ? (
                             <div className="mb-6 space-y-3">
-                              {mobileResults.length === 0 ? (
+                              {loading ? (
+                                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-6 text-center">
+                                  <p className="text-sm text-zinc-300">Buscando...</p>
+                                </div>
+                              ) : mobileResults.length === 0 ? (
                                 <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-6 text-center">
                                   <p className="text-sm font-medium text-white">
                                     Esta palavra não existe no dicionário.
-                                  </p>
-                                  <p className="mt-2 text-sm text-zinc-400">
-                                    Tente buscar pelo termo principal, transliteração ou Strong.
                                   </p>
                                 </div>
                               ) : (
@@ -253,28 +266,15 @@ export default function ReaderDictionaryPanel() {
                                     <button
                                       key={entry.id}
                                       type="button"
-                                      onClick={() => handleSelectEntry(entry.id)}
+                                      onClick={() => openEntry(entry.id, true)}
                                       className="w-full rounded-2xl border border-white/10 bg-black/20 p-4 text-left transition hover:border-sky-300/40 hover:bg-white/5"
                                     >
-                                      <div className="flex items-start justify-between gap-3">
-                                        <div className="min-w-0">
-                                          <p className="truncate text-base font-semibold text-white">
-                                            {entry.displayTerm}
-                                          </p>
-                                          <p className="mt-1 text-xs uppercase tracking-[0.2em] text-zinc-500">
-                                            {languageLabel(entry.language)}
-                                          </p>
-                                        </div>
-
-                                        {entry.strong ? (
-                                          <span className="shrink-0 rounded-full border border-white/10 px-2.5 py-1 text-[11px] text-zinc-300">
-                                            {entry.strong}
-                                          </span>
-                                        ) : null}
-                                      </div>
+                                      <p className="text-base font-semibold text-white">
+                                        {entry.word}
+                                      </p>
 
                                       <p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-200">
-                                        {entry.shortDefinition}
+                                        {entry.preview}
                                       </p>
                                     </button>
                                   ))}
@@ -299,7 +299,7 @@ export default function ReaderDictionaryPanel() {
                               type="text"
                               value={query}
                               onChange={(event) => setQuery(event.target.value)}
-                              placeholder="Ex.: graça, paz, igreja..."
+                              placeholder="Ex.: amor, graça, Abraão..."
                               className="w-full rounded-2xl border border-white/10 bg-[#0d0d14] px-5 py-4 text-sm text-white placeholder:text-zinc-500 outline-none transition focus:border-sky-300/40"
                             />
 
@@ -308,17 +308,14 @@ export default function ReaderDictionaryPanel() {
                                 type="button"
                                 onClick={() => {
                                   setQuery("");
-                                  setSelectedId("");
+                                  setResults([]);
+                                  setSelectedEntry(null);
                                 }}
                                 className="flex-1 rounded-2xl border border-white/10 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10"
                               >
                                 Limpar busca
                               </button>
                             </div>
-
-                            <p className="mt-3 text-sm text-zinc-400">
-                              Busque pela palavra principal, original, transliteração ou Strong.
-                            </p>
                           </div>
                         </div>
 
@@ -340,122 +337,31 @@ export default function ReaderDictionaryPanel() {
                               <div className="mb-5">
                                 <button
                                   type="button"
-                                  onClick={handleBackToSearch}
+                                  onClick={() => setMobileMode("search")}
                                   className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition hover:bg-white/10"
                                 >
                                   ← Voltar à pesquisa
                                 </button>
                               </div>
 
-                              <div className="flex flex-wrap items-center gap-3">
+                              <div className="overflow-hidden rounded-3xl border border-sky-300/20 bg-gradient-to-br from-sky-300/10 via-white/5 to-transparent p-5">
                                 <h3 className="text-2xl font-bold text-white">
-                                  {selectedEntry.displayTerm}
+                                  {selectedEntry.word}
                                 </h3>
 
-                                <span className="rounded-full border border-sky-300/30 bg-sky-300/10 px-3 py-1 text-xs font-medium text-sky-200">
-                                  {languageLabel(selectedEntry.language)}
-                                </span>
-                              </div>
-
-                              <div className="mt-3">
-                                <p className="text-sm leading-7 text-zinc-300">
-                                  {selectedEntry.shortDefinition}
+                                <p className="mt-4 text-sm leading-7 text-zinc-200">
+                                  {selectedEntry.preview}
                                 </p>
                               </div>
 
-                              <div className="mt-6 grid gap-3">
-                                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                                  <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                    Original
-                                  </p>
-                                  <p className="mt-2 break-words text-base text-white">
-                                    {selectedEntry.term || "Não informado"}
-                                  </p>
-                                </div>
-
-                                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                                  <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                    Transliteração
-                                  </p>
-                                  <p className="mt-2 break-words text-base text-white">
-                                    {selectedEntry.transliteration || "Não informada"}
-                                  </p>
-                                </div>
-
-                                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                                  <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                    Strong
-                                  </p>
-                                  <p className="mt-2 break-words text-base text-white">
-                                    {selectedEntry.strong || "Não informado"}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-                                <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                  Pronúncia
-                                </p>
-                                <p className="mt-2 text-sm text-white">
-                                  {selectedEntry.pronunciation || "Não informada"}
-                                </p>
-                              </div>
-
-                              <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-5">
-                                <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                  Explicação
-                                </p>
-                                <p className="mt-3 whitespace-pre-line text-sm leading-8 text-zinc-200">
-                                  {selectedEntry.fullDefinition}
-                                </p>
-                              </div>
-
-                              <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-5">
-                                <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                  Referências bíblicas
-                                </p>
-
-                                <div className="mt-4 flex flex-wrap gap-2">
-                                  {selectedEntry.references.map((reference) => (
-                                    <span
-                                      key={reference}
-                                      className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-200"
-                                    >
-                                      {reference}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-5">
-                                <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                  Termos relacionados
-                                </p>
-
-                                {relatedEntries.length === 0 ? (
-                                  <p className="mt-3 text-sm text-zinc-400">
-                                    Nenhum termo relacionado cadastrado.
-                                  </p>
+                              <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5">
+                                {loadingEntry ? (
+                                  <p className="text-sm text-zinc-400">Carregando verbete...</p>
                                 ) : (
-                                  <div className="mt-4 flex flex-wrap gap-3">
-                                    {relatedEntries.map((entry) => (
-                                      <button
-                                        key={entry.id}
-                                        type="button"
-                                        onClick={() => handleOpenRelatedEntry(entry.id)}
-                                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-sky-300/40 hover:bg-sky-300/10"
-                                      >
-                                        <p className="text-sm font-semibold text-white">
-                                          {entry.displayTerm}
-                                        </p>
-                                        <p className="mt-1 text-xs text-zinc-400">
-                                          {entry.term !== entry.displayTerm
-                                            ? `${entry.term} • ${languageLabel(entry.language)}`
-                                            : languageLabel(entry.language)}
-                                        </p>
-                                      </button>
-                                    ))}
-                                  </div>
+                                  <div
+                                    className="prose prose-invert max-w-none prose-p:text-zinc-200 prose-strong:text-white"
+                                    dangerouslySetInnerHTML={{ __html: selectedEntry.html }}
+                                  />
                                 )}
                               </div>
                             </article>
@@ -464,7 +370,6 @@ export default function ReaderDictionaryPanel() {
                       </div>
                     </div>
                   ) : (
-                    /* DESKTOP */
                     <div className="grid min-h-0 flex-1 grid-cols-[340px_minmax(0,1fr)]">
                       <aside className="flex min-h-0 flex-col border-r border-white/10 bg-[#11141b]">
                         <div className="shrink-0 border-b border-white/10 p-4">
@@ -485,16 +390,13 @@ export default function ReaderDictionaryPanel() {
                             type="button"
                             onClick={() => {
                               setQuery("");
-                              setSelectedId("");
+                              setResults([]);
+                              setSelectedEntry(null);
                             }}
                             className="mt-3 w-full rounded-2xl border border-white/10 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10"
                           >
                             Limpar busca
                           </button>
-
-                          <p className="mt-3 text-xs text-zinc-500">
-                            Busque pela palavra principal, transliteração, original ou Strong.
-                          </p>
                         </div>
 
                         <div className="min-h-0 flex-1 overflow-y-auto p-4">
@@ -513,13 +415,14 @@ export default function ReaderDictionaryPanel() {
                                 Digite uma palavra para pesquisar no dicionário.
                               </p>
                             </div>
+                          ) : loading ? (
+                            <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-8 text-center">
+                              <p className="text-sm text-zinc-300">Buscando...</p>
+                            </div>
                           ) : results.length === 0 ? (
                             <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-8 text-center">
                               <p className="text-sm font-medium text-white">
                                 Esta palavra não existe no dicionário.
-                              </p>
-                              <p className="mt-2 text-xs text-zinc-400">
-                                Tente buscar pelo termo principal, transliteração ou Strong.
                               </p>
                             </div>
                           ) : (
@@ -531,32 +434,19 @@ export default function ReaderDictionaryPanel() {
                                   <button
                                     key={entry.id}
                                     type="button"
-                                    onClick={() => handleSelectEntry(entry.id)}
+                                    onClick={() => openEntry(entry.id, false)}
                                     className={`w-full rounded-2xl border p-4 text-left transition ${
                                       active
                                         ? "border-sky-300/40 bg-sky-300/10"
                                         : "border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/5"
                                     }`}
                                   >
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="min-w-0">
-                                        <p className="truncate text-sm font-semibold text-white">
-                                          {entry.displayTerm}
-                                        </p>
-                                        <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-zinc-500">
-                                          {languageLabel(entry.language)}
-                                        </p>
-                                      </div>
-
-                                      {entry.strong ? (
-                                        <span className="shrink-0 rounded-full border border-white/10 px-2 py-1 text-[10px] text-zinc-300">
-                                          {entry.strong}
-                                        </span>
-                                      ) : null}
-                                    </div>
+                                    <p className="text-sm font-semibold text-white">
+                                      {entry.word}
+                                    </p>
 
                                     <p className="mt-3 line-clamp-2 text-xs leading-6 text-zinc-200">
-                                      {entry.shortDefinition}
+                                      {entry.preview}
                                     </p>
                                   </button>
                                 );
@@ -581,134 +471,24 @@ export default function ReaderDictionaryPanel() {
                           </div>
                         ) : (
                           <article>
-                            <div className="flex flex-wrap items-center gap-3">
+                            <div className="overflow-hidden rounded-3xl border border-sky-300/20 bg-gradient-to-br from-sky-300/10 via-white/5 to-transparent p-6">
                               <h3 className="text-3xl font-bold text-white">
-                                {selectedEntry.displayTerm}
+                                {selectedEntry.word}
                               </h3>
 
-                              <span className="rounded-full border border-sky-300/30 bg-sky-300/10 px-3 py-1 text-xs font-medium text-sky-200">
-                                {languageLabel(selectedEntry.language)}
-                              </span>
-                            </div>
-
-                            <div className="mt-3 max-w-3xl">
-                              <p className="text-base leading-7 text-zinc-300">
-                                {selectedEntry.shortDefinition}
+                              <p className="mt-4 max-w-3xl text-base leading-8 text-zinc-200">
+                                {selectedEntry.preview}
                               </p>
                             </div>
 
-                            <div className="mt-6 grid gap-3 md:grid-cols-3">
-                              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                                <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                  Original
-                                </p>
-                                <p className="mt-2 break-words text-lg text-white">
-                                  {selectedEntry.term || "Não informado"}
-                                </p>
-                              </div>
-
-                              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                                <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                  Transliteração
-                                </p>
-                                <p className="mt-2 break-words text-lg text-white">
-                                  {selectedEntry.transliteration || "Não informada"}
-                                </p>
-                              </div>
-
-                              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                                <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                  Strong
-                                </p>
-                                <p className="mt-2 break-words text-lg text-white">
-                                  {selectedEntry.strong || "Não informado"}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-                              <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                Pronúncia
-                              </p>
-                              <p className="mt-2 text-base text-white">
-                                {selectedEntry.pronunciation || "Não informada"}
-                              </p>
-                            </div>
-
-                            <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-5">
-                              <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                Explicação
-                              </p>
-                              <p className="mt-3 whitespace-pre-line text-base leading-8 text-zinc-200">
-                                {selectedEntry.fullDefinition}
-                              </p>
-                            </div>
-
-                            <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                              <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-                                <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                  Referências bíblicas
-                                </p>
-
-                                <div className="mt-4 flex flex-wrap gap-2">
-                                  {selectedEntry.references.map((reference) => (
-                                    <span
-                                      key={reference}
-                                      className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-200"
-                                    >
-                                      {reference}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-                                <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                  Buscas equivalentes
-                                </p>
-
-                                <div className="mt-4 flex flex-wrap gap-2">
-                                  {selectedEntry.aliases.map((item) => (
-                                    <span
-                                      key={item}
-                                      className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-200"
-                                    >
-                                      {item}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-5">
-                              <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                                Termos relacionados
-                              </p>
-
-                              {relatedEntries.length === 0 ? (
-                                <p className="mt-3 text-sm text-zinc-400">
-                                  Nenhum termo relacionado cadastrado.
-                                </p>
+                            <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-6">
+                              {loadingEntry ? (
+                                <p className="text-sm text-zinc-400">Carregando verbete...</p>
                               ) : (
-                                <div className="mt-4 flex flex-wrap gap-3">
-                                  {relatedEntries.map((entry) => (
-                                    <button
-                                      key={entry.id}
-                                      type="button"
-                                      onClick={() => handleOpenRelatedEntry(entry.id)}
-                                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-sky-300/40 hover:bg-sky-300/10"
-                                    >
-                                      <p className="text-sm font-semibold text-white">
-                                        {entry.displayTerm}
-                                      </p>
-                                      <p className="mt-1 text-xs text-zinc-400">
-                                        {entry.term !== entry.displayTerm
-                                          ? `${entry.term} • ${languageLabel(entry.language)}`
-                                          : languageLabel(entry.language)}
-                                      </p>
-                                    </button>
-                                  ))}
-                                </div>
+                                <div
+                                  className="prose prose-invert max-w-none prose-p:text-zinc-200 prose-strong:text-white"
+                                  dangerouslySetInnerHTML={{ __html: selectedEntry.html }}
+                                />
                               )}
                             </div>
                           </article>
