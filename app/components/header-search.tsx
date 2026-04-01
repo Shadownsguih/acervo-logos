@@ -10,7 +10,13 @@ type SearchItem = {
   description: string | null;
 };
 
-export default function HeaderSearch() {
+type HeaderSearchProps = {
+  mobileVariant?: "inline" | "icon";
+};
+
+export default function HeaderSearch({
+  mobileVariant = "inline",
+}: HeaderSearchProps) {
   const router = useRouter();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -21,6 +27,8 @@ export default function HeaderSearch() {
   const [open, setOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
+
+  const isUsingIconMobile = mobileVariant === "icon";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -47,7 +55,7 @@ export default function HeaderSearch() {
 
     const timer = window.setTimeout(() => {
       inputRef.current?.focus();
-    }, 180);
+    }, 120);
 
     return () => window.clearTimeout(timer);
   }, [isMobileExpanded]);
@@ -77,7 +85,7 @@ export default function HeaderSearch() {
       } finally {
         setLoading(false);
       }
-    }, 350);
+    }, 320);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -115,7 +123,7 @@ export default function HeaderSearch() {
     router.push(`/buscar?q=${encodeURIComponent(trimmed)}`);
   }
 
-  function clearAndCloseMobile() {
+  function resetMobileSearch() {
     setQuery("");
     setResults([]);
     setOpen(false);
@@ -124,40 +132,58 @@ export default function HeaderSearch() {
   }
 
   return (
-    <div ref={wrapperRef} className="relative w-full">
+    <div ref={wrapperRef} className="relative">
       {/* DESKTOP */}
       <div className="hidden md:block">
         <div className="relative w-full max-w-md">
           <form onSubmit={handleSubmit}>
-            <input
-              id="busca-header-desktop"
-              ref={inputRef}
-              type="text"
-              name="q"
-              value={query}
-              onChange={(e) => {
-                const value = e.target.value;
-                setQuery(value);
+            <div className="relative">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+              </span>
 
-                if (value.trim()) {
-                  setErrorMessage("");
-                }
+              <input
+                id="busca-header-desktop"
+                ref={inputRef}
+                type="text"
+                name="q"
+                value={query}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setQuery(value);
 
-                setOpen(true);
-              }}
-              onFocus={() => {
-                if (results.length > 0 || query.trim().length >= 2) {
+                  if (value.trim()) {
+                    setErrorMessage("");
+                  }
+
                   setOpen(true);
-                }
-              }}
-              onBlur={() => {
-                if (query.trim()) {
-                  setErrorMessage("");
-                }
-              }}
-              placeholder="Pesquisar materiais..."
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-100 outline-none transition focus:border-zinc-600"
-            />
+                }}
+                onFocus={() => {
+                  if (results.length > 0 || query.trim().length >= 2) {
+                    setOpen(true);
+                  }
+                }}
+                onBlur={() => {
+                  if (query.trim()) {
+                    setErrorMessage("");
+                  }
+                }}
+                placeholder="Pesquisar materiais..."
+                className="w-full rounded-2xl border border-white/10 bg-white/[0.04] py-2.5 pl-11 pr-4 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-white/20 focus:bg-white/[0.06]"
+              />
+            </div>
           </form>
 
           {errorMessage ? (
@@ -165,9 +191,9 @@ export default function HeaderSearch() {
           ) : null}
 
           {open && query.trim().length >= 2 ? (
-            <div className="absolute top-full z-50 mt-2 w-full overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl">
+            <div className="absolute top-full z-50 mt-3 w-full overflow-hidden rounded-3xl border border-white/10 bg-[#0b0d12]/98 shadow-2xl backdrop-blur-2xl">
               {loading ? (
-                <div className="px-4 py-3 text-sm text-zinc-400">Buscando...</div>
+                <div className="px-4 py-4 text-sm text-zinc-400">Buscando...</div>
               ) : results.length > 0 ? (
                 <div className="max-h-96 overflow-y-auto">
                   {results.map((item) => (
@@ -178,7 +204,7 @@ export default function HeaderSearch() {
                         setOpen(false);
                         setErrorMessage("");
                       }}
-                      className="block border-b border-zinc-800 px-4 py-3 transition last:border-b-0 hover:bg-zinc-900"
+                      className="block border-b border-white/6 px-4 py-4 transition last:border-b-0 hover:bg-white/[0.04]"
                     >
                       <p className="font-medium text-zinc-100">{item.title}</p>
                       <p className="mt-1 line-clamp-2 text-sm text-zinc-400">
@@ -190,13 +216,13 @@ export default function HeaderSearch() {
                   <button
                     type="button"
                     onClick={handleViewAllResults}
-                    className="w-full bg-zinc-900 px-4 py-3 text-left text-sm font-medium text-amber-400 transition hover:bg-zinc-800"
+                    className="w-full bg-white/[0.03] px-4 py-4 text-left text-sm font-medium text-amber-400 transition hover:bg-white/[0.06]"
                   >
                     Ver todos os resultados →
                   </button>
                 </div>
               ) : (
-                <div className="px-4 py-3 text-sm text-zinc-400">
+                <div className="px-4 py-4 text-sm text-zinc-400">
                   Nenhum material encontrado.
                 </div>
               )}
@@ -205,69 +231,211 @@ export default function HeaderSearch() {
         </div>
       </div>
 
-      {/* MOBILE */}
-      <div className="md:hidden">
-        <div className="relative flex items-center justify-end">
-          <div
-            className={`flex items-center justify-end transition-all duration-300 ease-out ${
-              isMobileExpanded ? "w-full" : "w-12"
-            }`}
-          >
-            {isMobileExpanded ? (
-              <div className="w-full">
-                <form onSubmit={handleSubmit} className="w-full">
-                  <div className="flex items-center gap-2">
-                    <div className="relative flex-1 overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d14]">
-                      <input
-                        id="busca-header-mobile"
-                        ref={inputRef}
-                        type="text"
-                        name="q"
-                        value={query}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setQuery(value);
+      {/* MOBILE INLINE */}
+      {!isUsingIconMobile ? (
+        <div className="md:hidden">
+          <div className="relative w-full">
+            <form onSubmit={handleSubmit}>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-3.5-3.5" />
+                  </svg>
+                </span>
 
-                          if (value.trim()) {
-                            setErrorMessage("");
-                          }
+                <input
+                  id="busca-header-mobile-inline"
+                  ref={inputRef}
+                  type="text"
+                  name="q"
+                  value={query}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setQuery(value);
 
-                          setOpen(true);
+                    if (value.trim()) {
+                      setErrorMessage("");
+                    }
+
+                    setOpen(true);
+                  }}
+                  onFocus={() => {
+                    if (results.length > 0 || query.trim().length >= 2) {
+                      setOpen(true);
+                    }
+                  }}
+                  placeholder="Pesquisar materiais..."
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-white/20 focus:bg-white/[0.06]"
+                />
+              </div>
+            </form>
+
+            {errorMessage ? (
+              <p className="mt-2 text-xs text-red-400">{errorMessage}</p>
+            ) : null}
+
+            {open && query.trim().length >= 2 ? (
+              <div className="absolute top-full z-50 mt-3 w-full overflow-hidden rounded-3xl border border-white/10 bg-[#0b0d12]/98 shadow-2xl backdrop-blur-2xl">
+                {loading ? (
+                  <div className="px-4 py-4 text-sm text-zinc-400">
+                    Buscando...
+                  </div>
+                ) : results.length > 0 ? (
+                  <div className="max-h-80 overflow-y-auto">
+                    {results.map((item) => (
+                      <Link
+                        key={item.id}
+                        href={`/material/${item.id}`}
+                        onClick={() => {
+                          setOpen(false);
+                          setErrorMessage("");
                         }}
-                        onFocus={() => {
-                          if (results.length > 0 || query.trim().length >= 2) {
-                            setOpen(true);
-                          }
-                        }}
-                        placeholder="Pesquisar materiais..."
-                        className="w-full bg-transparent px-4 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-500"
-                      />
-                    </div>
+                        className="block border-b border-white/6 px-4 py-4 transition last:border-b-0 hover:bg-white/[0.04]"
+                      >
+                        <p className="font-medium text-zinc-100">{item.title}</p>
+                        <p className="mt-1 line-clamp-2 text-sm text-zinc-400">
+                          {item.description || "Sem descrição cadastrada."}
+                        </p>
+                      </Link>
+                    ))}
 
                     <button
                       type="button"
-                      onClick={clearAndCloseMobile}
-                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-zinc-200 transition hover:bg-white/[0.07]"
-                      aria-label="Fechar busca"
-                      title="Fechar busca"
+                      onClick={handleViewAllResults}
+                      className="w-full bg-white/[0.03] px-4 py-4 text-left text-sm font-medium text-amber-400 transition hover:bg-white/[0.06]"
                     >
-                      ✕
+                      Ver todos os resultados →
                     </button>
                   </div>
-                </form>
+                ) : (
+                  <div className="px-4 py-4 text-sm text-zinc-400">
+                    Nenhum material encontrado.
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
-                {errorMessage ? (
-                  <p className="mt-2 text-xs text-red-400">{errorMessage}</p>
-                ) : null}
+      {/* MOBILE ICON */}
+      {isUsingIconMobile ? (
+        <div className="md:hidden">
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileExpanded(true);
+              setOpen(Boolean(query.trim()));
+            }}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-zinc-100 transition hover:bg-white/[0.08]"
+            aria-label="Abrir busca"
+            title="Abrir busca"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+          </button>
 
-                {open && query.trim().length >= 2 ? (
-                  <div className="absolute right-0 top-full z-50 mt-2 w-full overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl">
-                    {loading ? (
-                      <div className="px-4 py-3 text-sm text-zinc-400">
+          {isMobileExpanded ? (
+            <div className="fixed inset-0 z-[100] bg-black/55 backdrop-blur-md">
+              <div className="mx-auto flex min-h-screen w-full max-w-3xl items-start justify-center px-4 pt-20">
+                <div className="w-full overflow-hidden rounded-[2rem] border border-white/10 bg-[#0b0d12]/98 shadow-2xl backdrop-blur-2xl">
+                  <div className="border-b border-white/6 px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <form onSubmit={handleSubmit} className="flex-1">
+                        <div className="relative">
+                          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">
+                            <svg
+                              aria-hidden="true"
+                              viewBox="0 0 24 24"
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <circle cx="11" cy="11" r="7" />
+                              <path d="m20 20-3.5-3.5" />
+                            </svg>
+                          </span>
+
+                          <input
+                            id="busca-header-mobile-overlay"
+                            ref={inputRef}
+                            type="text"
+                            name="q"
+                            value={query}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setQuery(value);
+
+                              if (value.trim()) {
+                                setErrorMessage("");
+                              }
+
+                              setOpen(true);
+                            }}
+                            onFocus={() => {
+                              if (results.length > 0 || query.trim().length >= 2) {
+                                setOpen(true);
+                              }
+                            }}
+                            placeholder="Pesquisar materiais..."
+                            className="w-full rounded-2xl border border-white/10 bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-white/20 focus:bg-white/[0.06]"
+                          />
+                        </div>
+                      </form>
+
+                      <button
+                        type="button"
+                        onClick={resetMobileSearch}
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-zinc-200 transition hover:bg-white/[0.08]"
+                        aria-label="Fechar busca"
+                        title="Fechar busca"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {errorMessage ? (
+                      <p className="mt-3 text-xs text-red-400">{errorMessage}</p>
+                    ) : null}
+                  </div>
+
+                  <div className="max-h-[70vh] overflow-y-auto">
+                    {query.trim().length < 2 ? (
+                      <div className="px-4 py-10 text-center">
+                        <p className="text-sm text-zinc-400">
+                          Digite pelo menos 2 letras para pesquisar.
+                        </p>
+                      </div>
+                    ) : loading ? (
+                      <div className="px-4 py-6 text-sm text-zinc-400">
                         Buscando...
                       </div>
                     ) : results.length > 0 ? (
-                      <div className="max-h-80 overflow-y-auto">
+                      <div>
                         {results.map((item) => (
                           <Link
                             key={item.id}
@@ -277,11 +445,9 @@ export default function HeaderSearch() {
                               setErrorMessage("");
                               setIsMobileExpanded(false);
                             }}
-                            className="block border-b border-zinc-800 px-4 py-3 transition last:border-b-0 hover:bg-zinc-900"
+                            className="block border-b border-white/6 px-4 py-4 transition last:border-b-0 hover:bg-white/[0.04]"
                           >
-                            <p className="font-medium text-zinc-100">
-                              {item.title}
-                            </p>
+                            <p className="font-medium text-zinc-100">{item.title}</p>
                             <p className="mt-1 line-clamp-2 text-sm text-zinc-400">
                               {item.description || "Sem descrição cadastrada."}
                             </p>
@@ -291,48 +457,25 @@ export default function HeaderSearch() {
                         <button
                           type="button"
                           onClick={handleViewAllResults}
-                          className="w-full bg-zinc-900 px-4 py-3 text-left text-sm font-medium text-amber-400 transition hover:bg-zinc-800"
+                          className="w-full bg-white/[0.03] px-4 py-4 text-left text-sm font-medium text-amber-400 transition hover:bg-white/[0.06]"
                         >
                           Ver todos os resultados →
                         </button>
                       </div>
                     ) : (
-                      <div className="px-4 py-3 text-sm text-zinc-400">
-                        Nenhum material encontrado.
+                      <div className="px-4 py-10 text-center">
+                        <p className="text-sm text-zinc-400">
+                          Nenhum material encontrado.
+                        </p>
                       </div>
                     )}
                   </div>
-                ) : null}
+                </div>
               </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMobileExpanded(true);
-                  setOpen(Boolean(query.trim()));
-                }}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-zinc-100 transition hover:bg-white/[0.07]"
-                aria-label="Abrir busca"
-                title="Abrir busca"
-              >
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-3.5-3.5" />
-                </svg>
-              </button>
-            )}
-          </div>
+            </div>
+          ) : null}
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }
