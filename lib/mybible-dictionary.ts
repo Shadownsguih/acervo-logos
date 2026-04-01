@@ -1,20 +1,22 @@
 import fs from "node:fs";
 import path from "node:path";
 
-type RefinedDictionaryEntry = {
+export type RefinedDictionaryEntry = {
   id: string;
   displayTerm: string;
-  term: string;
-  normalizedTerm: string;
-  language: "portugues" | "grego" | "hebraico";
+  term?: string;
+  normalizedTerm?: string;
+  language?: string;
   transliteration?: string;
   strong?: string;
   pronunciation?: string;
-  shortDefinition: string;
-  fullDefinition: string;
-  references: string[];
-  aliases: string[];
+  shortDefinition?: string;
+  fullDefinition?: string;
+  references?: string[];
+  aliases?: string[];
   relatedTerms?: string[];
+  original?: string;
+  etymologyMeaning?: string;
 };
 
 type DictionarySearchItem = {
@@ -24,12 +26,24 @@ type DictionarySearchItem = {
   preview: string;
 };
 
-type DictionaryEntry = {
+export type DictionaryEntry = {
   id: string;
   word: string;
   normalizedWord: string;
-  html: string;
   preview: string;
+  displayTerm: string;
+  term: string;
+  language: string;
+  transliteration: string;
+  strong: string;
+  pronunciation: string;
+  shortDefinition: string;
+  fullDefinition: string;
+  references: string[];
+  aliases: string[];
+  relatedTerms: string[];
+  original: string;
+  etymologyMeaning: string;
 };
 
 let cachedEntries: DictionaryEntry[] | null = null;
@@ -47,70 +61,25 @@ function cleanInline(value: string) {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
 
-function escapeHtml(value: string) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+function normalizeStringArray(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => cleanInline(String(item || "")))
+    .filter(Boolean);
 }
 
-function buildHtmlFromEntry(entry: RefinedDictionaryEntry) {
-  const referencesHtml = (entry.references || [])
-    .map(
-      (reference) =>
-        `<span style="display:inline-block;margin:4px 6px 0 0;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);font-size:12px;">${escapeHtml(reference)}</span>`
-    )
-    .join("");
+function formatLanguage(language?: string) {
+  const value = cleanInline(language || "");
+  if (!value) return "";
 
-  const aliasesHtml = (entry.aliases || [])
-    .map(
-      (alias) =>
-        `<span style="display:inline-block;margin:4px 6px 0 0;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);font-size:12px;">${escapeHtml(alias)}</span>`
-    )
-    .join("");
+  const normalized = normalizeText(value);
 
-  const relatedHtml = (entry.relatedTerms || [])
-    .map(
-      (item) =>
-        `<span style="display:inline-block;margin:4px 6px 0 0;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);font-size:12px;">${escapeHtml(item)}</span>`
-    )
-    .join("");
+  if (normalized === "hebraico") return "Hebraico";
+  if (normalized === "aramaico") return "Aramaico";
+  if (normalized === "grego") return "Grego";
+  if (normalized === "portugues") return "Português";
 
-  return `
-    <div>
-      <p><strong>Termo principal:</strong> ${escapeHtml(entry.displayTerm)}</p>
-      <p><strong>Original:</strong> ${escapeHtml(entry.term || entry.displayTerm)}</p>
-      <p><strong>Idioma:</strong> ${escapeHtml(entry.language)}</p>
-      <p><strong>Transliteração:</strong> ${escapeHtml(entry.transliteration || "Não informada")}</p>
-      <p><strong>Strong:</strong> ${escapeHtml(entry.strong || "Não informado")}</p>
-      <p><strong>Pronúncia:</strong> ${escapeHtml(entry.pronunciation || "Não informada")}</p>
-
-      <p><strong>Definição breve:</strong> ${escapeHtml(entry.shortDefinition || "Não informada")}</p>
-
-      <p style="margin-top:16px;"><strong>Explicação:</strong></p>
-      <p>${escapeHtml(entry.fullDefinition || entry.shortDefinition || "Sem explicação disponível.").replace(/\n/g, "<br />")}</p>
-
-      ${
-        entry.references?.length
-          ? `<p style="margin-top:16px;"><strong>Referências bíblicas:</strong></p><div>${referencesHtml}</div>`
-          : ""
-      }
-
-      ${
-        entry.aliases?.length
-          ? `<p style="margin-top:16px;"><strong>Buscas equivalentes:</strong></p><div>${aliasesHtml}</div>`
-          : ""
-      }
-
-      ${
-        entry.relatedTerms?.length
-          ? `<p style="margin-top:16px;"><strong>Termos relacionados:</strong></p><div>${relatedHtml}</div>`
-          : ""
-      }
-    </div>
-  `;
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 async function loadRawEntries() {
@@ -126,14 +95,14 @@ async function loadRawEntries() {
   );
 
   if (!fs.existsSync(filePath)) {
-    throw new Error(`Arquivo refinado do Wycliffe não encontrado em: ${filePath}`);
+    throw new Error(`Arquivo refinado do dicionário não encontrado em: ${filePath}`);
   }
 
   const raw = fs.readFileSync(filePath, "utf-8");
   const parsed = JSON.parse(raw) as RefinedDictionaryEntry[];
 
   if (!Array.isArray(parsed)) {
-    throw new Error("O arquivo refinado do Wycliffe não é um array JSON válido.");
+    throw new Error("O arquivo do dicionário refinado não é um array JSON válido.");
   }
 
   cachedRawEntries = parsed;
@@ -147,13 +116,34 @@ async function loadDictionaryEntries(): Promise<DictionaryEntry[]> {
 
   const rawEntries = await loadRawEntries();
 
-  const entries: DictionaryEntry[] = rawEntries.map((entry) => ({
-    id: cleanInline(entry.id),
-    word: cleanInline(entry.displayTerm),
-    normalizedWord: normalizeText(entry.displayTerm),
-    html: buildHtmlFromEntry(entry),
-    preview: cleanInline(entry.shortDefinition || entry.fullDefinition || ""),
-  }));
+  const entries: DictionaryEntry[] = rawEntries.map((entry) => {
+    const displayTerm = cleanInline(entry.displayTerm || entry.term || "Sem título");
+    const shortDefinition = cleanInline(
+      entry.shortDefinition || entry.fullDefinition || ""
+    );
+
+    return {
+      id: cleanInline(entry.id),
+      word: displayTerm,
+      normalizedWord: normalizeText(displayTerm),
+      preview: shortDefinition,
+      displayTerm,
+      term: cleanInline(entry.term || entry.displayTerm || ""),
+      language: formatLanguage(entry.language),
+      transliteration: cleanInline(entry.transliteration || ""),
+      strong: cleanInline(entry.strong || ""),
+      pronunciation: cleanInline(entry.pronunciation || ""),
+      shortDefinition,
+      fullDefinition: String(
+        entry.fullDefinition || entry.shortDefinition || "Sem explicação disponível."
+      ).trim(),
+      references: normalizeStringArray(entry.references),
+      aliases: normalizeStringArray(entry.aliases),
+      relatedTerms: normalizeStringArray(entry.relatedTerms),
+      original: cleanInline(entry.original || ""),
+      etymologyMeaning: cleanInline(entry.etymologyMeaning || ""),
+    };
+  });
 
   cachedEntries = entries;
   return entries;
@@ -184,17 +174,21 @@ export async function searchMyBibleDictionary(query: string, limit = 20) {
     return [];
   }
 
-  const rawEntries = await loadRawEntries();
+  const entries = await loadDictionaryEntries();
 
-  const scored = rawEntries
+  const scored = entries
     .map((entry) => {
       const fields = [
         entry.displayTerm,
         entry.term,
-        entry.normalizedTerm,
-        entry.transliteration ?? "",
-        entry.strong ?? "",
-        ...(Array.isArray(entry.aliases) ? entry.aliases : []),
+        entry.word,
+        entry.normalizedWord,
+        entry.transliteration,
+        entry.strong,
+        entry.original,
+        entry.etymologyMeaning,
+        ...entry.aliases,
+        ...entry.relatedTerms,
       ];
 
       let score = 0;
@@ -207,13 +201,15 @@ export async function searchMyBibleDictionary(query: string, limit = 20) {
         return null;
       }
 
-      return {
-        id: cleanInline(entry.id),
-        word: cleanInline(entry.displayTerm),
-        normalizedWord: normalizeText(entry.displayTerm),
-        preview: cleanInline(entry.shortDefinition || entry.fullDefinition || ""),
+      const result: DictionarySearchItem & { score: number } = {
+        id: entry.id,
+        word: entry.word,
+        normalizedWord: entry.normalizedWord,
+        preview: entry.preview,
         score,
       };
+
+      return result;
     })
     .filter(
       (

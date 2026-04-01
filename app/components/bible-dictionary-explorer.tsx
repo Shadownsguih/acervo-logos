@@ -13,9 +13,129 @@ type EntryResponse = {
   id: string;
   word: string;
   normalizedWord: string;
-  html: string;
   preview: string;
+  displayTerm: string;
+  term: string;
+  language: string;
+  transliteration: string;
+  strong: string;
+  pronunciation: string;
+  shortDefinition: string;
+  fullDefinition: string;
+  references: string[];
+  aliases: string[];
+  relatedTerms: string[];
+  original: string;
+  etymologyMeaning: string;
 };
+
+function MetaCard({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string;
+}) {
+  if (!value) return null;
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+      <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-400">
+        {label}
+      </p>
+      <p className="mt-2 text-sm leading-6 text-white">{value}</p>
+    </div>
+  );
+}
+
+function BadgeList({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}) {
+  if (!items.length) return null;
+
+  return (
+    <section className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5">
+      <h4 className="text-sm font-semibold text-white">{title}</h4>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {items.map((item) => (
+          <span
+            key={`${title}-${item}`}
+            className="inline-flex items-center rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1.5 text-xs text-zinc-100"
+          >
+            {item}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EntryContent({ entry }: { entry: EntryResponse }) {
+  return (
+    <div>
+      <section className="overflow-hidden rounded-3xl border border-amber-400/20 bg-gradient-to-br from-amber-400/10 via-white/5 to-transparent p-6">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-amber-400">
+          Verbete bíblico
+        </p>
+
+        <h3 className="mt-3 text-3xl font-bold text-white">{entry.displayTerm}</h3>
+
+        {entry.original ? (
+          <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-400">
+              Original
+            </p>
+            <p className="mt-2 text-xl font-semibold leading-8 text-white">
+              {entry.original}
+            </p>
+          </div>
+        ) : null}
+
+        {entry.shortDefinition ? (
+          <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-amber-300">
+              Definição breve
+            </p>
+            <p className="mt-2 text-sm leading-7 text-zinc-100">
+              {entry.shortDefinition}
+            </p>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <MetaCard label="Idioma" value={entry.language} />
+        <MetaCard label="Transliteração" value={entry.transliteration} />
+        <MetaCard label="Pronúncia" value={entry.pronunciation} />
+        <MetaCard label="Strong" value={entry.strong} />
+      </section>
+
+      {entry.etymologyMeaning ? (
+        <section className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5">
+          <h4 className="text-sm font-semibold text-white">Significado Etimólogico</h4>
+          <p className="mt-3 text-sm leading-7 text-zinc-200">
+            {entry.etymologyMeaning}
+          </p>
+        </section>
+      ) : null}
+
+      <section className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5 md:p-6">
+        <h4 className="text-sm font-semibold text-white">Definição completa</h4>
+        <div className="mt-4 space-y-4 text-sm leading-7 text-zinc-200 whitespace-pre-line">
+          {entry.fullDefinition}
+        </div>
+      </section>
+
+      <BadgeList title="Referências bíblicas" items={entry.references} />
+      <BadgeList title="Nomes e buscas equivalentes" items={entry.aliases} />
+      <BadgeList title="Termos relacionados" items={entry.relatedTerms} />
+    </div>
+  );
+}
 
 export default function BibleDictionaryExplorer() {
   const [query, setQuery] = useState("");
@@ -104,7 +224,6 @@ export default function BibleDictionaryExplorer() {
 
   return (
     <section className="space-y-6 md:space-y-8">
-      {/* MOBILE */}
       <div className="block md:hidden">
         <div className="relative overflow-hidden">
           <div
@@ -229,26 +348,11 @@ export default function BibleDictionaryExplorer() {
                     </button>
                   </div>
 
-                  <div className="overflow-hidden rounded-3xl border border-amber-400/20 bg-gradient-to-br from-amber-400/10 via-white/5 to-transparent p-5">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="text-2xl font-bold text-white">
-                        {selectedEntry.word}
-                      </h3>
-                    </div>
-
-                    <p className="mt-4 text-sm leading-7 text-zinc-200">
-                      {selectedEntry.preview}
-                    </p>
-                  </div>
-
-                  <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5">
+                  <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
                     {loadingEntry ? (
                       <p className="text-sm text-zinc-400">Carregando verbete...</p>
                     ) : (
-                      <div
-                        className="prose prose-invert max-w-none prose-p:text-zinc-200 prose-strong:text-white"
-                        dangerouslySetInnerHTML={{ __html: selectedEntry.html }}
-                      />
+                      <EntryContent entry={selectedEntry} />
                     )}
                   </div>
                 </article>
@@ -258,7 +362,6 @@ export default function BibleDictionaryExplorer() {
         </div>
       </div>
 
-      {/* DESKTOP */}
       <div className="hidden md:block">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8">
           <div className="max-w-3xl">
@@ -375,24 +478,11 @@ export default function BibleDictionaryExplorer() {
               </div>
             ) : (
               <article>
-                <div className="overflow-hidden rounded-3xl border border-amber-400/20 bg-gradient-to-br from-amber-400/10 via-white/5 to-transparent p-6">
-                  <h3 className="text-3xl font-bold text-white">
-                    {selectedEntry.word}
-                  </h3>
-
-                  <p className="mt-4 max-w-3xl text-base leading-8 text-zinc-200">
-                    {selectedEntry.preview}
-                  </p>
-                </div>
-
-                <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-6">
+                <div className="rounded-3xl border border-white/10 bg-black/20 p-6">
                   {loadingEntry ? (
                     <p className="text-sm text-zinc-400">Carregando verbete...</p>
                   ) : (
-                    <div
-                      className="prose prose-invert max-w-none prose-p:text-zinc-200 prose-strong:text-white"
-                      dangerouslySetInnerHTML={{ __html: selectedEntry.html }}
-                    />
+                    <EntryContent entry={selectedEntry} />
                   )}
                 </div>
               </article>
