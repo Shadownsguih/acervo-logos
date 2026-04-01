@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase-server";
 import { logoutUserAction } from "@/app/login/actions";
 import UserMenuDropdown from "@/app/components/user-menu-dropdown";
 import HeaderSearch from "@/app/components/header-search";
+import PwaRegister from "@/app/components/pwa-register";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,10 +22,23 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Acervo Logos",
   description: "Biblioteca teológica digital",
-  manifest: "/manifest.json",
+  applicationName: "Acervo Logos",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Acervo Logos",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  themeColor: "#05060a",
   icons: {
-    icon: "/favicon.ico",
-    apple: "/icon-192.png",}
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/logo-icon.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/logo-icon-192.png", sizes: "192x192", type: "image/png" }],
+  },
 };
 
 function getInitials(name: string) {
@@ -87,6 +101,8 @@ export default async function RootLayout({
         suppressHydrationWarning
         className="min-h-full bg-zinc-950 text-zinc-100"
       >
+        <PwaRegister />
+
         <div className="flex min-h-screen flex-col overflow-x-hidden bg-[#05060a]">
           <header className="sticky top-0 z-50 border-b border-white/10 bg-[#05060a]/88 backdrop-blur-xl">
             <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:px-4 md:px-6">

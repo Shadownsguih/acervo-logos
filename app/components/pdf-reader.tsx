@@ -64,6 +64,7 @@ const DESKTOP_UI_AUTO_HIDE_DELAY = 1400;
 const MOBILE_PINCH_SENSITIVITY = 1.22;
 const MOBILE_ZOOM_SNAP_THRESHOLD = 1.04;
 const MOBILE_SWIPE_ENABLED_THRESHOLD = 1.01;
+const MOBILE_TOUCH_ACTION_RESET_THRESHOLD = 1.02;
 const FALLBACK_PAGE_RATIO = 1.4142;
 
 function clampZoom(value: number) {
@@ -315,8 +316,9 @@ export default function PdfReader({
     committedMobileZoomRef.current = DEFAULT_ZOOM;
     setZoomLevel(DEFAULT_ZOOM);
     setCommittedZoomLevel(DEFAULT_ZOOM);
-    committedMobileZoomRef.current = DEFAULT_ZOOM;
-    liveMobileZoomRef.current = DEFAULT_ZOOM;
+    pinchStateRef.current = null;
+    swipeStateRef.current = null;
+    gestureHandledRef.current = false;
     pinchMovedRef.current = false;
     setIsPinching(false);
 
@@ -536,6 +538,14 @@ export default function PdfReader({
 
     showReaderUiTemporarily();
 
+    if (committedMobileZoomRef.current <= MOBILE_TOUCH_ACTION_RESET_THRESHOLD) {
+      const shell = getActiveShell();
+
+      if (shell) {
+        shell.scrollLeft = 0;
+      }
+    }
+
     if (event.touches.length === 2) {
       const shell = getActiveShell();
       const distance = getDistanceBetweenTouches(
@@ -695,6 +705,13 @@ export default function PdfReader({
       swipeStateRef.current = null;
       gestureHandledRef.current = false;
       return;
+    }
+
+    const shell = getActiveShell();
+
+    if (shell && committedMobileZoomRef.current <= MOBILE_TOUCH_ACTION_RESET_THRESHOLD) {
+      shell.scrollLeft = 0;
+      shell.scrollTop = 0;
     }
 
     if (!swipeStateRef.current || gestureHandledRef.current) {
@@ -1022,6 +1039,27 @@ export default function PdfReader({
       recomputeMobileBaseSize();
     });
   }, [pageNumber, isMobileReaderFullscreen, isMobile]);
+
+  useEffect(() => {
+    if (!isMobile || isPinching) {
+      return;
+    }
+
+    if (committedMobileZoomRef.current > MOBILE_TOUCH_ACTION_RESET_THRESHOLD) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      const shell = getActiveShell();
+
+      if (!shell) {
+        return;
+      }
+
+      shell.scrollLeft = 0;
+      shell.scrollTop = 0;
+    });
+  }, [isMobile, isPinching, committedZoomLevel, isMobileReaderFullscreen, pageNumber]);
 
   const visibleZoomPercent = useMemo(
     () => Math.round(zoomLevel * 100),
@@ -1366,8 +1404,13 @@ export default function PdfReader({
           }}
           onWheel={handleWheelZoom}
           style={{
-            touchAction: isMobile ? "pan-x pan-y" : "auto",
+            touchAction: isMobile
+              ? committedMobileZoomRef.current > MOBILE_TOUCH_ACTION_RESET_THRESHOLD
+                ? "pan-x pan-y pinch-zoom"
+                : "pinch-zoom"
+              : "auto",
             WebkitOverflowScrolling: "touch",
+            overscrollBehavior: isMobile ? "contain" : "auto",
           }}
         >
           {!isDesktopFullscreen ? (
@@ -1631,7 +1674,10 @@ export default function PdfReader({
                 className="relative flex-1 min-h-0 overflow-auto bg-black"
                 onClick={toggleMobileUiVisibility}
                 style={{
-                  touchAction: "pan-x pan-y",
+                  touchAction:
+                    committedMobileZoomRef.current > MOBILE_TOUCH_ACTION_RESET_THRESHOLD
+                      ? "pan-x pan-y pinch-zoom"
+                      : "pinch-zoom",
                   WebkitOverflowScrolling: "touch",
                   overscrollBehavior: "contain",
                 }}
