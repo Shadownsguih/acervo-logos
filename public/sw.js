@@ -1,4 +1,5 @@
-const CACHE_NAME = "acervo-logos-v1";
+const CACHE_NAME = "acervo-logos-v2";
+
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
@@ -15,21 +16,28 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-          return Promise.resolve();
-        })
-      )
-    )
+    Promise.all([
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys.map((key) => {
+            if (key !== CACHE_NAME) {
+              return caches.delete(key);
+            }
+            return Promise.resolve();
+          })
+        )
+      ),
+      self.clients.claim(),
+    ])
   );
-
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
@@ -39,9 +47,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  const requestUrl = new URL(request.url);
+  const url = new URL(request.url);
 
-  if (requestUrl.origin !== self.location.origin) {
+  if (url.origin !== self.location.origin) {
     return;
   }
 
@@ -53,6 +61,10 @@ self.addEventListener("fetch", (event) => {
 
       return fetch(request)
         .then((networkResponse) => {
+          if (!networkResponse || networkResponse.status !== 200) {
+            return networkResponse;
+          }
+
           const responseClone = networkResponse.clone();
 
           caches.open(CACHE_NAME).then((cache) => {

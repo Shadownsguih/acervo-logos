@@ -23,6 +23,8 @@ export const metadata: Metadata = {
   title: "Acervo Logos",
   description: "Biblioteca teológica digital",
   applicationName: "Acervo Logos",
+  manifest: "/manifest.webmanifest",
+  themeColor: "#05060a",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -31,13 +33,15 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-  themeColor: "#05060a",
   icons: {
     icon: [
       { url: "/favicon.ico" },
-      { url: "/logo-icon.png", sizes: "512x512", type: "image/png" },
+      { url: "/logo-icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/logo-icon-512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: "/logo-icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [
+      { url: "/logo-icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
   },
 };
 
