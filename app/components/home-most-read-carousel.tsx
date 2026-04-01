@@ -136,7 +136,7 @@ export default function HomeMostReadCarousel({
 
   if (!material) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-zinc-400">
+      <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 text-sm text-zinc-400 sm:p-6">
         Nenhum material disponível.
       </div>
     );
@@ -161,7 +161,7 @@ export default function HomeMostReadCarousel({
 
   return (
     <div
-      className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-sm"
+      className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-sm sm:rounded-3xl sm:p-6"
       onMouseEnter={() => {
         clearResumeTimeout();
         setIsPaused(true);
@@ -174,22 +174,22 @@ export default function HomeMostReadCarousel({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.08),transparent_35%)]" />
 
       <div className="relative">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-400">
+        <div className="mb-4 flex items-start justify-between gap-3 sm:mb-6 sm:items-center">
+          <div className="min-w-0">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-amber-400">
               Destaques
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-white">
+            <h2 className="mt-2 text-xl font-semibold text-white sm:text-2xl">
               Mais lidos
             </h2>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex shrink-0 gap-2">
             <button
               type="button"
               onClick={handlePrev}
               disabled={isAnimating || total <= 1}
-              className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Material anterior"
             >
               ←
@@ -199,7 +199,7 @@ export default function HomeMostReadCarousel({
               type="button"
               onClick={handleNext}
               disabled={isAnimating || total <= 1}
-              className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Próximo material"
             >
               →
@@ -207,30 +207,30 @@ export default function HomeMostReadCarousel({
           </div>
         </div>
 
-        <div className="relative min-h-[280px]">
+        <div className="relative min-h-[250px] sm:min-h-[280px]">
           <div
-            className={`rounded-2xl border border-white/10 bg-black/30 p-6 transition-all duration-300 ease-out ${animationClass}`}
+            className={`rounded-2xl border border-white/10 bg-black/30 p-4 transition-all duration-300 ease-out sm:p-6 ${animationClass}`}
           >
             <div className="mb-4 flex items-center justify-between gap-3">
-              <span className="rounded-full border border-amber-400/15 bg-amber-400/10 px-3 py-1 text-xs text-amber-300">
+              <span className="rounded-full border border-amber-400/15 bg-amber-400/10 px-3 py-1 text-[11px] text-amber-300 sm:text-xs">
                 Posição {displayIndex + 1}
               </span>
 
-              <span className="text-xs text-zinc-500">
+              <span className="text-[11px] text-zinc-500 sm:text-xs">
                 {material.views || 0} visualizações
               </span>
             </div>
 
-            <h3 className="text-lg font-semibold leading-7 text-white">
+            <h3 className="text-base font-semibold leading-7 text-white sm:text-lg">
               {material.title}
             </h3>
 
-            <p className="mt-3 line-clamp-3 text-sm leading-7 text-zinc-400">
+            <p className="mt-3 line-clamp-4 text-sm leading-7 text-zinc-400 sm:line-clamp-3">
               {material.description || "Material disponível no acervo."}
             </p>
 
-            <div className="mt-6 border-t border-white/10 pt-4">
-              <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
+            <div className="mt-5 border-t border-white/10 pt-4 sm:mt-6">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500 sm:text-xs">
                 {accessLabel}
               </p>
 
@@ -240,7 +240,7 @@ export default function HomeMostReadCarousel({
 
               <Link
                 href={accessHref}
-                className="mt-3 inline-block text-sm font-medium text-amber-400 transition hover:text-amber-300"
+                className="mt-4 inline-flex min-h-[44px] items-center text-sm font-medium text-amber-400 transition hover:text-amber-300"
               >
                 {accessButtonLabel}
               </Link>
@@ -256,7 +256,7 @@ export default function HomeMostReadCarousel({
               onClick={() => handleIndicatorClick(i)}
               disabled={isAnimating}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === displayIndex ? "w-8 bg-amber-400" : "w-6 bg-white/10"
+                i === displayIndex ? "w-8 bg-amber-400" : "w-5 bg-white/10 sm:w-6"
               }`}
               aria-label={`Ir para destaque ${i + 1}`}
             />
