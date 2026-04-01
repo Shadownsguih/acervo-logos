@@ -61,41 +61,13 @@ const SWIPE_THRESHOLD = 70;
 const SWIPE_MAX_VERTICAL_DRIFT = 60;
 const MOBILE_UI_AUTO_HIDE_DELAY = 1800;
 const DESKTOP_UI_AUTO_HIDE_DELAY = 1400;
-const MOBILE_PINCH_SENSITIVITY = 0.9;
-const MOBILE_PINCH_DEADZONE = 0.02;
-const MOBILE_ZOOM_SNAP_BACK_THRESHOLD = 1.06;
-const MOBILE_ZOOM_GESTURE_THRESHOLD = 1.08;
+const MOBILE_PINCH_SENSITIVITY = 1.22;
+const MOBILE_ZOOM_SNAP_THRESHOLD = 1.04;
+const MOBILE_SWIPE_ENABLED_THRESHOLD = 1.01;
 const FALLBACK_PAGE_RATIO = 1.4142;
 
 function clampZoom(value: number) {
   return Math.min(Math.max(Number(value.toFixed(2)), MIN_ZOOM), MAX_ZOOM);
-}
-
-function normalizeCommittedZoom(value: number) {
-  const safeZoom = clampZoom(value);
-
-  if (safeZoom < MOBILE_ZOOM_SNAP_BACK_THRESHOLD) {
-    return DEFAULT_ZOOM;
-  }
-
-  return safeZoom;
-}
-
-function normalizeLiveMobileZoom(value: number, startZoom: number) {
-  const safeZoom = clampZoom(value);
-
-  if (
-    startZoom === DEFAULT_ZOOM &&
-    Math.abs(safeZoom - DEFAULT_ZOOM) <= MOBILE_PINCH_DEADZONE
-  ) {
-    return DEFAULT_ZOOM;
-  }
-
-  return safeZoom;
-}
-
-function isRealMobileZoom(value: number) {
-  return value >= MOBILE_ZOOM_GESTURE_THRESHOLD;
 }
 
 function getDistanceBetweenTouches(touchA: TouchLike, touchB: TouchLike) {
@@ -132,8 +104,9 @@ export default function PdfReader({
   const mobileViewportRef = useRef<{ width: number; height: number } | null>(
     null
   );
-  const committedZoomRef = useRef<number>(DEFAULT_ZOOM);
-  const liveZoomRef = useRef<number>(DEFAULT_ZOOM);
+  const committedMobileZoomRef = useRef<number>(DEFAULT_ZOOM);
+  const liveMobileZoomRef = useRef<number>(DEFAULT_ZOOM);
+  const pinchMovedRef = useRef<boolean>(false);
 
   const [isMounted, setIsMounted] = useState(false);
   const [numPages, setNumPages] = useState<number>(0);
@@ -326,48 +299,77 @@ export default function PdfReader({
     });
   }
 
+  function syncMobileZoomState(nextZoom: number) {
+    const safeZoom = clampZoom(nextZoom);
+
+    liveMobileZoomRef.current = safeZoom;
+    committedMobileZoomRef.current = safeZoom;
+    setZoomLevel(safeZoom);
+    setCommittedZoomLevel(safeZoom);
+
+    return safeZoom;
+  }
+
+  function resetMobileZoomState(hint?: string) {
+    liveMobileZoomRef.current = DEFAULT_ZOOM;
+    committedMobileZoomRef.current = DEFAULT_ZOOM;
+    setZoomLevel(DEFAULT_ZOOM);
+    setCommittedZoomLevel(DEFAULT_ZOOM);
+    committedMobileZoomRef.current = DEFAULT_ZOOM;
+    liveMobileZoomRef.current = DEFAULT_ZOOM;
+    pinchMovedRef.current = false;
+    setIsPinching(false);
+
+    requestAnimationFrame(() => {
+      const shell = getActiveShell();
+
+      if (!shell) {
+        return;
+      }
+
+      shell.scrollLeft = 0;
+      shell.scrollTop = 0;
+    });
+
+    if (hint) {
+      setGestureHint(hint);
+      clearGestureHintWithDelay();
+    }
+  }
+
   function applyZoom(nextZoom: number, hint?: string) {
-    const safeZoom = isMobile
-      ? normalizeCommittedZoom(nextZoom)
-      : clampZoom(nextZoom);
+    const safeZoom = clampZoom(nextZoom);
     const shell = getActiveShell();
 
     if (isMobile && shell && mobileBaseWidth > 0 && mobileBaseHeight > 0) {
-      const oldZoom = committedZoomRef.current || DEFAULT_ZOOM;
-      const ratio = safeZoom / Math.max(oldZoom, DEFAULT_ZOOM);
-      const viewportCenterX = shell.scrollLeft + shell.clientWidth / 2;
-      const viewportCenterY = shell.scrollTop + shell.clientHeight / 2;
+      if (safeZoom <= MOBILE_ZOOM_SNAP_THRESHOLD) {
+        resetMobileZoomState(hint ?? "Zoom: 100%");
+      } else {
+        const oldZoom = committedMobileZoomRef.current || 1;
+        const ratio = safeZoom / oldZoom;
+        const viewportCenterX = shell.scrollLeft + shell.clientWidth / 2;
+        const viewportCenterY = shell.scrollTop + shell.clientHeight / 2;
 
-      liveZoomRef.current = safeZoom;
-      committedZoomRef.current = safeZoom;
-      setZoomLevel(safeZoom);
-      setCommittedZoomLevel(safeZoom);
+        syncMobileZoomState(safeZoom);
 
-      requestAnimationFrame(() => {
-        if (safeZoom === DEFAULT_ZOOM) {
-          shell.scrollLeft = 0;
-          shell.scrollTop = 0;
-          return;
-        }
-
-        shell.scrollLeft = Math.max(
-          0,
-          viewportCenterX * ratio - shell.clientWidth / 2
-        );
-        shell.scrollTop = Math.max(
-          0,
-          viewportCenterY * ratio - shell.clientHeight / 2
-        );
-      });
+        requestAnimationFrame(() => {
+          shell.scrollLeft = Math.max(
+            0,
+            viewportCenterX * ratio - shell.clientWidth / 2
+          );
+          shell.scrollTop = Math.max(
+            0,
+            viewportCenterY * ratio - shell.clientHeight / 2
+          );
+        });
+      }
     } else {
-      liveZoomRef.current = safeZoom;
-      committedZoomRef.current = safeZoom;
       setZoomLevel(safeZoom);
       setCommittedZoomLevel(safeZoom);
     }
 
     setPageError("");
-    setGestureHint(hint ?? `Zoom: ${Math.round(safeZoom * 100)}%`);
+    setGestureHint(hint ?? `Zoom: ${Math.round((safeZoom <= MOBILE_ZOOM_SNAP_THRESHOLD && isMobile ? DEFAULT_ZOOM : safeZoom) * 100)}%`);
     clearGestureHintWithDelay();
     showReaderUiTemporarily();
   }
@@ -544,13 +546,14 @@ export default function PdfReader({
 
       pinchStateRef.current = {
         startDistance: distance,
-        startZoom: committedZoomRef.current,
+        startZoom: liveMobileZoomRef.current || committedMobileZoomRef.current || DEFAULT_ZOOM,
         startScrollLeft: shell?.scrollLeft ?? 0,
         startScrollTop: shell?.scrollTop ?? 0,
         centerX: center.x,
         centerY: center.y,
       };
 
+      pinchMovedRef.current = false;
       swipeStateRef.current = null;
       gestureHandledRef.current = true;
       setIsPinching(true);
@@ -560,11 +563,17 @@ export default function PdfReader({
 
     if (event.touches.length === 1) {
       pinchStateRef.current = null;
+      pinchMovedRef.current = false;
       gestureHandledRef.current = false;
-      swipeStateRef.current = {
-        startX: event.touches[0].clientX,
-        startY: event.touches[0].clientY,
-      };
+
+      if (committedMobileZoomRef.current <= MOBILE_SWIPE_ENABLED_THRESHOLD) {
+        swipeStateRef.current = {
+          startX: event.touches[0].clientX,
+          startY: event.touches[0].clientY,
+        };
+      } else {
+        swipeStateRef.current = null;
+      }
     }
   }
 
@@ -588,16 +597,17 @@ export default function PdfReader({
         return;
       }
 
-      const distanceRatio = currentDistance / pinchStateRef.current.startDistance;
-      const linearRatio =
-        1 + (distanceRatio - 1) * (1 + MOBILE_PINCH_SENSITIVITY);
-      const rawNextZoom = pinchStateRef.current.startZoom * linearRatio;
-      const nextZoom = normalizeLiveMobileZoom(
-        rawNextZoom,
-        pinchStateRef.current.startZoom
+      const ratio = currentDistance / pinchStateRef.current.startDistance;
+      const adjustedRatio = Math.pow(ratio, MOBILE_PINCH_SENSITIVITY);
+      const nextZoom = clampZoom(
+        pinchStateRef.current.startZoom * adjustedRatio
       );
 
-      liveZoomRef.current = nextZoom;
+      if (Math.abs(nextZoom - pinchStateRef.current.startZoom) > 0.01) {
+        pinchMovedRef.current = true;
+      }
+
+      liveMobileZoomRef.current = nextZoom;
       setZoomLevel(nextZoom);
       setGestureHint(`Zoom: ${Math.round(nextZoom * 100)}%`);
 
@@ -607,16 +617,9 @@ export default function PdfReader({
       const relativeY =
         pinchStateRef.current.centerY / Math.max(shell.clientHeight, 1);
 
-      const baseZoom = Math.max(pinchStateRef.current.startZoom, DEFAULT_ZOOM);
-      const zoomRatio = nextZoom / baseZoom;
+      const zoomRatio = nextZoom / Math.max(pinchStateRef.current.startZoom, DEFAULT_ZOOM);
 
       requestAnimationFrame(() => {
-        if (nextZoom <= DEFAULT_ZOOM) {
-          shell.scrollLeft = 0;
-          shell.scrollTop = 0;
-          return;
-        }
-
         const baseCenterX =
           pinchStateRef.current!.startScrollLeft +
           shell.clientWidth * relativeX;
@@ -644,7 +647,7 @@ export default function PdfReader({
     if (
       event.touches.length === 1 &&
       swipeStateRef.current &&
-      !isRealMobileZoom(committedZoomRef.current)
+      committedMobileZoomRef.current <= MOBILE_SWIPE_ENABLED_THRESHOLD
     ) {
       const currentTouch = event.touches[0];
       const deltaX = currentTouch.clientX - swipeStateRef.current.startX;
@@ -662,39 +665,24 @@ export default function PdfReader({
     }
 
     if (pinchStateRef.current && event.touches.length < 2) {
-      const finalizedZoom = normalizeCommittedZoom(liveZoomRef.current);
-      const shell = getActiveShell();
+      const finalZoom = pinchMovedRef.current
+        ? clampZoom(liveMobileZoomRef.current)
+        : clampZoom(committedMobileZoomRef.current);
 
       pinchStateRef.current = null;
+      pinchMovedRef.current = false;
       swipeStateRef.current = null;
       gestureHandledRef.current = false;
       setIsPinching(false);
 
-      liveZoomRef.current = finalizedZoom;
-      committedZoomRef.current = finalizedZoom;
-      setZoomLevel(finalizedZoom);
-      setCommittedZoomLevel(finalizedZoom);
+      if (finalZoom <= MOBILE_ZOOM_SNAP_THRESHOLD) {
+        resetMobileZoomState("Zoom: 100%");
+      } else {
+        syncMobileZoomState(finalZoom);
+        setGestureHint(`Zoom: ${Math.round(finalZoom * 100)}%`);
+        clearGestureHintWithDelay();
+      }
 
-      requestAnimationFrame(() => {
-        if (!shell) {
-          return;
-        }
-
-        if (finalizedZoom === DEFAULT_ZOOM) {
-          shell.scrollLeft = 0;
-          shell.scrollTop = 0;
-          return;
-        }
-
-        const maxScrollLeft = Math.max(0, shell.scrollWidth - shell.clientWidth);
-        const maxScrollTop = Math.max(0, shell.scrollHeight - shell.clientHeight);
-
-        shell.scrollLeft = Math.min(Math.max(shell.scrollLeft, 0), maxScrollLeft);
-        shell.scrollTop = Math.min(Math.max(shell.scrollTop, 0), maxScrollTop);
-      });
-
-      setGestureHint(`Zoom: ${Math.round(finalizedZoom * 100)}%`);
-      clearGestureHintWithDelay();
       showReaderUiTemporarily();
       return;
     }
@@ -703,7 +691,7 @@ export default function PdfReader({
       return;
     }
 
-    if (isRealMobileZoom(committedZoomRef.current)) {
+    if (committedMobileZoomRef.current > MOBILE_SWIPE_ENABLED_THRESHOLD) {
       swipeStateRef.current = null;
       gestureHandledRef.current = false;
       return;
@@ -746,26 +734,18 @@ export default function PdfReader({
   }
 
   function handleTouchCancel() {
-    const finalizedZoom = isMobile
-      ? normalizeCommittedZoom(liveZoomRef.current)
-      : clampZoom(zoomLevel);
+    const finalZoom = clampZoom(liveMobileZoomRef.current || committedMobileZoomRef.current);
 
     pinchStateRef.current = null;
     swipeStateRef.current = null;
+    pinchMovedRef.current = false;
     gestureHandledRef.current = false;
     setIsPinching(false);
-    liveZoomRef.current = finalizedZoom;
-    committedZoomRef.current = finalizedZoom;
-    setZoomLevel(finalizedZoom);
-    setCommittedZoomLevel(finalizedZoom);
 
-    const shell = getActiveShell();
-
-    if (shell && finalizedZoom === DEFAULT_ZOOM) {
-      requestAnimationFrame(() => {
-        shell.scrollLeft = 0;
-        shell.scrollTop = 0;
-      });
+    if (finalZoom <= MOBILE_ZOOM_SNAP_THRESHOLD) {
+      resetMobileZoomState();
+    } else {
+      syncMobileZoomState(finalZoom);
     }
 
     clearGestureHintWithDelay();
@@ -968,8 +948,9 @@ export default function PdfReader({
     setGestureHint("");
     setZoomLevel(DEFAULT_ZOOM);
     setCommittedZoomLevel(DEFAULT_ZOOM);
-    liveZoomRef.current = DEFAULT_ZOOM;
-    committedZoomRef.current = DEFAULT_ZOOM;
+    committedMobileZoomRef.current = DEFAULT_ZOOM;
+    liveMobileZoomRef.current = DEFAULT_ZOOM;
+    pinchMovedRef.current = false;
     setIsPinching(false);
     setMobileBaseWidth(0);
     setMobileBaseHeight(0);
@@ -1047,10 +1028,12 @@ export default function PdfReader({
     [zoomLevel]
   );
 
-  const effectiveZoom = isPinching
+  const effectiveZoom = isMobile
+    ? isPinching
+      ? liveMobileZoomRef.current
+      : committedMobileZoomRef.current
+    : isPinching
     ? zoomLevel
-    : isMobile
-    ? normalizeCommittedZoom(committedZoomLevel)
     : committedZoomLevel;
 
   const desktopScale = useMemo(() => {
