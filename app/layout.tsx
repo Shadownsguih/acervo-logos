@@ -8,6 +8,7 @@ import { logoutUserAction } from "@/app/login/actions";
 import UserMenuDropdown from "@/app/components/user-menu-dropdown";
 import HeaderSearch from "@/app/components/header-search";
 import PwaRegister from "@/app/components/pwa-register";
+import PwaInstallButton from "@/app/components/pwa-install-button";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -141,6 +142,8 @@ export default async function RootLayout({
               </div>
 
               <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+                <PwaInstallButton />
+
                 {!user ? (
                   <div className="hidden items-center gap-3 xl:flex">
                     <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs uppercase tracking-[0.24em] text-zinc-400">
@@ -178,8 +181,13 @@ export default async function RootLayout({
             </div>
 
             <div className="border-t border-white/5 px-3 py-3 sm:px-4 lg:hidden">
-              <div className="mx-auto w-full max-w-7xl">
-                <HeaderSearch />
+              <div className="mx-auto flex w-full max-w-7xl items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <HeaderSearch />
+                </div>
+                <div className="shrink-0">
+                  <PwaInstallButton />
+                </div>
               </div>
             </div>
           </header>
