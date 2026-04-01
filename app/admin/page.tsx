@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { logoutAction } from "./login/actions";
 import MaterialUploadForm from "./material-upload-form";
 import MaterialWithVolumesForm from "./material-with-volumes-form";
 import AddVolumeExistingForm from "./add-volume-existing-form";
 import MaterialsManager from "./materials-manager";
+import SubscriptionsManager from "./subscriptions-manager";
 
 type Category = {
   id: string;
@@ -37,6 +39,21 @@ type VolumeRow = {
   views: number | null;
 };
 
+type UserProfileRow = {
+  id: string;
+  full_name: string | null;
+  access_expires_at: string | null;
+  subscription_status: string | null;
+  payment_status: string | null;
+  created_at: string | null;
+};
+
+type AuthUser = {
+  id: string;
+  email?: string | null;
+  created_at?: string | null;
+};
+
 export default async function AdminPage() {
   const supabase = await createClient();
 
@@ -46,11 +63,15 @@ export default async function AdminPage() {
 
   const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase() ?? "";
   const isAdmin =
-    !!user?.email && !!adminEmail && user.email.toLowerCase() === adminEmail;
+    !!user?.email &&
+    !!adminEmail &&
+    user.email.toLowerCase() === adminEmail;
 
   if (!isAdmin) {
     redirect("/admin/login");
   }
+
+  const adminSupabase = createAdminClient();
 
   const [
     { count: materialsCount },
@@ -59,6 +80,8 @@ export default async function AdminPage() {
     { data: materialsData },
     { data: materialsManagerData },
     { data: volumesManagerData },
+    { data: profilesData, error: profilesError },
+    authUsersResponse,
   ] = await Promise.all([
     supabase.from("materials").select("*", { head: true, count: "exact" }),
     supabase
@@ -68,22 +91,43 @@ export default async function AdminPage() {
     supabase.from("materials").select("id, title").order("title"),
     supabase
       .from("materials")
-      .select("id, title, description, pdf_url, category_id, views, display_order")
+      .select(
+        "id, title, description, pdf_url, category_id, views, display_order"
+      )
       .order("display_order", { ascending: true, nullsFirst: false })
       .order("title", { ascending: true }),
     supabase
       .from("material_volumes")
-      .select("id, material_id, title, volume_number, pdf_url, description, views")
+      .select(
+        "id, material_id, title, volume_number, pdf_url, description, views"
+      )
       .order("volume_number", { ascending: true }),
+    adminSupabase
+      .from("user_profiles")
+      .select(
+        "id, full_name, access_expires_at, subscription_status, payment_status, created_at"
+      )
+      .order("created_at", { ascending: false }),
+    adminSupabase.auth.admin.listUsers(),
   ]);
+
+  if (profilesError) {
+    console.error("Erro ao buscar user_profiles no admin:", profilesError);
+  }
 
   const categories = (categoriesData ?? []) as Category[];
   const materials = (materialsData ?? []) as Material[];
   const materialsRows = (materialsManagerData ?? []) as MaterialRow[];
   const volumesRows = (volumesManagerData ?? []) as VolumeRow[];
+  const profileRows = (profilesData ?? []) as UserProfileRow[];
+  const authUsers = (authUsersResponse.data?.users ?? []) as AuthUser[];
 
   const categoryMap = new Map<string, Category>(
     categories.map((category) => [category.id, category])
+  );
+
+  const profileMap = new Map<string, UserProfileRow>(
+    profileRows.map((profile) => [profile.id, profile])
   );
 
   const managedMaterials = materialsRows.map((material) => ({
@@ -108,6 +152,20 @@ export default async function AdminPage() {
       })),
   }));
 
+  const subscriptionUsers = authUsers.map((authUser) => {
+    const profile = profileMap.get(authUser.id);
+
+    return {
+      id: authUser.id,
+      email: authUser.email ?? "E-mail não informado",
+      fullName: profile?.full_name ?? null,
+      accessExpiresAt: profile?.access_expires_at ?? null,
+      subscriptionStatus: profile?.subscription_status ?? null,
+      paymentStatus: profile?.payment_status ?? null,
+      createdAt: profile?.created_at ?? authUser.created_at ?? null,
+    };
+  });
+
   return (
     <main className="min-h-screen bg-[#05060a] px-6 py-12 text-white">
       <div className="mx-auto max-w-6xl">
@@ -120,10 +178,7 @@ export default async function AdminPage() {
             <h1 className="mt-3 text-4xl font-bold">Acervo Logos</h1>
 
             <p className="mt-4 max-w-2xl text-zinc-400">
-              Área reservada para gerenciamento do acervo. Aqui você pode
-              publicar materiais simples, obras com múltiplos volumes e também
-              adicionar novos volumes a obras já existentes, sem precisar entrar
-              manualmente no Cloudflare R2 ou no Supabase.
+              Área administrativa do sistema.
             </p>
           </div>
 
@@ -137,7 +192,7 @@ export default async function AdminPage() {
           </form>
         </div>
 
-        <section className="mt-10 grid gap-6 md:grid-cols-3">
+        <section className="mt-10 grid gap-6 md:grid-cols-4">
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
             <p className="text-sm text-zinc-400">Materiais</p>
             <p className="mt-3 text-4xl font-bold">{materialsCount ?? 0}</p>
@@ -149,45 +204,27 @@ export default async function AdminPage() {
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-            <p className="text-sm text-zinc-400">Administrador</p>
-            <p className="mt-3 break-all text-sm text-zinc-200">
-              {user?.email}
+            <p className="text-sm text-zinc-400">Usuários</p>
+            <p className="mt-3 text-4xl font-bold">
+              {subscriptionUsers.length}
             </p>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+            <p className="text-sm text-zinc-400">Admin</p>
+            <p className="mt-3 text-sm break-all">{user?.email}</p>
           </div>
         </section>
 
+        <SubscriptionsManager users={subscriptionUsers} />
+
         <MaterialUploadForm categories={categories} />
-
         <MaterialWithVolumesForm categories={categories} />
-
         <AddVolumeExistingForm materials={materials} />
-
         <MaterialsManager
           materials={managedMaterials}
           categories={categories}
         />
-
-        <section className="mt-10 rounded-[32px] border border-white/10 bg-white/[0.03] p-6 md:p-8">
-          <h2 className="text-2xl font-bold">Categorias cadastradas</h2>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {categories.length > 0 ? (
-              categories.map((category) => (
-                <div
-                  key={category.id}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
-                >
-                  <p className="font-semibold text-white">{category.name}</p>
-                  <p className="mt-2 text-xs uppercase tracking-[0.25em] text-zinc-500">
-                    {category.slug}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-zinc-400">Nenhuma categoria cadastrada.</p>
-            )}
-          </div>
-        </section>
       </div>
     </main>
   );

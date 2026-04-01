@@ -14,7 +14,28 @@ function normalizeNextPath(value: string) {
 }
 
 function isPublicPath(pathname: string) {
-  return pathname === "/" || pathname === "/login" || pathname === "/admin/login";
+  return pathname === "/" || pathname === "/login" || pathname === "/assinatura";
+}
+
+function isSubscriptionExpired(
+  accessExpiresAt: string | null | undefined,
+  subscriptionStatus: string | null | undefined
+) {
+  if (subscriptionStatus === "blocked") {
+    return true;
+  }
+
+  if (!accessExpiresAt) {
+    return true;
+  }
+
+  const expiresAt = new Date(accessExpiresAt);
+
+  if (Number.isNaN(expiresAt.getTime())) {
+    return true;
+  }
+
+  return expiresAt.getTime() < Date.now();
 }
 
 export async function proxy(request: NextRequest) {
@@ -57,6 +78,7 @@ export async function proxy(request: NextRequest) {
   const isAdminRoute = pathname.startsWith("/admin");
   const isAdminLoginPage = pathname === "/admin/login";
   const isUserLoginPage = pathname === "/login";
+  const isExpiredPage = pathname === "/assinatura";
 
   const isAdminUser =
     !!user?.email &&
@@ -103,6 +125,33 @@ export async function proxy(request: NextRequest) {
     url.searchParams.set("next", normalizeNextPath(nextPath));
 
     return NextResponse.redirect(url);
+  }
+
+  if (user && !isAdminUser) {
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("access_expires_at, subscription_status")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const expired = isSubscriptionExpired(
+      profile?.access_expires_at,
+      profile?.subscription_status
+    );
+
+    if (expired && !isExpiredPage) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/assinatura";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+
+    if (!expired && isExpiredPage) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
   }
 
   return response;
