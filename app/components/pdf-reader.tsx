@@ -61,11 +61,27 @@ const SWIPE_THRESHOLD = 70;
 const SWIPE_MAX_VERTICAL_DRIFT = 60;
 const MOBILE_UI_AUTO_HIDE_DELAY = 1800;
 const DESKTOP_UI_AUTO_HIDE_DELAY = 1400;
-const MOBILE_PINCH_SENSITIVITY = 1.15;
+const MOBILE_PINCH_SENSITIVITY = 1.28;
+const MOBILE_ZOOM_SNAP_BACK_THRESHOLD = 1.06;
+const MOBILE_ZOOM_GESTURE_THRESHOLD = 1.08;
 const FALLBACK_PAGE_RATIO = 1.4142;
 
 function clampZoom(value: number) {
   return Math.min(Math.max(Number(value.toFixed(2)), MIN_ZOOM), MAX_ZOOM);
+}
+
+function normalizeCommittedZoom(value: number) {
+  const safeZoom = clampZoom(value);
+
+  if (safeZoom < MOBILE_ZOOM_SNAP_BACK_THRESHOLD) {
+    return DEFAULT_ZOOM;
+  }
+
+  return safeZoom;
+}
+
+function isRealMobileZoom(value: number) {
+  return value >= MOBILE_ZOOM_GESTURE_THRESHOLD;
 }
 
 function getDistanceBetweenTouches(touchA: TouchLike, touchB: TouchLike) {
@@ -295,11 +311,13 @@ export default function PdfReader({
   }
 
   function applyZoom(nextZoom: number, hint?: string) {
-    const safeZoom = clampZoom(nextZoom);
+    const safeZoom = isMobile
+      ? normalizeCommittedZoom(nextZoom)
+      : clampZoom(nextZoom);
     const shell = getActiveShell();
 
     if (isMobile && shell && mobileBaseWidth > 0 && mobileBaseHeight > 0) {
-      const oldZoom = committedZoomLevel || 1;
+      const oldZoom = normalizeCommittedZoom(committedZoomLevel || 1);
       const ratio = safeZoom / oldZoom;
       const viewportCenterX = shell.scrollLeft + shell.clientWidth / 2;
       const viewportCenterY = shell.scrollTop + shell.clientHeight / 2;
@@ -308,6 +326,12 @@ export default function PdfReader({
       setCommittedZoomLevel(safeZoom);
 
       requestAnimationFrame(() => {
+        if (safeZoom === DEFAULT_ZOOM) {
+          shell.scrollLeft = 0;
+          shell.scrollTop = 0;
+          return;
+        }
+
         shell.scrollLeft = Math.max(
           0,
           viewportCenterX * ratio - shell.clientWidth / 2
@@ -546,9 +570,11 @@ export default function PdfReader({
 
       const ratio = currentDistance / pinchStateRef.current.startDistance;
       const adjustedRatio = Math.pow(ratio, MOBILE_PINCH_SENSITIVITY);
-      const nextZoom = clampZoom(
-        pinchStateRef.current.startZoom * adjustedRatio
-      );
+      const rawNextZoom = pinchStateRef.current.startZoom * adjustedRatio;
+      const nextZoom =
+        rawNextZoom < MOBILE_ZOOM_SNAP_BACK_THRESHOLD
+          ? DEFAULT_ZOOM
+          : clampZoom(rawNextZoom);
 
       setZoomLevel(nextZoom);
       setGestureHint(`Zoom: ${Math.round(nextZoom * 100)}%`);
@@ -559,9 +585,16 @@ export default function PdfReader({
       const relativeY =
         pinchStateRef.current.centerY / Math.max(shell.clientHeight, 1);
 
-      const zoomRatio = nextZoom / pinchStateRef.current.startZoom;
+      const baseZoom = Math.max(pinchStateRef.current.startZoom, DEFAULT_ZOOM);
+      const zoomRatio = nextZoom / baseZoom;
 
       requestAnimationFrame(() => {
+        if (nextZoom === DEFAULT_ZOOM) {
+          shell.scrollLeft = 0;
+          shell.scrollTop = 0;
+          return;
+        }
+
         const baseCenterX =
           pinchStateRef.current!.startScrollLeft +
           shell.clientWidth * relativeX;
@@ -589,7 +622,7 @@ export default function PdfReader({
     if (
       event.touches.length === 1 &&
       swipeStateRef.current &&
-      committedZoomLevel <= 1.02
+      !isRealMobileZoom(committedZoomLevel)
     ) {
       const currentTouch = event.touches[0];
       const deltaX = currentTouch.clientX - swipeStateRef.current.startX;
@@ -607,10 +640,27 @@ export default function PdfReader({
     }
 
     if (pinchStateRef.current && event.touches.length < 2) {
+      const finalizedZoom = normalizeCommittedZoom(zoomLevel);
+
       pinchStateRef.current = null;
       gestureHandledRef.current = false;
       setIsPinching(false);
-      setCommittedZoomLevel(zoomLevel);
+      setZoomLevel(finalizedZoom);
+      setCommittedZoomLevel(finalizedZoom);
+
+      if (finalizedZoom === DEFAULT_ZOOM) {
+        requestAnimationFrame(() => {
+          const shell = getActiveShell();
+
+          if (!shell) return;
+
+          shell.scrollLeft = 0;
+          shell.scrollTop = 0;
+        });
+
+        setGestureHint("Zoom: 100%");
+      }
+
       clearGestureHintWithDelay();
       showReaderUiTemporarily();
       return;
@@ -620,7 +670,7 @@ export default function PdfReader({
       return;
     }
 
-    if (committedZoomLevel > 1.02) {
+    if (isRealMobileZoom(committedZoomLevel)) {
       swipeStateRef.current = null;
       gestureHandledRef.current = false;
       return;
@@ -663,11 +713,16 @@ export default function PdfReader({
   }
 
   function handleTouchCancel() {
+    const finalizedZoom = isMobile
+      ? normalizeCommittedZoom(zoomLevel)
+      : clampZoom(zoomLevel);
+
     pinchStateRef.current = null;
     swipeStateRef.current = null;
     gestureHandledRef.current = false;
     setIsPinching(false);
-    setCommittedZoomLevel(zoomLevel);
+    setZoomLevel(finalizedZoom);
+    setCommittedZoomLevel(finalizedZoom);
     clearGestureHintWithDelay();
   }
 
@@ -945,7 +1000,11 @@ export default function PdfReader({
     [zoomLevel]
   );
 
-  const effectiveZoom = isPinching ? zoomLevel : committedZoomLevel;
+  const effectiveZoom = isPinching
+    ? zoomLevel
+    : isMobile
+    ? normalizeCommittedZoom(committedZoomLevel)
+    : committedZoomLevel;
 
   const desktopScale = useMemo(() => {
     return Number((DESKTOP_BASE_SCALE * effectiveZoom).toFixed(2));
