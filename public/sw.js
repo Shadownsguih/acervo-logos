@@ -1,10 +1,10 @@
-const CACHE_NAME = "acervo-logos-v2";
+const CACHE_NAME = "acervo-logos-v3";
 
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
-  "/logo-icon-192.png",
-  "/logo-icon-512.png",
+  "/icon-192.png",
+  "/icon-512.png",
   "/logo-icon.png",
   "/logo-full.png",
 ];

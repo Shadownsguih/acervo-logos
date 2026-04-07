@@ -14,7 +14,14 @@ function normalizeNextPath(value: string) {
 }
 
 function isPublicPath(pathname: string) {
-  return pathname === "/" || pathname === "/login" || pathname === "/assinatura";
+  return (
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/assinatura" ||
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/manifest.json" ||
+    pathname === "/sw.js"
+  );
 }
 
 function isSubscriptionExpired(
@@ -159,6 +166,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|manifest.json|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
