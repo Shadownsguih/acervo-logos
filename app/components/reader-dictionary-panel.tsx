@@ -123,7 +123,7 @@ function EntryContent({ entry }: { entry: EntryResponse }) {
 
       {entry.etymologyMeaning ? (
         <section className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5">
-          <h4 className="text-sm font-semibold text-white">Etimologia da palavra</h4>
+          <h4 className="text-sm font-semibold text-white">Significado</h4>
           <p className="mt-3 text-sm leading-7 text-zinc-200">
             {entry.etymologyMeaning}
           </p>
