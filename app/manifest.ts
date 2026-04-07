@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
     name: "Acervo Logos",
-    short_name: "Logos",
+    short_name: "Acervo Logos",
     description: "Biblioteca teológica digital",
     start_url: "/",
     scope: "/",
@@ -14,6 +14,7 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#05060a",
     lang: "pt-BR",
     categories: ["books", "education", "reference"],
+
     icons: [
       {
         src: "/icon-192.png",
