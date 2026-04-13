@@ -8,6 +8,7 @@ import StudyNotesPanel from "@/app/components/study-notes-panel";
 import ReaderVolumeSwitcher from "@/app/components/reader-volume-switcher";
 import ReaderQuickSwitcher from "@/app/components/reader-quick-switcher";
 import ReaderDictionaryPanel from "@/app/components/reader-dictionary-panel";
+import ReaderLastDocumentTracker from "@/app/components/reader-last-document-tracker";
 
 type MaterialVolume = {
   id: string;
@@ -108,6 +109,13 @@ export default async function ReadPage({
     return (
       <main className="min-h-screen bg-[#0a0a0f] px-4 py-5 pb-24 text-white md:px-6 md:pb-6">
         <div className="mx-auto max-w-7xl">
+          <ReaderLastDocumentTracker
+            documentId={volume.id}
+            documentTitle={volume.title}
+            documentType="volume"
+            readerHref={`/ler/${volume.id}`}
+          />
+
           <div className="mb-4 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-4 md:px-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Link
@@ -233,6 +241,13 @@ export default async function ReadPage({
   return (
     <main className="min-h-screen bg-[#0a0a0f] px-4 py-5 pb-24 text-white md:px-6 md:pb-6">
       <div className="mx-auto max-w-7xl">
+        <ReaderLastDocumentTracker
+          documentId={material.id}
+          documentTitle={material.title}
+          documentType="material"
+          readerHref={`/ler/${material.id}`}
+        />
+
         <div className="mb-4 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-4 md:px-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import CategorySearchToggle from "@/app/components/category-search-toggle";
 import BibleDictionaryExplorer from "@/app/components/bible-dictionary-explorer";
+import CategoryScroll from "@/app/components/category-scroll";
 import { isBibleDictionaryCategory } from "@/lib/bible-dictionary";
 
 type Category = {
@@ -38,6 +39,36 @@ function matchesCategoryRoute(category: Category, routeParam: string) {
   return candidates.includes(normalizedRoute);
 }
 
+function getCategoryAccent(categoryName: string) {
+  const normalized = normalizeCategoryPath(categoryName);
+
+  if (normalized.includes("biblia")) {
+    return {
+      heroGlow: "bg-amber-300/10",
+      badge: "Bíblias",
+    };
+  }
+
+  if (normalized.includes("comentario")) {
+    return {
+      heroGlow: "bg-blue-300/10",
+      badge: "Comentários",
+    };
+  }
+
+  if (normalized.includes("dicionario")) {
+    return {
+      heroGlow: "bg-emerald-300/10",
+      badge: "Consulta",
+    };
+  }
+
+  return {
+    heroGlow: "bg-violet-300/10",
+    badge: "Acervo",
+  };
+}
+
 export default async function CategoryPage({
   params,
   searchParams,
@@ -56,18 +87,20 @@ export default async function CategoryPage({
 
   if (categoriesError) {
     return (
-      <main className="min-h-screen bg-[#0a0a0f] px-6 py-16 text-white">
+      <main className="min-h-screen bg-[#0a0a0f] px-4 py-10 text-white sm:px-6 sm:py-16">
         <div className="mx-auto max-w-5xl">
-          <h1 className="text-3xl font-bold">Categoria não encontrada</h1>
-          <p className="mt-4 text-zinc-400">
-            A categoria que você tentou acessar não existe.
-          </p>
-          <Link
-            href="/categorias"
-            className="mt-6 inline-block rounded-full bg-amber-400 px-6 py-3 font-semibold text-black"
-          >
-            Voltar para categorias
-          </Link>
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/20 sm:p-8">
+            <h1 className="text-3xl font-bold">Categoria não encontrada</h1>
+            <p className="mt-4 text-zinc-400">
+              A categoria que você tentou acessar não existe.
+            </p>
+            <Link
+              href="/categorias"
+              className="mt-6 inline-flex rounded-full bg-amber-400 px-6 py-3 font-semibold text-black transition hover:bg-amber-300"
+            >
+              Voltar para categorias
+            </Link>
+          </div>
         </div>
       </main>
     );
@@ -79,50 +112,64 @@ export default async function CategoryPage({
 
   if (!category) {
     return (
-      <main className="min-h-screen bg-[#0a0a0f] px-6 py-16 text-white">
+      <main className="min-h-screen bg-[#0a0a0f] px-4 py-10 text-white sm:px-6 sm:py-16">
         <div className="mx-auto max-w-5xl">
-          <h1 className="text-3xl font-bold">Categoria não encontrada</h1>
-          <p className="mt-4 text-zinc-400">
-            A categoria que você tentou acessar não existe.
-          </p>
-          <Link
-            href="/categorias"
-            className="mt-6 inline-block rounded-full bg-amber-400 px-6 py-3 font-semibold text-black"
-          >
-            Voltar para categorias
-          </Link>
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/20 sm:p-8">
+            <h1 className="text-3xl font-bold">Categoria não encontrada</h1>
+            <p className="mt-4 text-zinc-400">
+              A categoria que você tentou acessar não existe.
+            </p>
+            <Link
+              href="/categorias"
+              className="mt-6 inline-flex rounded-full bg-amber-400 px-6 py-3 font-semibold text-black transition hover:bg-amber-300"
+            >
+              Voltar para categorias
+            </Link>
+          </div>
         </div>
       </main>
     );
   }
 
+  const accent = getCategoryAccent(category.name);
+
   if (isBibleDictionaryCategory(category)) {
     return (
-      <main className="min-h-screen bg-[#0a0a0f] px-6 py-16 text-white">
+      <main className="min-h-screen bg-[#0a0a0f] px-4 py-5 text-white sm:px-6 sm:py-8">
         <div className="mx-auto max-w-6xl">
           <Link
             href="/categorias"
-            className="mb-8 inline-block text-sm font-medium text-amber-400 hover:text-amber-300"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-200 transition hover:bg-white/10"
           >
-            ← Voltar para categorias
+            <span>←</span>
+            <span>Voltar para categorias</span>
           </Link>
 
-          <section className="mb-10 max-w-3xl">
-            <p className="text-sm uppercase tracking-[0.35em] text-amber-400">
-              Acervo Logos
-            </p>
+          <section className="relative mt-4 overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(160deg,rgba(13,17,28,0.96),rgba(17,24,39,0.94))] px-4 py-5 shadow-[0_24px_70px_-40px_rgba(0,0,0,0.9)] sm:mt-5 sm:rounded-[32px] sm:px-7 sm:py-7">
+            <div
+              className={`pointer-events-none absolute -left-10 top-0 h-24 w-24 rounded-full blur-3xl ${accent.heroGlow}`}
+            />
+            <div className="pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-full bg-amber-300/10 blur-3xl" />
 
-            <h1 className="mt-3 text-4xl font-bold md:text-5xl">
-              {category.name}
-            </h1>
+            <div className="relative max-w-3xl">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-300 sm:text-xs">
+                {accent.badge}
+              </p>
 
-            <p className="mt-4 text-lg text-zinc-300">
-              Área especial de consulta bíblica com pesquisa por termos em
-              português, grego, hebraico e Strong.
-            </p>
+              <h1 className="mt-3 text-[1.7rem] font-bold leading-tight text-white sm:text-4xl md:text-5xl">
+                {category.name}
+              </h1>
+
+              <p className="mt-3 text-sm leading-6 text-zinc-400 sm:text-base sm:leading-7">
+                Área especial de consulta bíblica com pesquisa por termos em
+                português, grego, hebraico e Strong.
+              </p>
+            </div>
           </section>
 
-          <BibleDictionaryExplorer />
+          <div className="mt-6">
+            <BibleDictionaryExplorer />
+          </div>
         </div>
       </main>
     );
@@ -145,18 +192,20 @@ export default async function CategoryPage({
 
   if (materialsError) {
     return (
-      <main className="min-h-screen bg-[#0a0a0f] px-6 py-16 text-white">
+      <main className="min-h-screen bg-[#0a0a0f] px-4 py-10 text-white sm:px-6 sm:py-16">
         <div className="mx-auto max-w-5xl">
-          <h1 className="text-3xl font-bold">Erro ao carregar materiais</h1>
-          <p className="mt-4 text-zinc-400">
-            Não foi possível carregar os materiais desta categoria.
-          </p>
-          <Link
-            href="/categorias"
-            className="mt-6 inline-block rounded-full bg-amber-400 px-6 py-3 font-semibold text-black"
-          >
-            Voltar para categorias
-          </Link>
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/20 sm:p-8">
+            <h1 className="text-3xl font-bold">Erro ao carregar materiais</h1>
+            <p className="mt-4 text-zinc-400">
+              Não foi possível carregar os materiais desta categoria.
+            </p>
+            <Link
+              href="/categorias"
+              className="mt-6 inline-flex rounded-full bg-amber-400 px-6 py-3 font-semibold text-black transition hover:bg-amber-300"
+            >
+              Voltar para categorias
+            </Link>
+          </div>
         </div>
       </main>
     );
@@ -165,50 +214,60 @@ export default async function CategoryPage({
   const typedMaterials = (materials || []) as Material[];
 
   return (
-    <main className="min-h-screen bg-[#0a0a0f] px-6 py-16 text-white">
+    <main className="min-h-screen bg-[#0a0a0f] px-4 py-5 text-white sm:px-6 sm:py-8">
       <div className="mx-auto max-w-6xl">
         <Link
           href="/categorias"
-          className="mb-8 inline-block text-sm font-medium text-amber-400 hover:text-amber-300"
+          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-200 transition hover:bg-white/10"
         >
-          ← Voltar para categorias
+          <span>←</span>
+          <span>Voltar para categorias</span>
         </Link>
 
-        <section className="mb-10 max-w-2xl">
-          <p className="text-sm uppercase tracking-[0.35em] text-amber-400">
-            Acervo Logos
-          </p>
+        <section className="relative mt-4 overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(160deg,rgba(13,17,28,0.96),rgba(17,24,39,0.94))] px-4 py-5 shadow-[0_24px_70px_-40px_rgba(0,0,0,0.9)] sm:mt-5 sm:rounded-[32px] sm:px-7 sm:py-7">
+          <div
+            className={`pointer-events-none absolute -left-10 top-0 h-24 w-24 rounded-full blur-3xl ${accent.heroGlow}`}
+          />
+          <div className="pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-full bg-amber-300/10 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-0 left-1/3 h-20 w-20 rounded-full bg-blue-400/10 blur-3xl" />
 
-          <h1 className="mt-3 text-4xl font-bold md:text-5xl">
-            {category.name}
-          </h1>
+          <div className="relative max-w-3xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-300 sm:text-xs">
+              {accent.badge}
+            </p>
 
-          <p className="mt-4 text-lg text-zinc-300">
-            Explore os materiais organizados nesta categoria e aprofunde seu
-            estudo com mais clareza e ordem.
-          </p>
+            <h1 className="mt-3 text-[1.7rem] font-bold leading-tight text-white sm:text-4xl md:text-5xl">
+              {category.name}
+            </h1>
 
-          <div className="mt-6">
-            <CategorySearchToggle categorySlug={slug} />
+            <p className="mt-3 text-sm leading-6 text-zinc-400 sm:text-base sm:leading-7">
+              Explore os materiais organizados nesta categoria e aprofunde seu
+              estudo com mais clareza e ordem.
+            </p>
+
+            <div className="mt-5 sm:mt-6">
+              <CategorySearchToggle categorySlug={slug} />
+            </div>
           </div>
         </section>
 
         {query ? (
-          <div className="mb-8 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+          <div className="mt-5 rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-4 shadow-lg shadow-black/10 sm:px-5">
             <p className="text-sm text-zinc-300">
-              Resultados para:{" "}
-              <span className="font-medium text-white">“{query}”</span>
+              Resultados para{" "}
+              <span className="font-semibold text-white">“{query}”</span>
             </p>
           </div>
         ) : null}
 
         {typedMaterials.length === 0 ? (
-          <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-12 text-center">
+          <div className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.04] px-6 py-12 text-center shadow-xl shadow-black/10">
             <h2 className="text-xl font-semibold text-white">
               {query
                 ? "Nenhum material encontrado"
                 : "Nenhum material disponível"}
             </h2>
+
             <p className="mt-3 text-zinc-400">
               {query
                 ? "Tente buscar por outro termo dentro desta categoria."
@@ -216,39 +275,59 @@ export default async function CategoryPage({
             </p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {typedMaterials.map((material) => (
-              <Link
-                key={material.id}
-                href={`/material/${material.id}`}
-                className="group rounded-3xl border border-white/10 bg-white/5 p-6 transition hover:-translate-y-1 hover:border-amber-400/40 hover:bg-white/[0.07]"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-xl font-semibold text-white transition group-hover:text-amber-300">
-                      {material.title}
-                    </h2>
-                    <p className="mt-3 line-clamp-3 text-sm text-zinc-400">
-                      {material.description || "Sem descrição cadastrada."}
-                    </p>
-                  </div>
+          <section className="mt-6">
+            <CategoryScroll>
+              {typedMaterials.map((material) => (
+                <Link
+                  key={material.id}
+                  href={`/material/${material.id}`}
+                  className="
+                    group relative min-w-[78vw] max-w-[78vw] flex-shrink-0 snap-center
+                    overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.04]
+                    p-5 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.85)]
+                    transition duration-300 active:scale-[0.985]
+                    hover:-translate-y-1 hover:border-amber-400/30 hover:bg-white/[0.06]
+                    hover:shadow-[0_24px_60px_-25px_rgba(0,0,0,0.9)]
+                    sm:min-w-0 sm:max-w-none sm:snap-start sm:p-6 sm:active:scale-100
+                  "
+                >
+                  <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-300/5 blur-2xl transition group-hover:bg-amber-300/10" />
 
-                  <div className="shrink-0 rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400">
-                    {material.views ?? 0} leituras
-                  </div>
-                </div>
+                  <div className="relative flex min-h-[190px] flex-col justify-between sm:min-h-[220px]">
+                    <div>
+                      <div className="flex items-start justify-between gap-4">
+                        <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-400 sm:text-[11px]">
+                          Material
+                        </span>
 
-                <div className="mt-6 flex items-center justify-between text-sm">
-                  <span className="text-amber-400 transition group-hover:text-amber-300">
-                    Abrir material
-                  </span>
-                  <span className="text-zinc-500 transition group-hover:translate-x-1">
-                    →
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
+                        <div className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-400">
+                          {material.views ?? 0} leituras
+                        </div>
+                      </div>
+
+                      <h2 className="mt-5 text-lg font-semibold leading-snug text-white transition group-hover:text-amber-300 sm:text-2xl">
+                        {material.title}
+                      </h2>
+
+                      <p className="mt-3 line-clamp-4 text-sm leading-6 text-zinc-400 sm:line-clamp-3">
+                        {material.description || "Sem descrição cadastrada."}
+                      </p>
+                    </div>
+
+                    <div className="mt-6 flex items-center justify-between text-sm">
+                      <span className="font-medium text-amber-400 transition group-hover:text-amber-300">
+                        Abrir material
+                      </span>
+
+                      <span className="text-zinc-500 transition group-hover:translate-x-1">
+                        →
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </CategoryScroll>
+          </section>
         )}
       </div>
     </main>

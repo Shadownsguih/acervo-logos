@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { createClient } from "@/lib/supabase-server";
 import HomeMostReadCarousel from "@/app/components/home-most-read-carousel";
+import { getOrCreateDailyBibleVerse } from "@/lib/daily-bible-verse";
 
 export default async function HomePage() {
   const authClient = await createClient();
@@ -13,7 +14,7 @@ export default async function HomePage() {
 
   const primaryHref = isLoggedIn ? "/categorias" : "/login?next=/categorias";
   const primaryLabel = isLoggedIn
-    ? "Acessar materiais do acervo"
+    ? "Acessar categorias"
     : "Entrar para acessar o acervo";
 
   const secondaryHref = "/categorias";
@@ -37,7 +38,9 @@ export default async function HomePage() {
   const ctaDescription = isLoggedIn
     ? "Você já está com acesso liberado. Entre agora nas categorias e continue estudando no Acervo Logos."
     : "Faça login para acessar o conteúdo completo do Acervo Logos.";
-  const ctaButtonLabel = isLoggedIn ? "Acessar materiais" : "Fazer login";
+  const ctaButtonLabel = isLoggedIn ? "Acessar categorias" : "Fazer login";
+
+  const dailyVerse = isLoggedIn ? await getOrCreateDailyBibleVerse() : null;
 
   const { data: materiais, error: materiaisError } = await supabase
     .from("materials")
@@ -91,54 +94,80 @@ export default async function HomePage() {
                   {heroDescription}
                 </p>
 
-                <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:mt-10 md:max-w-none md:flex-row md:flex-wrap md:justify-start">
-                  <Link
-                    href={primaryHref}
-                    className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-amber-400 px-6 py-3 text-sm font-semibold text-black transition hover:bg-amber-300 md:w-auto md:text-base"
-                  >
-                    {primaryLabel}
-                  </Link>
-
-                  <Link
-                    href={secondaryHref}
-                    className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-6 py-3 text-sm font-medium text-white transition hover:bg-white/[0.06] md:w-auto md:text-base"
-                  >
-                    {secondaryLabel}
-                  </Link>
-                </div>
-
                 <p className="mt-5 max-w-2xl text-sm leading-6 text-zinc-400 sm:leading-7">
                   {heroHelperText}
                 </p>
 
-                <div className="mt-8 grid w-full max-w-md gap-3 sm:max-w-xl sm:grid-cols-3 md:max-w-none">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 backdrop-blur-sm">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-                      Ambiente
-                    </p>
-                    <p className="mt-2 text-sm font-medium text-white">
-                      Leitura simples e contínua
-                    </p>
-                  </div>
+                {isLoggedIn ? (
+                  <>
+                    {dailyVerse ? (
+                      <div className="relative mt-8 w-full max-w-2xl overflow-hidden rounded-[30px] border border-amber-300/15 bg-[linear-gradient(135deg,rgba(245,158,11,0.16)_0%,rgba(255,255,255,0.05)_38%,rgba(15,23,42,0.72)_100%)] p-[1px] shadow-[0_24px_80px_-34px_rgba(245,158,11,0.5)]">
+                        <div className="relative overflow-hidden rounded-[29px] bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.16),transparent_28%),linear-gradient(160deg,rgba(10,12,18,0.96),rgba(13,17,28,0.96))] px-4 py-5 sm:px-6 sm:py-6">
+                          <div className="pointer-events-none absolute -right-10 top-0 h-28 w-28 rounded-full bg-amber-300/10 blur-3xl" />
+                          <div className="pointer-events-none absolute bottom-0 left-0 h-24 w-24 rounded-full bg-indigo-400/10 blur-3xl" />
 
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 backdrop-blur-sm">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-                      Organização
-                    </p>
-                    <p className="mt-2 text-sm font-medium text-white">
-                      Categorias e materiais em ordem
-                    </p>
-                  </div>
+                          <div className="relative flex items-start justify-between gap-4">
+                            <div className="max-w-[82%] text-left">
+                              <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/15 bg-amber-300/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200 sm:text-[11px]">
+                                <span className="inline-block h-2 w-2 rounded-full bg-amber-300" />
+                                <span>Versículo do dia</span>
+                              </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 backdrop-blur-sm">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-                      Acesso
-                    </p>
-                    <p className="mt-2 text-sm font-medium text-white">
-                      {isLoggedIn ? "Conta ativa para leitura" : "Login necessário"}
-                    </p>
+                              <p className="mt-4 text-lg leading-8 text-white sm:text-[1.35rem] sm:leading-9">
+                                <span className="mr-1 text-2xl leading-none text-amber-300/80 sm:text-3xl">
+                                  “
+                                </span>
+                                {dailyVerse.text}
+                                <span className="ml-1 text-2xl leading-none text-amber-300/80 sm:text-3xl">
+                                  ”
+                                </span>
+                              </p>
+
+                              <div className="mt-5 flex flex-wrap items-center gap-3">
+                                <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-amber-100 sm:text-sm">
+                                  {dailyVerse.reference}
+                                </span>
+
+                                <span className="inline-flex rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400 sm:text-xs">
+                                  {dailyVerse.version}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-300/10 bg-amber-300/10 text-xl text-amber-200 shadow-lg shadow-black/20 sm:h-14 sm:w-14 sm:text-2xl">
+                              ✨
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className="mt-8 w-full max-w-md">
+                      <Link
+                        href="/categorias"
+                        className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-amber-400 px-6 py-3 text-sm font-semibold text-black transition hover:bg-amber-300 md:text-base"
+                      >
+                        Acessar categorias
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:mt-10">
+                    <Link
+                      href={primaryHref}
+                      className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-amber-400 px-6 py-3 text-sm font-semibold text-black transition hover:bg-amber-300 md:text-base"
+                    >
+                      {primaryLabel}
+                    </Link>
+
+                    <Link
+                      href={secondaryHref}
+                      className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-6 py-3 text-sm font-medium text-white transition hover:bg-white/[0.06] md:text-base"
+                    >
+                      {secondaryLabel}
+                    </Link>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
