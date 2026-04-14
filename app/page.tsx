@@ -1,10 +1,16 @@
 import Link from "next/link";
+import { unstable_noStore as noStore } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { createClient } from "@/lib/supabase-server";
 import HomeMostReadCarousel from "@/app/components/home-most-read-carousel";
 import { getOrCreateDailyBibleVerse } from "@/lib/daily-bible-verse";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function HomePage() {
+  noStore();
+
   const authClient = await createClient();
   const {
     data: { user },

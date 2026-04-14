@@ -1,5 +1,5 @@
-import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -18,8 +18,8 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // Em alguns contextos de Server Component o set pode não estar disponível.
-            // Nesses casos, o middleware cuida da atualização da sessão.
+            // Em alguns contextos do App Router, set no Server Component pode falhar.
+            // Nesse caso, o middleware/proxy continua responsável por atualizar a sessão.
           }
         },
       },
