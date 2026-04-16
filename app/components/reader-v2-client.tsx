@@ -1622,7 +1622,7 @@ export default function ReaderV2Client({
             <div className={bottomPrimaryGroupClass}>
               <button
                 type="button"
-                onClick={goToPreviousPage}
+                onClick={() => goToPreviousPage()}
                 disabled={isZoomed}
                 className={navButtonClass}
               >
@@ -1652,7 +1652,7 @@ export default function ReaderV2Client({
 
               <button
                 type="button"
-                onClick={goToNextPage}
+                onClick={() => goToNextPage()}
                 disabled={isZoomed}
                 className={nextButtonClass}
               >

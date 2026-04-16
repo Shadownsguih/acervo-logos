@@ -54,6 +54,40 @@ type AuthUser = {
   created_at?: string | null;
 };
 
+function AdminSectionShell({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="relative overflow-hidden rounded-[36px] border border-white/10 bg-[#0d1017]/88 shadow-[0_30px_100px_-40px_rgba(0,0,0,0.95)] backdrop-blur-xl">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/35 to-transparent" />
+      <div className="border-b border-white/10 bg-[linear-gradient(135deg,rgba(255,191,36,0.08),rgba(255,255,255,0.02)_38%,rgba(17,24,39,0.18))] px-6 py-6 md:px-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-amber-300">
+          {eyebrow}
+        </p>
+        <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl font-bold text-white md:text-3xl">
+              {title}
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-zinc-300 md:text-base">
+              {description}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="px-1 pb-1">{children}</div>
+    </section>
+  );
+}
+
 export default async function AdminPage() {
   const supabase = await createClient();
 
@@ -157,7 +191,7 @@ export default async function AdminPage() {
 
     return {
       id: authUser.id,
-      email: authUser.email ?? "E-mail não informado",
+      email: authUser.email ?? "E-mail nao informado",
       fullName: profile?.full_name ?? null,
       accessExpiresAt: profile?.access_expires_at ?? null,
       subscriptionStatus: profile?.subscription_status ?? null,
@@ -166,65 +200,206 @@ export default async function AdminPage() {
     };
   });
 
+  const overviewCards = [
+    {
+      label: "Materiais",
+      value: materialsCount ?? 0,
+      tone:
+        "border-white/10 bg-white/[0.04] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
+    },
+    {
+      label: "Volumes",
+      value: volumesCount ?? 0,
+      tone:
+        "border-sky-400/20 bg-sky-400/10 text-white shadow-[0_18px_40px_-28px_rgba(56,189,248,0.9)]",
+    },
+    {
+      label: "Usuarios",
+      value: subscriptionUsers.length,
+      tone:
+        "border-emerald-400/20 bg-emerald-400/10 text-white shadow-[0_18px_40px_-28px_rgba(16,185,129,0.9)]",
+    },
+    {
+      label: "Categorias",
+      value: categories.length,
+      tone:
+        "border-amber-300/20 bg-amber-300/10 text-white shadow-[0_18px_40px_-28px_rgba(251,191,36,0.9)]",
+    },
+  ];
+
   return (
-    <main className="min-h-screen bg-[#05060a] px-6 py-12 text-white">
-      <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.35em] text-amber-400">
-              Painel administrativo
-            </p>
+    <main className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.12),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.08),transparent_18%),linear-gradient(180deg,#05060a_0%,#090b12_45%,#05060a_100%)] px-4 py-6 text-white md:px-6 md:py-8">
+      <div className="mx-auto max-w-7xl">
+        <section className="relative overflow-hidden rounded-[40px] border border-white/10 bg-[linear-gradient(135deg,rgba(251,191,36,0.12),rgba(255,255,255,0.04)_35%,rgba(15,23,42,0.78))] p-6 shadow-[0_40px_120px_-56px_rgba(0,0,0,0.95)] md:p-8 lg:p-10">
+          <div className="absolute -left-20 top-0 h-52 w-52 rounded-full bg-amber-300/10 blur-3xl" />
+          <div className="absolute right-0 top-10 h-44 w-44 rounded-full bg-sky-400/10 blur-3xl" />
 
-            <h1 className="mt-3 text-4xl font-bold">Acervo Logos</h1>
+          <div className="relative flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.38em] text-amber-300">
+                Painel administrativo
+              </p>
 
-            <p className="mt-4 max-w-2xl text-zinc-400">
-              Área administrativa do sistema.
-            </p>
-          </div>
+              <h1 className="mt-4 text-3xl font-bold leading-tight text-white md:text-5xl">
+                Centro de controle do Acervo Logos
+              </h1>
 
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              Sair
-            </button>
-          </form>
-        </div>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-200 md:text-base">
+                Um unico lugar para acompanhar o acervo, liberar acessos,
+                organizar materiais e manter a biblioteca em ordem sem tocar na
+                logica que ja esta funcionando.
+              </p>
 
-        <section className="mt-10 grid gap-6 md:grid-cols-4">
-          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-            <p className="text-sm text-zinc-400">Materiais</p>
-            <p className="mt-3 text-4xl font-bold">{materialsCount ?? 0}</p>
-          </div>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <div className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-zinc-300">
+                  Ambiente interno
+                </div>
+                <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-emerald-200">
+                  Sessao ativa
+                </div>
+              </div>
+            </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-            <p className="text-sm text-zinc-400">Volumes</p>
-            <p className="mt-3 text-4xl font-bold">{volumesCount ?? 0}</p>
-          </div>
+            <div className="w-full max-w-md space-y-4">
+              <div className="rounded-[28px] border border-white/10 bg-black/25 p-5 backdrop-blur-md">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
+                  Administrador
+                </p>
+                <p className="mt-3 break-all text-base font-semibold text-white">
+                  {user?.email}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  Este acesso possui permissao total para gerenciar acervo,
+                  volumes e assinaturas.
+                </p>
+              </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-            <p className="text-sm text-zinc-400">Usuários</p>
-            <p className="mt-3 text-4xl font-bold">
-              {subscriptionUsers.length}
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-            <p className="text-sm text-zinc-400">Admin</p>
-            <p className="mt-3 text-sm break-all">{user?.email}</p>
+              <form action={logoutAction}>
+                <button
+                  type="submit"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  Encerrar sessao
+                </button>
+              </form>
+            </div>
           </div>
         </section>
 
-        <SubscriptionsManager users={subscriptionUsers} />
+        <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {overviewCards.map((card) => (
+            <article
+              key={card.label}
+              className={`rounded-[28px] border p-5 ${card.tone}`}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-zinc-300/90">
+                {card.label}
+              </p>
+              <p className="mt-4 text-4xl font-bold">{card.value}</p>
+            </article>
+          ))}
+        </section>
 
-        <MaterialUploadForm categories={categories} />
-        <MaterialWithVolumesForm categories={categories} />
-        <AddVolumeExistingForm materials={materials} />
-        <MaterialsManager
-          materials={managedMaterials}
-          categories={categories}
-        />
+        <section className="mt-6 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+          <div className="rounded-[32px] border border-white/10 bg-[#0b0d13]/90 p-5 shadow-[0_24px_80px_-50px_rgba(0,0,0,0.95)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-300">
+              Fluxo recomendado
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-sm font-semibold text-white">1. Assinaturas</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  Libere, bloqueie e acompanhe vencimentos sem sair do painel.
+                </p>
+              </div>
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-sm font-semibold text-white">2. Cadastro</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  Adicione materiais simples, obras com volumes e novos PDFs ao
+                  acervo.
+                </p>
+              </div>
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-sm font-semibold text-white">3. Revisao</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  Ajuste ordem, categoria, titulos e estrutura da biblioteca com
+                  mais clareza.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[32px] border border-white/10 bg-[#0b0d13]/90 p-5 shadow-[0_24px_80px_-50px_rgba(0,0,0,0.95)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-sky-300">
+              Resumo rapido
+            </p>
+            <div className="mt-4 space-y-3">
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
+                  Materiais por categoria
+                </p>
+                <p className="mt-2 text-lg font-semibold text-white">
+                  {categories.length} categoria(s) disponivel(is)
+                </p>
+              </div>
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
+                  Estrutura do acervo
+                </p>
+                <p className="mt-2 text-lg font-semibold text-white">
+                  {materialsCount ?? 0} material(is) e {volumesCount ?? 0} volume(s)
+                </p>
+              </div>
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
+                  Acesso de usuarios
+                </p>
+                <p className="mt-2 text-lg font-semibold text-white">
+                  {subscriptionUsers.length} conta(s) monitorada(s)
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-6 space-y-6">
+          <AdminSectionShell
+            eyebrow="Acessos"
+            title="Gestao de assinaturas"
+            description="Monitore o vencimento das contas, renove acessos em poucos cliques e identifique rapidamente quem precisa de atencao."
+          >
+            <SubscriptionsManager users={subscriptionUsers} />
+          </AdminSectionShell>
+
+          <AdminSectionShell
+            eyebrow="Cadastro"
+            title="Entrada de novos materiais"
+            description="Organize o cadastro do acervo em etapas mais claras: material simples, obra com volumes e inclusao de volume em material existente."
+          >
+            <div className="grid gap-6 p-5 md:p-6 xl:grid-cols-3">
+              <div className="rounded-[30px] border border-white/10 bg-black/20 p-1">
+                <MaterialUploadForm categories={categories} />
+              </div>
+              <div className="rounded-[30px] border border-white/10 bg-black/20 p-1">
+                <MaterialWithVolumesForm categories={categories} />
+              </div>
+              <div className="rounded-[30px] border border-white/10 bg-black/20 p-1">
+                <AddVolumeExistingForm materials={materials} />
+              </div>
+            </div>
+          </AdminSectionShell>
+
+          <AdminSectionShell
+            eyebrow="Acervo"
+            title="Organizacao e manutencao"
+            description="Revise obras cadastradas, encontre materiais com mais facilidade e corrija titulos, categorias, volumes e ordem de exibicao sem alterar a parte funcional."
+          >
+            <MaterialsManager
+              materials={managedMaterials}
+              categories={categories}
+            />
+          </AdminSectionShell>
+        </div>
       </div>
     </main>
   );

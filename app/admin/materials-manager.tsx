@@ -523,14 +523,14 @@ export default function MaterialsManager({
   }
 
   return (
-    <section className="mt-10 rounded-[32px] border border-white/10 bg-white/[0.03] p-6 md:p-8">
+    <section className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="max-w-3xl">
-          <p className="text-sm uppercase tracking-[0.35em] text-amber-400">
+          <p className="text-[11px] uppercase tracking-[0.32em] text-amber-300">
             Gerenciamento
           </p>
 
-          <h2 className="mt-3 text-2xl font-bold">Materiais cadastrados</h2>
+          <h2 className="mt-3 text-2xl font-bold text-white md:text-3xl">Materiais cadastrados</h2>
 
           <p className="mt-4 text-zinc-400">
             Esta seção permite localizar obras, conferir sua estrutura e corrigir
@@ -551,7 +551,7 @@ export default function MaterialsManager({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Buscar por título, categoria, posição ou volume"
-            className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
+            className="w-full rounded-2xl border border-white/10 bg-[#11151d] px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-300/60 focus:bg-[#141924]"
           />
         </div>
       </div>
@@ -574,7 +574,7 @@ export default function MaterialsManager({
             return (
               <article
                 key={material.id}
-                className="rounded-3xl border border-white/10 bg-black/20 p-5"
+                className="rounded-[28px] border border-white/10 bg-[#0b0f16]/82 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-white/15"
               >
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 flex-1">
@@ -617,7 +617,7 @@ export default function MaterialsManager({
                     )}
 
                     <div className="mt-5 grid gap-3 md:grid-cols-5">
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
                           Views
                         </p>
@@ -626,7 +626,7 @@ export default function MaterialsManager({
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
                           Volumes
                         </p>
@@ -635,7 +635,7 @@ export default function MaterialsManager({
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
                           PDF próprio
                         </p>
@@ -644,7 +644,7 @@ export default function MaterialsManager({
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
                           Estrutura
                         </p>
@@ -653,7 +653,7 @@ export default function MaterialsManager({
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
                           Ordem
                         </p>
@@ -675,7 +675,7 @@ export default function MaterialsManager({
                           current === material.id ? null : material.id
                         )
                       }
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:border-white/20 hover:bg-white/10"
                     >
                       {isExpanded ? "Ocultar detalhes" : "Ver detalhes"}
                     </button>
@@ -683,7 +683,7 @@ export default function MaterialsManager({
                     <button
                       type="button"
                       onClick={() => startEditingMaterial(material)}
-                      className="rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/15"
+                      className="rounded-2xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-200 transition hover:bg-amber-300/15"
                     >
                       Editar material
                     </button>
@@ -701,7 +701,7 @@ export default function MaterialsManager({
                 {isExpanded ? (
                   <div className="mt-6 border-t border-white/10 pt-6">
                     <div className="grid gap-4 md:grid-cols-3">
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
                           ID do material
                         </p>
@@ -710,7 +710,7 @@ export default function MaterialsManager({
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
                           Slug da categoria
                         </p>
@@ -719,7 +719,7 @@ export default function MaterialsManager({
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
                           Posição atual
                         </p>
@@ -768,7 +768,7 @@ export default function MaterialsManager({
                                   title: event.target.value,
                                 }))
                               }
-                              className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
+                              className="w-full rounded-2xl border border-white/10 bg-[#11151d] px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-300/60 focus:bg-[#141924]"
                             />
                           </div>
 
@@ -789,7 +789,7 @@ export default function MaterialsManager({
                                 }))
                               }
                               rows={5}
-                              className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
+                              className="w-full rounded-2xl border border-white/10 bg-[#11151d] px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-300/60 focus:bg-[#141924]"
                             />
                           </div>
 
@@ -810,7 +810,7 @@ export default function MaterialsManager({
                                     categoryId: event.target.value,
                                   }))
                                 }
-                                className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
+                                className="w-full rounded-2xl border border-white/10 bg-[#11151d] px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-300/60 focus:bg-[#141924]"
                               >
                                 <option value="">Selecione uma categoria</option>
                                 {categories.map((category) => (
@@ -840,7 +840,7 @@ export default function MaterialsManager({
                                     displayOrder: event.target.value,
                                   }))
                                 }
-                                className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
+                                className="w-full rounded-2xl border border-white/10 bg-[#11151d] px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-300/60 focus:bg-[#141924]"
                                 placeholder="Ex.: 2"
                               />
                               <p className="mt-2 text-xs text-zinc-500">
@@ -947,7 +947,7 @@ export default function MaterialsManager({
                             return (
                               <div
                                 key={volume.id}
-                                className="rounded-2xl border border-white/10 bg-zinc-950/70 p-4"
+                                className="rounded-[24px] border border-white/10 bg-zinc-950/70 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                               >
                                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                   <div className="flex-1">
@@ -980,7 +980,7 @@ export default function MaterialsManager({
                                       onClick={() =>
                                         startEditingVolume(material.id, volume)
                                       }
-                                      className="rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/15"
+                                      className="rounded-2xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-200 transition hover:bg-amber-300/15"
                                     >
                                       Editar volume
                                     </button>
@@ -1031,7 +1031,7 @@ export default function MaterialsManager({
                                               title: event.target.value,
                                             }))
                                           }
-                                          className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
+                                          className="w-full rounded-2xl border border-white/10 bg-[#11151d] px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-300/60 focus:bg-[#141924]"
                                         />
                                       </div>
 
@@ -1054,7 +1054,7 @@ export default function MaterialsManager({
                                               volumeNumber: event.target.value,
                                             }))
                                           }
-                                          className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
+                                          className="w-full rounded-2xl border border-white/10 bg-[#11151d] px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-300/60 focus:bg-[#141924]"
                                         />
                                       </div>
 
@@ -1075,7 +1075,7 @@ export default function MaterialsManager({
                                             }))
                                           }
                                           rows={4}
-                                          className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
+                                          className="w-full rounded-2xl border border-white/10 bg-[#11151d] px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-300/60 focus:bg-[#141924]"
                                         />
                                       </div>
                                     </div>
@@ -1145,7 +1145,7 @@ export default function MaterialsManager({
                         </div>
                       </div>
                     ) : (
-                      <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-zinc-400">
+                      <div className="mt-6 rounded-[22px] border border-white/10 bg-white/[0.04] p-4 text-sm text-zinc-400">
                         Este material não possui volumes vinculados.
                       </div>
                     )}
@@ -1155,7 +1155,7 @@ export default function MaterialsManager({
             );
           })
         ) : (
-          <div className="rounded-3xl border border-white/10 bg-black/20 p-8 text-center text-zinc-400">
+          <div className="rounded-[28px] border border-white/10 bg-[#0b0f16]/82 p-8 text-center text-zinc-400">
             Nenhum material encontrado para a busca informada.
           </div>
         )}

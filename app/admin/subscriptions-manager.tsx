@@ -345,10 +345,10 @@ export default function SubscriptionsManager({
       <button
         type="button"
         onClick={() => setActiveFilter(value)}
-        className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
+        className={`rounded-full border px-4 py-2.5 text-xs font-semibold tracking-[0.12em] transition ${
           isActiveFilter
-            ? "border-amber-400 bg-amber-400 text-black"
-            : "border-white/10 bg-white/[0.03] text-zinc-300 hover:bg-white/[0.06]"
+            ? "border-amber-300 bg-amber-300 text-black shadow-[0_12px_28px_-18px_rgba(251,191,36,0.95)]"
+            : "border-white/10 bg-white/[0.04] text-zinc-300 hover:border-white/20 hover:bg-white/[0.08]"
         }`}
       >
         {label}
@@ -358,13 +358,13 @@ export default function SubscriptionsManager({
   }
 
   return (
-    <section className="mt-10 rounded-[32px] border border-white/10 bg-white/[0.03] p-6 md:p-8">
+    <section className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.35em] text-amber-400">
+          <p className="text-[11px] uppercase tracking-[0.32em] text-amber-300">
             Assinaturas
           </p>
-          <h2 className="mt-3 text-2xl font-bold">
+          <h2 className="mt-3 text-2xl font-bold text-white md:text-3xl">
             Controle de acesso dos usuários
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
@@ -386,7 +386,7 @@ export default function SubscriptionsManager({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Digite nome, e-mail ou status"
-            className="w-full rounded-2xl border border-white/10 bg-[#12151d] px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-400/60"
+            className="w-full rounded-2xl border border-white/10 bg-[#11151d] px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-300/60 focus:bg-[#141924]"
           />
         </div>
       </div>
@@ -408,21 +408,21 @@ export default function SubscriptionsManager({
       </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-5">
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+        <div className="rounded-[24px] border border-white/10 bg-[#0b0f16]/85 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
             Total
           </p>
           <p className="mt-3 text-3xl font-bold text-white">{totalUsers}</p>
         </div>
 
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+        <div className="rounded-[24px] border border-emerald-500/20 bg-emerald-500/10 p-4 shadow-[0_18px_40px_-28px_rgba(16,185,129,0.95)]">
           <p className="text-xs uppercase tracking-[0.24em] text-emerald-300">
             Ativos
           </p>
           <p className="mt-3 text-3xl font-bold text-white">{activeUsers}</p>
         </div>
 
-        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
+        <div className="rounded-[24px] border border-yellow-500/20 bg-yellow-500/10 p-4 shadow-[0_18px_40px_-28px_rgba(234,179,8,0.95)]">
           <p className="text-xs uppercase tracking-[0.24em] text-yellow-300">
             Vencendo em breve
           </p>
@@ -431,14 +431,14 @@ export default function SubscriptionsManager({
           </p>
         </div>
 
-        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4">
+        <div className="rounded-[24px] border border-amber-500/20 bg-amber-500/10 p-4 shadow-[0_18px_40px_-28px_rgba(245,158,11,0.95)]">
           <p className="text-xs uppercase tracking-[0.24em] text-amber-300">
             Vencidos
           </p>
           <p className="mt-3 text-3xl font-bold text-white">{expiredUsers}</p>
         </div>
 
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+        <div className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-4 shadow-[0_18px_40px_-28px_rgba(239,68,68,0.95)]">
           <p className="text-xs uppercase tracking-[0.24em] text-red-300">
             Bloqueados
           </p>
@@ -446,10 +446,10 @@ export default function SubscriptionsManager({
         </div>
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-3xl border border-white/10">
+      <div className="mt-8 overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0d13]/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
-            <thead className="bg-white/[0.04]">
+            <thead className="bg-white/[0.04] backdrop-blur-xl">
               <tr className="text-left">
                 <th className="px-4 py-4 text-xs uppercase tracking-[0.2em] text-zinc-500">
                   Usuário
@@ -486,7 +486,7 @@ export default function SubscriptionsManager({
                   return (
                     <tr
                       key={user.id}
-                      className="border-t border-white/10 bg-black/10 align-top"
+                      className="border-t border-white/10 bg-black/10 align-top transition hover:bg-white/[0.03]"
                     >
                       <td className="px-4 py-4">
                         <div>
@@ -531,7 +531,7 @@ export default function SubscriptionsManager({
                             type="button"
                             onClick={() => handleAction(user.id, "renew")}
                             disabled={isLoading}
-                            className="rounded-full bg-amber-400 px-4 py-2 text-xs font-semibold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-full bg-amber-300 px-4 py-2.5 text-xs font-semibold tracking-[0.08em] text-black transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {isLoading ? "Processando..." : "Renovar 31 dias"}
                           </button>
@@ -540,7 +540,7 @@ export default function SubscriptionsManager({
                             type="button"
                             onClick={() => handleAction(user.id, "block")}
                             disabled={isLoading}
-                            className="rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-xs font-semibold tracking-[0.08em] text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {isLoading ? "Processando..." : "Bloquear"}
                           </button>
@@ -549,14 +549,14 @@ export default function SubscriptionsManager({
                             type="button"
                             onClick={() => handleAction(user.id, "reactivate")}
                             disabled={isLoading}
-                            className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-semibold tracking-[0.08em] text-emerald-300 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {isLoading ? "Processando..." : "Reativar"}
                           </button>
 
                           {feedback ? (
                             <div
-                              className={`rounded-2xl border px-3 py-2 text-xs ${
+                              className={`rounded-2xl border px-3 py-2 text-xs leading-6 ${
                                 feedback.type === "success"
                                   ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
                                   : "border-red-500/20 bg-red-500/10 text-red-300"
