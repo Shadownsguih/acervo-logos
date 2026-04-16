@@ -46,7 +46,7 @@ async function readResponseSafely(response: Response): Promise<ApiResult> {
     ) {
       return {
         error:
-          "O arquivo é grande demais para o método antigo de upload. Use o envio direto para o R2.",
+          "O arquivo e grande demais para o metodo antigo de upload. Use o envio direto para o R2.",
       };
     }
 
@@ -76,7 +76,7 @@ async function getDirectUploadTarget(params: {
   }
 
   if (!result.uploadUrl || !result.publicUrl) {
-    throw new Error("A URL assinada do upload não foi retornada.");
+    throw new Error("A URL assinada do upload nao foi retornada.");
   }
 
   return result as Required<DirectUploadTarget>;
@@ -101,6 +101,30 @@ async function uploadPdfDirectly(params: {
     );
   }
 }
+
+function StatusCard({
+  tone,
+  children,
+}: {
+  tone: "success" | "error" | "status";
+  children: React.ReactNode;
+}) {
+  const className =
+    tone === "success"
+      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+      : tone === "error"
+      ? "border-red-500/20 bg-red-500/10 text-red-300"
+      : "border-amber-300/20 bg-amber-300/10 text-amber-200";
+
+  return (
+    <div className={`rounded-[22px] border px-4 py-3 text-sm ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+const fieldClassName =
+  "w-full rounded-[20px] border border-white/10 bg-[#11151d] px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-300/60 focus:bg-[#141924]";
 
 export default function MaterialUploadForm({
   categories,
@@ -129,7 +153,7 @@ export default function MaterialUploadForm({
     setStatusMessage("");
 
     if (!title.trim()) {
-      setErrorMessage("Informe o título do material.");
+      setErrorMessage("Informe o titulo do material.");
       return;
     }
 
@@ -220,135 +244,159 @@ export default function MaterialUploadForm({
   }
 
   return (
-    <section className="mt-10 rounded-[32px] border border-white/10 bg-white/[0.03] p-6 md:p-8">
-      <div className="max-w-3xl">
-        <p className="text-sm uppercase tracking-[0.35em] text-amber-400">
-          Publicação
-        </p>
-
-        <h2 className="mt-3 text-2xl font-bold">Adicionar material simples</h2>
-
-        <p className="mt-4 text-zinc-400">
-          Agora o PDF é enviado diretamente para o Cloudflare R2, ideal para
-          arquivos grandes.
-        </p>
-      </div>
-
-      {successMessage ? (
-        <div className="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-          {successMessage}
-        </div>
-      ) : null}
-
-      {errorMessage ? (
-        <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          {errorMessage}
-        </div>
-      ) : null}
-
-      {statusMessage ? (
-        <div className="mt-6 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
-          {statusMessage}
-        </div>
-      ) : null}
-
-      <form onSubmit={handleSubmit} className="mt-8 grid gap-6">
+    <section className="rounded-[28px] border border-white/10 bg-[#0c1017]/88 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="flex h-full flex-col">
         <div>
-          <label
-            htmlFor="material-title"
-            className="mb-2 block text-sm font-medium text-zinc-200"
-          >
-            Título
-          </label>
-          <input
-            id="material-title"
-            type="text"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
-            placeholder="Ex.: Bíblia de Estudo"
-          />
-        </div>
+          <p className="text-[11px] uppercase tracking-[0.32em] text-amber-300">
+            Publicacao
+          </p>
 
-        <div>
-          <label
-            htmlFor="material-description"
-            className="mb-2 block text-sm font-medium text-zinc-200"
-          >
-            Descrição
-          </label>
-          <textarea
-            id="material-description"
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            rows={4}
-            className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
-            placeholder="Descrição breve do material"
-          />
-        </div>
+          <h3 className="mt-3 text-2xl font-bold text-white">
+            Adicionar material simples
+          </h3>
 
-        <div>
-          <label
-            htmlFor="material-category"
-            className="mb-2 block text-sm font-medium text-zinc-200"
-          >
-            Categoria
-          </label>
-          <select
-            id="material-category"
-            value={categoryId}
-            onChange={(event) => setCategoryId(event.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-amber-400"
-          >
-            <option value="">Selecione uma categoria</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label
-            htmlFor="material-pdf"
-            className="mb-2 block text-sm font-medium text-zinc-200"
-          >
-            Arquivo PDF
-          </label>
-          <input
-            id="material-pdf"
-            type="file"
-            accept="application/pdf"
-            onChange={(event) => {
-              const selectedFile = event.target.files?.[0] ?? null;
-              setFile(selectedFile);
-            }}
-            className="block w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-sm text-zinc-300 file:mr-4 file:rounded-full file:border-0 file:bg-amber-400 file:px-4 file:py-2 file:font-semibold file:text-black hover:file:bg-amber-300"
-          />
-
-          {file ? (
-            <p className="mt-2 text-xs text-zinc-500">
-              Tamanho selecionado: {(file.size / 1024 / 1024).toFixed(2)} MB
-            </p>
-          ) : null}
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="rounded-full bg-amber-400 px-6 py-3 font-semibold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isSubmitting ? "Publicando..." : "Publicar material"}
-          </button>
-
-          <p className="text-sm text-zinc-500">
-            O PDF será enviado direto para o R2 e depois o material será salvo
-            no Supabase.
+          <p className="mt-4 text-sm leading-7 text-zinc-400">
+            Ideal para obras com PDF unico. O arquivo segue direto para o R2 e
+            o cadastro ja volta mais limpo para o acervo.
           </p>
         </div>
-      </form>
+
+        <div className="mt-5 grid gap-3">
+          <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
+            <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
+              Fluxo
+            </p>
+            <p className="mt-2 text-sm font-medium text-white">
+              PDF unico com envio direto
+            </p>
+          </div>
+
+          <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
+            <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
+              Destino
+            </p>
+            <p className="mt-2 text-sm font-medium text-white">
+              Cloudflare R2 + cadastro no Supabase
+            </p>
+          </div>
+        </div>
+
+        {successMessage ? (
+          <div className="mt-6">
+            <StatusCard tone="success">{successMessage}</StatusCard>
+          </div>
+        ) : null}
+
+        {errorMessage ? (
+          <div className="mt-6">
+            <StatusCard tone="error">{errorMessage}</StatusCard>
+          </div>
+        ) : null}
+
+        {statusMessage ? (
+          <div className="mt-6">
+            <StatusCard tone="status">{statusMessage}</StatusCard>
+          </div>
+        ) : null}
+
+        <form onSubmit={handleSubmit} className="mt-8 grid gap-6">
+          <div>
+            <label
+              htmlFor="material-title"
+              className="mb-2 block text-sm font-medium text-zinc-200"
+            >
+              Titulo
+            </label>
+            <input
+              id="material-title"
+              type="text"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              className={fieldClassName}
+              placeholder="Ex.: Biblia de Estudo"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="material-description"
+              className="mb-2 block text-sm font-medium text-zinc-200"
+            >
+              Descricao
+            </label>
+            <textarea
+              id="material-description"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              rows={4}
+              className={fieldClassName}
+              placeholder="Descricao breve do material"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="material-category"
+              className="mb-2 block text-sm font-medium text-zinc-200"
+            >
+              Categoria
+            </label>
+            <select
+              id="material-category"
+              value={categoryId}
+              onChange={(event) => setCategoryId(event.target.value)}
+              className={fieldClassName}
+            >
+              <option value="">Selecione uma categoria</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] p-4">
+            <label
+              htmlFor="material-pdf"
+              className="mb-2 block text-sm font-medium text-zinc-200"
+            >
+              Arquivo PDF
+            </label>
+            <input
+              id="material-pdf"
+              type="file"
+              accept="application/pdf"
+              onChange={(event) => {
+                const selectedFile = event.target.files?.[0] ?? null;
+                setFile(selectedFile);
+              }}
+              className="block w-full rounded-[20px] border border-white/10 bg-[#11151d] px-4 py-3 text-sm text-zinc-300 file:mr-4 file:rounded-full file:border-0 file:bg-amber-300 file:px-4 file:py-2 file:font-semibold file:text-black hover:file:bg-amber-200"
+            />
+
+            {file ? (
+              <div className="mt-3 rounded-[18px] border border-white/10 bg-black/20 px-3 py-2 text-xs text-zinc-400">
+                Tamanho selecionado: {(file.size / 1024 / 1024).toFixed(2)} MB
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="inline-flex items-center justify-center rounded-full bg-amber-300 px-6 py-3 font-semibold text-black transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSubmitting ? "Publicando..." : "Publicar material"}
+            </button>
+
+            <p className="text-sm leading-6 text-zinc-500">
+              O PDF sera enviado direto para o R2 e depois o material sera
+              salvo no Supabase.
+            </p>
+          </div>
+        </form>
+      </div>
     </section>
   );
 }

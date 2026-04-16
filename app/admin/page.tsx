@@ -58,33 +58,82 @@ function AdminSectionShell({
   eyebrow,
   title,
   description,
+  defaultOpen = false,
   children,
 }: {
   eyebrow: string;
   title: string;
   description: string;
+  defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-[36px] border border-white/10 bg-[#0d1017]/88 shadow-[0_30px_100px_-40px_rgba(0,0,0,0.95)] backdrop-blur-xl">
+    <details
+      open={defaultOpen}
+      className="group relative overflow-hidden rounded-[36px] border border-white/10 bg-[#0d1017]/88 shadow-[0_30px_100px_-40px_rgba(0,0,0,0.95)] backdrop-blur-xl"
+    >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/35 to-transparent" />
-      <div className="border-b border-white/10 bg-[linear-gradient(135deg,rgba(255,191,36,0.08),rgba(255,255,255,0.02)_38%,rgba(17,24,39,0.18))] px-6 py-6 md:px-8">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-amber-300">
-          {eyebrow}
-        </p>
-        <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+
+      <summary className="list-none cursor-pointer border-b border-white/10 bg-[linear-gradient(135deg,rgba(255,191,36,0.08),rgba(255,255,255,0.02)_38%,rgba(17,24,39,0.18))] px-6 py-6 md:px-8">
+        <div className="flex items-start justify-between gap-4">
           <div className="max-w-3xl">
-            <h2 className="text-2xl font-bold text-white md:text-3xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-amber-300">
+              {eyebrow}
+            </p>
+            <h2 className="mt-3 text-2xl font-bold text-white md:text-3xl">
               {title}
             </h2>
             <p className="mt-3 text-sm leading-7 text-zinc-300 md:text-base">
               {description}
             </p>
           </div>
+
+          <div className="mt-1 inline-flex min-w-[8.5rem] items-center justify-center rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-200 transition group-open:border-amber-300/30 group-open:bg-amber-300/10 group-open:text-amber-100">
+            <span className="group-open:hidden">Expandir</span>
+            <span className="hidden group-open:inline">Recolher</span>
+          </div>
         </div>
-      </div>
+      </summary>
+
       <div className="px-1 pb-1">{children}</div>
-    </section>
+    </details>
+  );
+}
+
+function AdminSubsectionShell({
+  title,
+  description,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  description: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className="group rounded-[30px] border border-white/10 bg-black/20"
+    >
+      <summary className="list-none cursor-pointer px-5 py-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="max-w-xl">
+            <h3 className="text-lg font-semibold text-white">{title}</h3>
+            <p className="mt-2 text-sm leading-6 text-zinc-400">
+              {description}
+            </p>
+          </div>
+
+          <div className="mt-1 inline-flex min-w-[7.5rem] items-center justify-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-200 transition group-open:border-amber-300/30 group-open:bg-amber-300/10 group-open:text-amber-100">
+            <span className="group-open:hidden">Expandir</span>
+            <span className="hidden group-open:inline">Recolher</span>
+          </div>
+        </div>
+      </summary>
+
+      <div className="px-1 pb-1">{children}</div>
+    </details>
   );
 }
 
@@ -367,6 +416,7 @@ export default async function AdminPage() {
             eyebrow="Acessos"
             title="Gestao de assinaturas"
             description="Monitore o vencimento das contas, renove acessos em poucos cliques e identifique rapidamente quem precisa de atencao."
+            defaultOpen
           >
             <SubscriptionsManager users={subscriptionUsers} />
           </AdminSectionShell>
@@ -377,15 +427,25 @@ export default async function AdminPage() {
             description="Organize o cadastro do acervo em etapas mais claras: material simples, obra com volumes e inclusao de volume em material existente."
           >
             <div className="grid gap-6 p-5 md:p-6 xl:grid-cols-3">
-              <div className="rounded-[30px] border border-white/10 bg-black/20 p-1">
+              <AdminSubsectionShell
+                title="Material simples"
+                description="Cadastro direto para obras com um unico PDF."
+                defaultOpen
+              >
                 <MaterialUploadForm categories={categories} />
-              </div>
-              <div className="rounded-[30px] border border-white/10 bg-black/20 p-1">
+              </AdminSubsectionShell>
+              <AdminSubsectionShell
+                title="Material com volumes"
+                description="Crie a obra principal e publique todos os volumes na mesma etapa."
+              >
                 <MaterialWithVolumesForm categories={categories} />
-              </div>
-              <div className="rounded-[30px] border border-white/10 bg-black/20 p-1">
+              </AdminSubsectionShell>
+              <AdminSubsectionShell
+                title="Adicionar volume existente"
+                description="Inclua um novo volume em uma obra que ja esta cadastrada."
+              >
                 <AddVolumeExistingForm materials={materials} />
-              </div>
+              </AdminSubsectionShell>
             </div>
           </AdminSectionShell>
 
