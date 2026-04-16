@@ -58,25 +58,12 @@ type FeedbackState = {
   targetId: string;
 };
 
-function sortMaterialsForManager(items: ManagedMaterial[]) {
-  return [...items].sort((a, b) => {
-    const orderA =
-      typeof a.displayOrder === "number" && a.displayOrder > 0
-        ? a.displayOrder
-        : Number.MAX_SAFE_INTEGER;
-
-    const orderB =
-      typeof b.displayOrder === "number" && b.displayOrder > 0
-        ? b.displayOrder
-        : Number.MAX_SAFE_INTEGER;
-
-    if (orderA !== orderB) {
-      return orderA - orderB;
-    }
-
-    return a.title.localeCompare(b.title, "pt-BR");
-  });
-}
+type GroupedMaterials = {
+  id: string;
+  name: string;
+  slug: string;
+  materials: ManagedMaterial[];
+};
 
 export default function MaterialsManager({
   materials,
@@ -121,10 +108,51 @@ export default function MaterialsManager({
 
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
-  const orderedMaterials = useMemo(
-    () => sortMaterialsForManager(materials),
-    [materials]
-  );
+  const orderedMaterials = useMemo(() => {
+    const categoryOrder = new Map(
+      categories.map((category, index) => [category.id, index])
+    );
+
+    return [...materials].sort((a, b) => {
+      const categoryIdA = a.category?.id ?? "uncategorized";
+      const categoryIdB = b.category?.id ?? "uncategorized";
+
+      if (categoryIdA !== categoryIdB) {
+        if (categoryIdA === "uncategorized") {
+          return 1;
+        }
+
+        if (categoryIdB === "uncategorized") {
+          return -1;
+        }
+
+        const categoryIndexA =
+          categoryOrder.get(categoryIdA) ?? Number.MAX_SAFE_INTEGER;
+        const categoryIndexB =
+          categoryOrder.get(categoryIdB) ?? Number.MAX_SAFE_INTEGER;
+
+        if (categoryIndexA !== categoryIndexB) {
+          return categoryIndexA - categoryIndexB;
+        }
+      }
+
+      const orderA =
+        typeof a.displayOrder === "number" && a.displayOrder > 0
+          ? a.displayOrder
+          : Number.MAX_SAFE_INTEGER;
+
+      const orderB =
+        typeof b.displayOrder === "number" && b.displayOrder > 0
+          ? b.displayOrder
+          : Number.MAX_SAFE_INTEGER;
+
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+
+      return a.title.localeCompare(b.title, "pt-BR");
+    });
+  }, [categories, materials]);
 
   const filteredMaterials = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -152,6 +180,27 @@ export default function MaterialsManager({
       return searchableContent.includes(normalizedSearch);
     });
   }, [orderedMaterials, search]);
+
+  const groupedMaterials = useMemo<GroupedMaterials[]>(() => {
+    const groups = new Map<string, GroupedMaterials>();
+
+    for (const material of filteredMaterials) {
+      const groupId = material.category?.id ?? "uncategorized";
+
+      if (!groups.has(groupId)) {
+        groups.set(groupId, {
+          id: groupId,
+          name: material.category?.name ?? "Sem categoria",
+          slug: material.category?.slug ?? "uncategorized",
+          materials: [],
+        });
+      }
+
+      groups.get(groupId)?.materials.push(material);
+    }
+
+    return Array.from(groups.values());
+  }, [filteredMaterials]);
 
   function startEditingMaterial(material: ManagedMaterial) {
     setFeedback(null);
@@ -557,8 +606,88 @@ export default function MaterialsManager({
       </div>
 
       <div className="mt-8 space-y-4">
-        {filteredMaterials.length > 0 ? (
-          filteredMaterials.map((material) => {
+        {groupedMaterials.length > 0 ? (
+          groupedMaterials.map((group, groupIndex) => (
+            <details
+              key={group.id}
+              open={groupIndex === 0}
+              className="group overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(17,23,33,0.92),rgba(11,15,22,0.86))] shadow-[0_18px_40px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,255,255,0.04)] transition"
+            >
+              <summary className="flex cursor-pointer list-none flex-col gap-5 px-5 py-5 marker:hidden md:px-6 md:py-6">
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-400/25 bg-amber-400/12 text-lg text-amber-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                        {groupIndex + 1}
+                      </span>
+
+                      <div className="min-w-0">
+                        <p className="text-[11px] uppercase tracking-[0.34em] text-amber-300/90">
+                          Bloco de categoria
+                        </p>
+
+                        <h3 className="mt-2 truncate text-2xl font-bold text-white md:text-[28px]">
+                          {group.name}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400">
+                      Os materiais desta categoria ficam reunidos neste painel para
+                      facilitar revisão, organização e manutenção.
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 flex-wrap items-center gap-3">
+                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.18em] text-zinc-300">
+                      {group.slug}
+                    </div>
+
+                    <div className="rounded-full border border-amber-400/20 bg-amber-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200 transition group-open:bg-amber-400/16">
+                      <span className="group-open:hidden">Expandir</span>
+                      <span className="hidden group-open:inline">Recolher</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">
+                      Materiais
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-white">
+                      {group.materials.length}
+                    </p>
+                  </div>
+
+                  <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">
+                      Tipo dominante
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-white">
+                      {group.materials.some((material) => material.volumes.length > 0)
+                        ? "Com volumes"
+                        : "Materiais simples"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">
+                      Estado do bloco
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-white">
+                      <span className="group-open:hidden">Fechado para leitura rápida</span>
+                      <span className="hidden group-open:inline">
+                        Aberto para gerenciamento
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </summary>
+
+              <div className="border-t border-white/10 px-4 pb-4 pt-4 md:px-5 md:pb-5">
+                <div className="space-y-4">
+                  {group.materials.map((material) => {
             const isExpanded = expandedMaterialId === material.id;
             const isEditingMaterial = editingMaterialId === material.id;
             const hasVolumes = material.volumes.length > 0;
@@ -1153,7 +1282,11 @@ export default function MaterialsManager({
                 ) : null}
               </article>
             );
-          })
+                  })}
+                </div>
+              </div>
+            </details>
+          ))
         ) : (
           <div className="rounded-[28px] border border-white/10 bg-[#0b0f16]/82 p-8 text-center text-zinc-400">
             Nenhum material encontrado para a busca informada.
