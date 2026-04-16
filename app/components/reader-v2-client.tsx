@@ -263,30 +263,50 @@ export default function ReaderV2Client({
     [readingProgressKey]
   );
 
-  function goToPage(nextValue: number) {
+  function goToPage(nextValue: number, shouldRevealChrome = true) {
     const safePage = clamp(nextValue, 1, numPages || 1);
     setPageNumber(safePage);
     setPageInput(String(safePage));
     setErrorMessage("");
-    revealChromeTemporarily(`Pagina ${safePage} de ${numPages || safePage}`);
+    const nextHint = `Pagina ${safePage} de ${numPages || safePage}`;
+
+    setStatusHint(nextHint);
+
+    if (shouldRevealChrome) {
+      revealChromeTemporarily(nextHint);
+    }
   }
 
-  function goToPreviousPage() {
+  function goToPreviousPage(shouldRevealChrome = true) {
     setPageNumber((current) => {
       const nextValue = Math.max(current - 1, 1);
       setPageInput(String(nextValue));
       setErrorMessage("");
-      revealChromeTemporarily(`Pagina ${nextValue} de ${numPages || nextValue}`);
+      const nextHint = `Pagina ${nextValue} de ${numPages || nextValue}`;
+
+      setStatusHint(nextHint);
+
+      if (shouldRevealChrome) {
+        revealChromeTemporarily(nextHint);
+      }
+
       return nextValue;
     });
   }
 
-  function goToNextPage() {
+  function goToNextPage(shouldRevealChrome = true) {
     setPageNumber((current) => {
       const nextValue = Math.min(current + 1, numPages || 1);
       setPageInput(String(nextValue));
       setErrorMessage("");
-      revealChromeTemporarily(`Pagina ${nextValue} de ${numPages || nextValue}`);
+      const nextHint = `Pagina ${nextValue} de ${numPages || nextValue}`;
+
+      setStatusHint(nextHint);
+
+      if (shouldRevealChrome) {
+        revealChromeTemporarily(nextHint);
+      }
+
       return nextValue;
     });
   }
@@ -498,7 +518,9 @@ export default function ReaderV2Client({
   }
 
   function handleTouchStart(event: ReactTouchEvent<HTMLDivElement>) {
-    revealChromeTemporarily();
+    if (isChromeVisible) {
+      revealChromeTemporarily();
+    }
 
     if (event.touches.length === 1) {
       const now = Date.now();
@@ -604,7 +626,10 @@ export default function ReaderV2Client({
         pinchStartDistanceRef.current = null;
         pinchStartZoomRef.current = null;
         pinchActiveRef.current = false;
-        revealChromeTemporarily();
+
+        if (isChromeVisible) {
+          revealChromeTemporarily();
+        }
       }
       return;
     }
@@ -637,12 +662,12 @@ export default function ReaderV2Client({
     }
 
     if (deltaX <= -SWIPE_THRESHOLD) {
-      goToNextPage();
+      goToNextPage(false);
       return;
     }
 
     if (deltaX >= SWIPE_THRESHOLD) {
-      goToPreviousPage();
+      goToPreviousPage(false);
     }
   }
 
