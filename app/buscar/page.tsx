@@ -10,7 +10,7 @@ type Material = {
 export default async function BuscarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; reader?: string }>;
 }) {
   const params = await searchParams;
   const query = params.q?.trim() || "";
@@ -60,15 +60,14 @@ export default async function BuscarPage({
         <h1 className="text-3xl font-bold sm:text-4xl">Resultados da busca</h1>
         <p className="mt-3 text-sm leading-6 text-zinc-400 sm:text-base">
           Termo pesquisado:{" "}
-          <span className="font-medium text-white">"{query}"</span>
+          <span className="font-medium text-white">&quot;{query}&quot;</span>
         </p>
 
         {materials.length > 0 ? (
           <div className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3">
             {materials.map((material) => (
-              <Link
+              <article
                 key={material.id}
-                href={`/material/${material.id}`}
                 className="rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:border-amber-400/40 hover:bg-white/[0.07] sm:p-6"
               >
                 <h2 className="text-lg font-semibold sm:text-xl">
@@ -76,13 +75,25 @@ export default async function BuscarPage({
                 </h2>
 
                 <p className="mt-3 text-sm leading-6 text-zinc-300">
-                  {material.description || "Sem descrição cadastrada."}
+                  {material.description || "Sem descricao cadastrada."}
                 </p>
 
-                <span className="mt-5 inline-block text-sm font-medium text-amber-400 sm:mt-6">
-                  Ver material →
-                </span>
-              </Link>
+                <div className="mt-5 flex flex-wrap items-center gap-2 sm:mt-6">
+                  <Link
+                    href={`/ler/${material.id}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm font-medium text-amber-100 transition hover:bg-amber-300/15"
+                  >
+                    Abrir leitura
+                  </Link>
+
+                  <Link
+                    href={`/material/${material.id}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:bg-white/[0.08]"
+                  >
+                    Ver material
+                  </Link>
+                </div>
+              </article>
             ))}
           </div>
         ) : (

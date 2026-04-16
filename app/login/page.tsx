@@ -1,13 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Cinzel } from "next/font/google";
 import { loginUserAction } from "./actions";
 import LoginMobilePanels from "./login-mobile-panels";
-
-const cinzel = Cinzel({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
 
 function getErrorMessage(erro?: string) {
   switch (erro) {
@@ -64,7 +58,7 @@ export default async function LoginPage({
             nextPath={nextPath}
             errorMessage={errorMessage}
             whatsappLink={whatsappLink}
-            cinzelClassName={cinzel.className}
+            cinzelClassName="font-serif"
           />
 
           <div className="hidden overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.05] shadow-[0_25px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl lg:block">
@@ -90,7 +84,7 @@ export default async function LoginPage({
                   <div className="flex flex-1 items-center justify-center">
                     <div className="w-full max-w-[340px] text-center">
                       <p
-                        className={`${cinzel.className} text-[50px] font-medium uppercase leading-[0.92] tracking-[0.08em] text-white/90`}
+                        className="font-serif text-[50px] font-medium uppercase leading-[0.92] tracking-[0.08em] text-white/90"
                       >
                         Bem vindo
                       </p>
@@ -132,7 +126,7 @@ export default async function LoginPage({
 
                   <div className="mt-16 text-center">
                     <h2
-                      className={`${cinzel.className} text-[38px] font-medium uppercase tracking-[0.24em] text-white/92 md:text-[56px]`}
+                      className="font-serif text-[38px] font-medium uppercase tracking-[0.24em] text-white/92 md:text-[56px]"
                     >
                       Faça Login
                     </h2>

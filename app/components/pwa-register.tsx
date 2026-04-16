@@ -12,8 +12,27 @@ export default function PwaRegister() {
       return;
     }
 
+    async function resetDevelopmentPwaState() {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+
+      await Promise.all(
+        registrations.map((registration) => registration.unregister())
+      );
+
+      if ("caches" in window) {
+        const cacheKeys = await window.caches.keys();
+
+        await Promise.all(cacheKeys.map((cacheKey) => window.caches.delete(cacheKey)));
+      }
+    }
+
     async function registerServiceWorker() {
       try {
+        if (process.env.NODE_ENV !== "production") {
+          await resetDevelopmentPwaState();
+          return;
+        }
+
         const registration = await navigator.serviceWorker.register("/sw.js", {
           scope: "/",
           updateViaCache: "none",

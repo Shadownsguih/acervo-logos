@@ -8,6 +8,7 @@ type LastReadDocument = {
   documentTitle: string;
   documentType: "material" | "volume";
   readerHref: string;
+  lastPage?: number | null;
   updatedAt: number;
 };
 
@@ -22,21 +23,21 @@ function formatRelativeText(updatedAt: number) {
   const day = 24 * hour;
 
   if (diffMs < minute) {
-    return "Lido agora há pouco";
+    return "Lido agora ha pouco";
   }
 
   if (diffMs < hour) {
     const minutes = Math.floor(diffMs / minute);
-    return minutes === 1 ? "Lido há 1 minuto" : `Lido há ${minutes} minutos`;
+    return minutes === 1 ? "Lido ha 1 minuto" : `Lido ha ${minutes} minutos`;
   }
 
   if (diffMs < day) {
     const hours = Math.floor(diffMs / hour);
-    return hours === 1 ? "Lido há 1 hora" : `Lido há ${hours} horas`;
+    return hours === 1 ? "Lido ha 1 hora" : `Lido ha ${hours} horas`;
   }
 
   const days = Math.floor(diffMs / day);
-  return days === 1 ? "Lido há 1 dia" : `Lido há ${days} dias`;
+  return days === 1 ? "Lido ha 1 dia" : `Lido ha ${days} dias`;
 }
 
 export default function CategoriesContinueReadingCard() {
@@ -71,6 +72,12 @@ export default function CategoriesContinueReadingCard() {
         documentTitle: parsedValue.documentTitle,
         documentType: parsedValue.documentType as "material" | "volume",
         readerHref: parsedValue.readerHref,
+        lastPage:
+          typeof parsedValue.lastPage === "number" &&
+          Number.isInteger(parsedValue.lastPage) &&
+          parsedValue.lastPage >= 1
+            ? parsedValue.lastPage
+            : null,
         updatedAt: parsedValue.updatedAt,
       });
     } catch {
@@ -115,13 +122,13 @@ export default function CategoriesContinueReadingCard() {
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-zinc-400">
-              Abra um material do acervo e ele aparecerá aqui para você retomar
+              Abra um material do acervo e ele aparecera aqui para voce retomar
               depois com mais facilidade.
             </p>
           </div>
 
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/5 text-xl text-zinc-300">
-            📖
+            Livro
           </div>
         </div>
       </div>
@@ -140,19 +147,25 @@ export default function CategoriesContinueReadingCard() {
             {lastRead.documentTitle}
           </h2>
 
-          <p className="mt-2 text-sm text-indigo-100/80">
-            {subtitle}
-          </p>
+          <p className="mt-2 text-sm text-indigo-100/80">{subtitle}</p>
         </div>
 
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/15 text-2xl text-indigo-300 shadow-lg shadow-black/20 sm:h-14 sm:w-14">
-          📘
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/15 text-sm font-semibold text-indigo-100 shadow-lg shadow-black/20 sm:h-14 sm:w-14">
+          Ler
         </div>
       </div>
 
       <div className="mt-5 flex items-center justify-between gap-3">
-        <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-zinc-300">
-          {lastRead.documentType === "volume" ? "Volume" : "Material"}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-zinc-300">
+            {lastRead.documentType === "volume" ? "Volume" : "Material"}
+          </div>
+
+          {lastRead.lastPage ? (
+            <div className="inline-flex rounded-full border border-indigo-300/15 bg-indigo-400/10 px-3 py-2 text-xs font-medium text-indigo-100">
+              Pagina {lastRead.lastPage}
+            </div>
+          ) : null}
         </div>
 
         <Link
@@ -160,7 +173,7 @@ export default function CategoriesContinueReadingCard() {
           className="inline-flex items-center gap-2 rounded-full bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-400"
         >
           <span>Retomar leitura</span>
-          <span aria-hidden="true">→</span>
+          <span aria-hidden="true">-&gt;</span>
         </Link>
       </div>
     </div>

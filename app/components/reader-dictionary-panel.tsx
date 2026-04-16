@@ -144,7 +144,15 @@ function EntryContent({ entry }: { entry: EntryResponse }) {
   );
 }
 
-export default function ReaderDictionaryPanel() {
+export default function ReaderDictionaryPanel({
+  variant = "floating",
+  embeddedLabel = "Dicionário",
+  onOpenChange,
+}: {
+  variant?: "floating" | "embedded";
+  embeddedLabel?: string;
+  onOpenChange?: (isOpen: boolean) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -156,6 +164,8 @@ export default function ReaderDictionaryPanel() {
   const [loadingEntry, setLoadingEntry] = useState(false);
 
   const hasQuery = query.trim().length > 0;
+  const isEmbedded = variant === "embedded";
+  const isEmbeddedDesktop = isEmbedded && !isMobile;
 
   useEffect(() => {
     function handleResize() {
@@ -167,6 +177,14 @@ export default function ReaderDictionaryPanel() {
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+
+    return () => {
+      onOpenChange?.(false);
+    };
+  }, [isOpen, onOpenChange]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -259,14 +277,28 @@ export default function ReaderDictionaryPanel() {
       <button
         type="button"
         onClick={openPanel}
-        className={`fixed z-40 inline-flex items-center gap-2 rounded-full border border-white/10 bg-sky-400 font-semibold text-black shadow-lg transition hover:bg-sky-300 ${
-          isMobile
-            ? "bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 px-3.5 py-3 text-[13px]"
-            : "bottom-5 left-5 px-4 py-3 text-sm"
-        }`}
+        className={
+          isEmbedded
+            ? `inline-flex items-center justify-center gap-2 border font-medium transition ${
+                isMobile
+                  ? "rounded-xl border-white/10 bg-black/20 px-3 py-2 text-xs text-white hover:bg-white/5"
+                  : "rounded-full border-white/12 bg-[#10131a]/92 px-3.5 py-2.5 text-[12px] text-zinc-100 shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-sm hover:border-white/20 hover:bg-[#151922]"
+              }`
+            : `fixed z-40 inline-flex items-center gap-2 rounded-full border border-white/10 bg-sky-400 font-semibold text-black shadow-lg transition hover:bg-sky-300 ${
+                isMobile
+                  ? "bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 px-3.5 py-3 text-[13px]"
+                  : "bottom-5 left-5 px-4 py-3 text-sm"
+              }`
+        }
       >
         <span aria-hidden="true">📖</span>
-        <span>{isMobile ? "Dicionário" : "Dicionário bíblico"}</span>
+        <span>
+          {isEmbedded
+            ? embeddedLabel
+            : isMobile
+            ? "Dicionário"
+            : "Dicionário bíblico"}
+        </span>
       </button>
 
       {isOpen ? (
@@ -280,6 +312,8 @@ export default function ReaderDictionaryPanel() {
             className={`pointer-events-auto overflow-hidden border border-white/10 bg-[#0f1117] text-white shadow-2xl ${
               isMobile
                 ? "fixed inset-x-0 bottom-0 h-[84vh] rounded-t-[1.5rem] rounded-b-none"
+                : isEmbeddedDesktop
+                ? "fixed bottom-24 right-6 w-[min(1120px,calc(100vw-4rem))] rounded-[28px]"
                 : isMinimized
                 ? "fixed bottom-5 left-5 h-[92px] w-[360px] rounded-2xl"
                 : "fixed bottom-5 left-5 h-[76vh] w-[min(920px,calc(100vw-3rem))] max-w-[920px] rounded-2xl"
@@ -287,13 +321,21 @@ export default function ReaderDictionaryPanel() {
             style={
               isMobile
                 ? { paddingBottom: "env(safe-area-inset-bottom)" }
+                : isEmbeddedDesktop
+                ? { height: "min(78vh, 760px)" }
                 : undefined
             }
           >
             <div className="flex h-full min-h-0 flex-col">
               <div
                 className={`shrink-0 border-b border-white/10 bg-[#12151d] ${
-                  isMobile ? "px-4 py-3" : isMinimized ? "px-3 py-2" : "px-4 py-3"
+                  isMobile
+                    ? "px-4 py-3"
+                    : isEmbeddedDesktop
+                    ? "px-5 py-4"
+                    : isMinimized
+                    ? "px-3 py-2"
+                    : "px-4 py-3"
                 }`}
               >
                 {isMobile ? (
@@ -338,7 +380,7 @@ export default function ReaderDictionaryPanel() {
                       isMinimized ? "gap-1.5" : "gap-2"
                     }`}
                   >
-                    {!isMobile ? (
+                    {!isMobile && !isEmbeddedDesktop ? (
                       <button
                         type="button"
                         onClick={() => setIsMinimized((prev) => !prev)}
@@ -488,7 +530,13 @@ export default function ReaderDictionaryPanel() {
                       </div>
                     </div>
                   ) : (
-                    <div className="grid min-h-0 flex-1 grid-cols-[340px_minmax(0,1fr)]">
+                    <div
+                      className={`grid min-h-0 flex-1 ${
+                        isEmbeddedDesktop
+                          ? "grid-cols-[320px_minmax(0,1fr)]"
+                          : "grid-cols-[340px_minmax(0,1fr)]"
+                      }`}
+                    >
                       <aside className="flex min-h-0 flex-col border-r border-white/10 bg-[#11141b]">
                         <div className="shrink-0 border-b border-white/10 p-4">
                           <label htmlFor="reader-dictionary-desktop-search" className="sr-only">

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { createClient } from "@/lib/supabase-server";
 import { logoutUserAction } from "@/app/login/actions";
@@ -9,16 +8,6 @@ import UserMenuDropdown from "@/app/components/user-menu-dropdown";
 import HeaderSearch from "@/app/components/header-search";
 import PwaRegister from "@/app/components/pwa-register";
 import PwaInstallButton from "@/app/components/pwa-install-button";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Acervo Logos",
@@ -79,7 +68,7 @@ export default async function RootLayout({
     <html
       lang="pt-BR"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
       <body
         suppressHydrationWarning

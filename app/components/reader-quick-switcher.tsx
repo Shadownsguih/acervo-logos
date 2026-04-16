@@ -15,6 +15,9 @@ type ReaderSearchItem = {
 type ReaderQuickSwitcherProps = {
   currentDocumentTitle: string;
   variant?: "floating" | "embedded";
+  floatingLabel?: string;
+  readerBasePath?: "/ler";
+  readerQueryValue?: "v1" | "v2";
 };
 
 const MOBILE_BREAKPOINT = 768;
@@ -22,6 +25,9 @@ const MOBILE_BREAKPOINT = 768;
 export default function ReaderQuickSwitcher({
   currentDocumentTitle,
   variant = "floating",
+  floatingLabel,
+  readerBasePath = "/ler",
+  readerQueryValue,
 }: ReaderQuickSwitcherProps) {
   const router = useRouter();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -126,7 +132,11 @@ export default function ReaderQuickSwitcher({
 
     setErrorMessage("");
     setOpen(false);
-    router.push(`/buscar?q=${encodeURIComponent(trimmed)}`);
+    router.push(
+      `/buscar?q=${encodeURIComponent(trimmed)}${
+        readerQueryValue ? `&reader=${readerQueryValue}` : ""
+      }`
+    );
   }
 
   function handleToggle() {
@@ -137,6 +147,21 @@ export default function ReaderQuickSwitcher({
   function handleClose() {
     setOpen(false);
     setErrorMessage("");
+  }
+
+  function resolveReaderHref(href: string) {
+    let nextHref = href;
+
+    if (href.startsWith("/ler/") && readerBasePath !== "/ler") {
+      nextHref = href.replace("/ler/", `${readerBasePath}/`);
+    }
+
+    if (!readerQueryValue) {
+      return nextHref;
+    }
+
+    const separator = nextHref.includes("?") ? "&" : "?";
+    return `${nextHref}${separator}reader=${readerQueryValue}`;
   }
 
   return (
@@ -166,7 +191,7 @@ export default function ReaderQuickSwitcher({
               isMobile
                 ? "left-0 right-0 bottom-0 rounded-t-[1.5rem] rounded-b-none"
                 : isEmbedded
-                ? "left-1/2 top-20 w-[min(92vw,420px)] -translate-x-1/2 rounded-2xl"
+                ? "bottom-24 right-6 w-[min(92vw,420px)] rounded-2xl"
                 : "bottom-24 right-5 w-[min(92vw,380px)] rounded-2xl"
             }`}
             style={
@@ -261,7 +286,7 @@ export default function ReaderQuickSwitcher({
                       {results.map((item) => (
                         <Link
                           key={item.id}
-                          href={item.readerHref}
+                          href={resolveReaderHref(item.readerHref)}
                           onClick={() => {
                             setOpen(false);
                             setErrorMessage("");
@@ -301,7 +326,13 @@ export default function ReaderQuickSwitcher({
 
                           setErrorMessage("");
                           setOpen(false);
-                          router.push(`/buscar?q=${encodeURIComponent(trimmed)}`);
+                          router.push(
+                            `/buscar?q=${encodeURIComponent(trimmed)}${
+                              readerQueryValue
+                                ? `&reader=${readerQueryValue}`
+                                : ""
+                            }`
+                          );
                         }}
                         className="w-full bg-white/[0.03] px-4 py-3 text-left text-sm font-medium text-amber-400 transition hover:bg-white/[0.06]"
                       >
@@ -328,8 +359,10 @@ export default function ReaderQuickSwitcher({
           onClick={handleToggle}
           className={
             isEmbedded
-              ? `inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-black/20 font-medium text-white transition hover:bg-white/5 ${
-                  isMobile ? "px-3 py-2 text-xs" : "px-3 py-2 text-xs"
+              ? `inline-flex items-center justify-center gap-2 border font-medium transition ${
+                  isMobile
+                    ? "rounded-xl border-white/10 bg-black/20 px-3 py-2 text-xs text-white hover:bg-white/5"
+                    : "rounded-full border-white/12 bg-[#10131a]/92 px-3.5 py-2.5 text-[12px] text-zinc-100 shadow-[0_10px_24px_rgba(0,0,0,0.22)] hover:border-white/20 hover:bg-[#151922]"
                 }`
               : `inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/10 font-semibold text-white shadow-lg backdrop-blur-sm transition hover:bg-white/15 ${
                   isMobile ? "px-3.5 py-3 text-[13px]" : "px-4 py-3 text-sm"
@@ -339,7 +372,11 @@ export default function ReaderQuickSwitcher({
         >
           <span aria-hidden="true">🔎</span>
           <span>
-            {isEmbedded ? "Trocar PDF" : isMobile ? "Buscar" : "Troca rápida"}
+            {isEmbedded
+              ? "Trocar PDF"
+              : isMobile
+              ? floatingLabel ?? "Buscar"
+              : floatingLabel ?? "Troca rápida"}
           </span>
         </button>
       )}

@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase-browser";
 
 type StudyNotesPanelProps = {
   currentDocumentTitle: string;
+  variant?: "floating" | "embedded";
+  embeddedLabel?: string;
+  onOpenChange?: (isOpen: boolean) => void;
 };
 
 type StudyNote = {
@@ -110,6 +113,19 @@ function getFullscreenWindowState(): FloatingWindowState {
   });
 }
 
+function getEmbeddedDesktopWindowState(): FloatingWindowState {
+  const viewport = getViewportSize();
+  const width = Math.min(620, Math.max(440, viewport.width - 120));
+  const height = Math.min(760, Math.max(560, viewport.height - 120));
+
+  return normalizeWindowState({
+    x: Math.round((viewport.width - width) / 2),
+    y: Math.max(24, Math.round((viewport.height - height) / 2)),
+    width,
+    height,
+  });
+}
+
 function getInitialWindowState(): FloatingWindowState {
   if (typeof window === "undefined") {
     return DEFAULT_WINDOW_STATE;
@@ -154,6 +170,9 @@ function getInitialWindowState(): FloatingWindowState {
 
 export default function StudyNotesPanel({
   currentDocumentTitle,
+  variant = "floating",
+  embeddedLabel = "Notas",
+  onOpenChange,
 }: StudyNotesPanelProps) {
   const supabase = useMemo(() => createClient(), []);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -194,6 +213,8 @@ export default function StudyNotesPanel({
   const [isCreating, setIsCreating] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const isEmbedded = variant === "embedded";
+  const isEmbeddedDesktop = isEmbedded && !isMobile;
 
   const selectedNote = notes.find((note) => note.id === selectedNoteId) ?? null;
 
@@ -218,6 +239,14 @@ export default function StudyNotesPanel({
       );
     });
   }, [notes, searchTerm]);
+
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+
+    return () => {
+      onOpenChange?.(false);
+    };
+  }, [isOpen, onOpenChange]);
 
   function persistLastSelectedNote(noteId: string | null) {
     if (typeof window === "undefined") return;
@@ -269,6 +298,13 @@ export default function StudyNotesPanel({
       return;
     }
 
+    if (isEmbeddedDesktop) {
+      setWindowState(getEmbeddedDesktopWindowState());
+      setIsMinimized(false);
+      setIsOpen(true);
+      return;
+    }
+
     const nextState = isDocumentInFullscreen()
       ? getFullscreenWindowState()
       : normalizeWindowState(getInitialWindowState());
@@ -279,7 +315,7 @@ export default function StudyNotesPanel({
   }
 
   function toggleMinimized() {
-    if (isMobile) {
+    if (isMobile || isEmbeddedDesktop) {
       return;
     }
 
@@ -287,7 +323,7 @@ export default function StudyNotesPanel({
   }
 
   function startDragging(event: React.PointerEvent<HTMLDivElement>) {
-    if (isMobile) {
+    if (isMobile || isEmbeddedDesktop) {
       return;
     }
 
@@ -309,7 +345,7 @@ export default function StudyNotesPanel({
     event.preventDefault();
     event.stopPropagation();
 
-    if (isMobile || isMinimized) {
+    if (isMobile || isEmbeddedDesktop || isMinimized) {
       return;
     }
 
@@ -701,14 +737,22 @@ export default function StudyNotesPanel({
       <button
         type="button"
         onClick={openWindow}
-        className={`fixed z-40 inline-flex items-center gap-2 rounded-full border border-white/10 bg-amber-400 font-semibold text-black shadow-lg transition hover:bg-amber-300 ${
-          isMobile
-            ? "bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 px-3.5 py-3 text-[13px]"
-            : "bottom-5 right-5 px-4 py-3 text-sm"
-        }`}
+        className={
+          isEmbedded
+            ? `inline-flex min-w-[92px] items-center justify-center gap-2 border font-medium transition ${
+                isMobile
+                  ? "rounded-xl border-white/10 bg-black/20 px-3 py-2 text-xs text-white hover:bg-white/5"
+                  : "rounded-full border-white/12 bg-[#10131a]/92 px-3.5 py-2.5 text-[12px] text-zinc-100 shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-sm hover:border-white/20 hover:bg-[#151922]"
+              }`
+            : `fixed z-40 inline-flex items-center gap-2 rounded-full border border-white/10 bg-amber-400 font-semibold text-black shadow-lg transition hover:bg-amber-300 ${
+                isMobile
+                  ? "bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 px-3.5 py-3 text-[13px]"
+                  : "bottom-5 right-5 px-4 py-3 text-sm"
+              }`
+        }
       >
         <span aria-hidden="true">📝</span>
-        <span>{isMobile ? "Notas" : "Bloco de notas"}</span>
+        <span>{isEmbedded ? embeddedLabel : isMobile ? "Notas" : "Bloco de notas"}</span>
       </button>
 
       {isOpen ? (
@@ -724,6 +768,8 @@ export default function StudyNotesPanel({
             } ${
               isMobile
                 ? "fixed inset-x-0 bottom-0 rounded-t-[1.5rem] rounded-b-none"
+                : isEmbeddedDesktop
+                ? "fixed bottom-24 right-6 rounded-[28px]"
                 : "fixed rounded-2xl transition-[height] duration-200"
             }`}
             style={
@@ -731,6 +777,11 @@ export default function StudyNotesPanel({
                 ? {
                     height: "84vh",
                     paddingBottom: "env(safe-area-inset-bottom)",
+                  }
+                : isEmbeddedDesktop
+                ? {
+                    width: "min(620px, calc(100vw - 4rem))",
+                    height: "min(78vh, 760px)",
                   }
                 : {
                     left: windowState.x,
@@ -746,6 +797,8 @@ export default function StudyNotesPanel({
                 className={`shrink-0 border-b border-white/10 bg-[#12151d] ${
                   isMobile
                     ? "cursor-default px-4 py-3"
+                    : isEmbeddedDesktop
+                    ? "cursor-default px-5 py-4"
                     : isMinimized
                     ? "cursor-move px-3 py-2"
                     : isDesktopFullscreen
@@ -796,7 +849,7 @@ export default function StudyNotesPanel({
                       isMinimized ? "gap-1.5" : "gap-2"
                     }`}
                   >
-                    {!isMobile ? (
+                    {!isMobile && !isEmbeddedDesktop ? (
                       <button
                         type="button"
                         onClick={toggleMinimized}
@@ -842,7 +895,11 @@ export default function StudyNotesPanel({
               {!isMinimized ? (
                 <div
                   className="relative flex-1 overflow-hidden"
-                  style={isMobile ? undefined : { height: mainBodyHeight }}
+                  style={
+                    isMobile || isEmbeddedDesktop
+                      ? undefined
+                      : { height: mainBodyHeight }
+                  }
                 >
                   <div
                     className={`absolute inset-0 transition-transform duration-200 ${
@@ -1045,7 +1102,7 @@ export default function StudyNotesPanel({
               ) : null}
             </div>
 
-            {!isMobile && !isMinimized ? (
+            {!isMobile && !isMinimized && !isEmbeddedDesktop ? (
               <button
                 type="button"
                 aria-label="Redimensionar bloco de notas"

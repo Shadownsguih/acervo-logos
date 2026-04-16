@@ -8,6 +8,7 @@ type ReaderVolumeItem = {
   id: string;
   title: string;
   volume_number: number | null;
+  href?: string;
 };
 
 type ReaderVolumeSwitcherProps = {
@@ -78,7 +79,7 @@ export default function ReaderVolumeSwitcher({
             className="w-full rounded-xl border border-white/10 bg-[#11131a] px-4 py-3 text-sm font-medium text-white outline-none transition focus:border-amber-400/40"
           >
             {items.map((item) => {
-              const href = `/ler/${item.id}`;
+              const href = item.href ?? `/ler/${item.id}`;
 
               return (
                 <option key={item.id} value={href}>
@@ -104,7 +105,7 @@ export default function ReaderVolumeSwitcher({
 
       <div className="flex gap-2 overflow-x-auto pb-1">
         {items.map((item) => {
-          const href = `/ler/${item.id}`;
+          const href = item.href ?? `/ler/${item.id}`;
           const isActive = href === currentReaderHref;
 
           return (
