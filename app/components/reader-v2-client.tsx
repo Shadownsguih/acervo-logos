@@ -120,6 +120,7 @@ export default function ReaderV2Client({
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const lastTapRef = useRef<number>(0);
   const controlsHideTimerRef = useRef<number | null>(null);
+  const pageFlipTimerRef = useRef<number | null>(null);
 
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
@@ -158,6 +159,16 @@ export default function ReaderV2Client({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [deviceKind, setDeviceKind] = useState<DeviceKind>("desktop");
   const [isDocumentLoading, setIsDocumentLoading] = useState(true);
+  const [isPageFlipActive, setIsPageFlipActive] = useState(false);
+  const [pageFlipDirection, setPageFlipDirection] = useState<"next" | "previous">(
+    "next"
+  );
+  const [pageFlipSourcePage, setPageFlipSourcePage] = useState<number | null>(
+    null
+  );
+  const [pageFlipTargetPage, setPageFlipTargetPage] = useState<number | null>(
+    null
+  );
   const [errorMessage, setErrorMessage] = useState("");
   const [isChromeVisible, setIsChromeVisible] = useState(true);
   const [isVolumesOpen, setIsVolumesOpen] = useState(false);
@@ -212,6 +223,13 @@ export default function ReaderV2Client({
     }
   }, []);
 
+  const clearPageFlipTimer = useCallback(() => {
+    if (pageFlipTimerRef.current) {
+      window.clearTimeout(pageFlipTimerRef.current);
+      pageFlipTimerRef.current = null;
+    }
+  }, []);
+
   function focusShell() {
     window.requestAnimationFrame(() => {
       shellRef.current?.focus();
@@ -263,8 +281,32 @@ export default function ReaderV2Client({
     [readingProgressKey]
   );
 
+  const triggerPageFlip = useCallback(
+    (fromPage: number, toPage: number) => {
+      if (isDocumentLoading || fromPage === toPage) {
+        return;
+      }
+
+      clearPageFlipTimer();
+      setPageFlipDirection(toPage > fromPage ? "next" : "previous");
+      setPageFlipSourcePage(fromPage);
+      setPageFlipTargetPage(toPage);
+      setIsPageFlipActive(true);
+      pageFlipTimerRef.current = window.setTimeout(() => {
+        setIsPageFlipActive(false);
+        setPageFlipSourcePage(null);
+        setPageFlipTargetPage(null);
+        pageFlipTimerRef.current = null;
+      }, 420);
+    },
+    [clearPageFlipTimer, isDocumentLoading]
+  );
+
   function goToPage(nextValue: number, shouldRevealChrome = true) {
     const safePage = clamp(nextValue, 1, numPages || 1);
+    if (safePage !== pageNumber) {
+      triggerPageFlip(pageNumber, safePage);
+    }
     setPageNumber(safePage);
     setPageInput(String(safePage));
     setErrorMessage("");
@@ -280,6 +322,9 @@ export default function ReaderV2Client({
   function goToPreviousPage(shouldRevealChrome = true) {
     setPageNumber((current) => {
       const nextValue = Math.max(current - 1, 1);
+      if (nextValue !== current) {
+        triggerPageFlip(current, nextValue);
+      }
       setPageInput(String(nextValue));
       setErrorMessage("");
       const nextHint = `Pagina ${nextValue} de ${numPages || nextValue}`;
@@ -297,6 +342,9 @@ export default function ReaderV2Client({
   function goToNextPage(shouldRevealChrome = true) {
     setPageNumber((current) => {
       const nextValue = Math.min(current + 1, numPages || 1);
+      if (nextValue !== current) {
+        triggerPageFlip(current, nextValue);
+      }
       setPageInput(String(nextValue));
       setErrorMessage("");
       const nextHint = `Pagina ${nextValue} de ${numPages || nextValue}`;
@@ -745,8 +793,9 @@ export default function ReaderV2Client({
 
     return () => {
       clearHideChromeTimer();
+      clearPageFlipTimer();
     };
-  }, [clearHideChromeTimer, revealChromeTemporarily]);
+  }, [clearHideChromeTimer, clearPageFlipTimer, revealChromeTemporarily]);
 
   useEffect(() => {
     if (numPages > 0 && pageNumber > numPages) {
@@ -992,6 +1041,11 @@ export default function ReaderV2Client({
   const progressText =
     numPages > 0 ? `Pagina ${pageNumber} de ${numPages}` : "Preparando leitura";
   const zoomText = `${Math.round(zoomLevel * 100)}%`;
+  const pageFlipPaperClass = isPageFlipActive
+    ? pageFlipDirection === "next"
+      ? "reader-page-flip-paper reader-page-flip-next"
+      : "reader-page-flip-paper reader-page-flip-previous"
+    : "";
   const chromeVisibilityClass = isChromeVisible
     ? "translate-y-0 opacity-100"
     : "pointer-events-none opacity-0";
@@ -1453,45 +1507,121 @@ export default function ReaderV2Client({
                       transformOrigin: "top left",
                     }}
                   >
-                    <Document
-                      file={fileUrl}
-                      loading=""
-                      onLoadSuccess={handleDocumentLoadSuccess}
-                      onLoadError={handleDocumentLoadError}
-                      className="block"
-                    >
-                      <Page
-                        key={`${pageNumber}-${mobileBasePageWidth}`}
-                        pageNumber={pageNumber}
-                        width={mobileBasePageWidth}
-                        renderTextLayer={false}
-                        renderAnnotationLayer={false}
-                        onLoadSuccess={handlePageLoadSuccess}
-                        className="shadow-[0_32px_90px_rgba(0,0,0,0.42)]"
-                      />
-                    </Document>
+                    {isPageFlipActive &&
+                    pageFlipSourcePage &&
+                    pageFlipTargetPage ? (
+                      <Document
+                        file={fileUrl}
+                        loading=""
+                        onLoadSuccess={handleDocumentLoadSuccess}
+                        onLoadError={handleDocumentLoadError}
+                        className="reader-page-flip-stage block"
+                      >
+                        <div className="reader-page-flip-stack">
+                          <div className="reader-page-flip-underlay">
+                            <Page
+                              key={`mobile-flip-underlay-${pageFlipTargetPage}-${mobileBasePageWidth}-${zoomLevel}`}
+                              pageNumber={pageFlipTargetPage}
+                              width={mobileBasePageWidth}
+                              renderTextLayer={false}
+                              renderAnnotationLayer={false}
+                              onLoadSuccess={handlePageLoadSuccess}
+                              className="shadow-[0_32px_90px_rgba(0,0,0,0.34)]"
+                            />
+                          </div>
+
+                          <div className={pageFlipPaperClass}>
+                            <Page
+                              key={`mobile-flip-paper-${pageFlipSourcePage}-${mobileBasePageWidth}-${zoomLevel}`}
+                              pageNumber={pageFlipSourcePage}
+                              width={mobileBasePageWidth}
+                              renderTextLayer={false}
+                              renderAnnotationLayer={false}
+                              onLoadSuccess={handlePageLoadSuccess}
+                              className="shadow-[0_32px_90px_rgba(0,0,0,0.42)]"
+                            />
+                          </div>
+                        </div>
+                      </Document>
+                    ) : (
+                      <Document
+                        file={fileUrl}
+                        loading=""
+                        onLoadSuccess={handleDocumentLoadSuccess}
+                        onLoadError={handleDocumentLoadError}
+                        className="block"
+                      >
+                        <Page
+                          key={`${pageNumber}-${mobileBasePageWidth}`}
+                          pageNumber={pageNumber}
+                          width={mobileBasePageWidth}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={false}
+                          onLoadSuccess={handlePageLoadSuccess}
+                          className="shadow-[0_32px_90px_rgba(0,0,0,0.42)]"
+                        />
+                      </Document>
+                    )}
                   </div>
                 </div>
               </div>
             ) : (
               <div className={desktopReadingWrapClass}>
-                <Document
-                  file={fileUrl}
-                  loading=""
-                  onLoadSuccess={handleDocumentLoadSuccess}
-                  onLoadError={handleDocumentLoadError}
-                  className="flex items-center justify-center"
-                >
-                  <Page
-                    key={`${pageNumber}-${desktopRenderedPageWidth}-${zoomLevel}-${fitMode}`}
-                    pageNumber={pageNumber}
-                    width={desktopRenderedPageWidth}
-                    renderTextLayer={false}
-                    renderAnnotationLayer={false}
-                    onLoadSuccess={handlePageLoadSuccess}
-                    className="shadow-[0_36px_110px_rgba(0,0,0,0.42)]"
-                  />
-                </Document>
+                {isPageFlipActive &&
+                pageFlipSourcePage &&
+                pageFlipTargetPage ? (
+                  <Document
+                    file={fileUrl}
+                    loading=""
+                    onLoadSuccess={handleDocumentLoadSuccess}
+                    onLoadError={handleDocumentLoadError}
+                    className="reader-page-flip-stage flex items-center justify-center"
+                  >
+                    <div className="reader-page-flip-stack">
+                      <div className="reader-page-flip-underlay">
+                        <Page
+                          key={`flip-underlay-${pageFlipTargetPage}-${desktopRenderedPageWidth}-${zoomLevel}-${fitMode}`}
+                          pageNumber={pageFlipTargetPage}
+                          width={desktopRenderedPageWidth}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={false}
+                          onLoadSuccess={handlePageLoadSuccess}
+                          className="shadow-[0_36px_110px_rgba(0,0,0,0.34)]"
+                        />
+                      </div>
+
+                      <div className={pageFlipPaperClass}>
+                        <Page
+                          key={`flip-paper-${pageFlipSourcePage}-${desktopRenderedPageWidth}-${zoomLevel}-${fitMode}`}
+                          pageNumber={pageFlipSourcePage}
+                          width={desktopRenderedPageWidth}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={false}
+                          onLoadSuccess={handlePageLoadSuccess}
+                          className="shadow-[0_36px_110px_rgba(0,0,0,0.42)]"
+                        />
+                      </div>
+                    </div>
+                  </Document>
+                ) : (
+                  <Document
+                    file={fileUrl}
+                    loading=""
+                    onLoadSuccess={handleDocumentLoadSuccess}
+                    onLoadError={handleDocumentLoadError}
+                    className="flex items-center justify-center"
+                  >
+                    <Page
+                      key={`${pageNumber}-${desktopRenderedPageWidth}-${zoomLevel}-${fitMode}`}
+                      pageNumber={pageNumber}
+                      width={desktopRenderedPageWidth}
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                      onLoadSuccess={handlePageLoadSuccess}
+                      className="shadow-[0_36px_110px_rgba(0,0,0,0.42)]"
+                    />
+                  </Document>
+                )}
               </div>
             )}
 
@@ -1502,6 +1632,7 @@ export default function ReaderV2Client({
                 </div>
               </div>
             ) : null}
+
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import "./globals.css";
 import { createClient } from "@/lib/supabase-server";
 import { logoutUserAction } from "@/app/login/actions";
@@ -8,6 +9,7 @@ import UserMenuDropdown from "@/app/components/user-menu-dropdown";
 import HeaderSearch from "@/app/components/header-search";
 import PwaRegister from "@/app/components/pwa-register";
 import PwaInstallButton from "@/app/components/pwa-install-button";
+import GlobalRouteLoading from "@/app/components/global-route-loading";
 
 export const metadata: Metadata = {
   title: "Acervo Logos",
@@ -151,7 +153,9 @@ export default async function RootLayout({
             </div>
           </header>
 
-          <main className="flex-1 overflow-x-hidden">{children}</main>
+          <main className="flex-1 overflow-x-hidden">
+            <Suspense fallback={<GlobalRouteLoading />}>{children}</Suspense>
+          </main>
         </div>
 
         <PwaInstallButton />

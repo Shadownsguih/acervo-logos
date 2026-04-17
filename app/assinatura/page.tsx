@@ -19,6 +19,20 @@ function formatDate(value: string | null) {
   }).format(date);
 }
 
+function hasAccessExpired(value: string | null) {
+  if (!value) {
+    return false;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  return date.getTime() < Date.now();
+}
+
 function resolveMessage(status: string | null, isExpiredByDate: boolean) {
   if (status === "blocked") {
     return {
@@ -66,11 +80,7 @@ export default async function AssinaturaPage() {
   const subscriptionStatus = profile?.subscription_status ?? null;
   const paymentStatus = profile?.payment_status ?? null;
 
-  const expiresAtDate = expiresAt ? new Date(expiresAt) : null;
-  const isExpiredByDate =
-    !!expiresAtDate &&
-    !Number.isNaN(expiresAtDate.getTime()) &&
-    expiresAtDate.getTime() < Date.now();
+  const isExpiredByDate = hasAccessExpired(expiresAt);
 
   const content = resolveMessage(subscriptionStatus, isExpiredByDate);
 

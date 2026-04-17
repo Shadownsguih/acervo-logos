@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 
 type StudyNotesPanelProps = {
@@ -203,8 +203,9 @@ export default function StudyNotesPanel({
   const [content, setContent] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [windowState, setWindowState] =
-    useState<FloatingWindowState>(DEFAULT_WINDOW_STATE);
+  const [windowState, setWindowState] = useState<FloatingWindowState>(() =>
+    getInitialWindowState()
+  );
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -359,7 +360,7 @@ export default function StudyNotesPanel({
     setIsResizing(true);
   }
 
-  async function loadNotes() {
+  const loadNotes = useEffectEvent(async () => {
     setIsLoading(true);
     setErrorMessage("");
 
@@ -417,7 +418,7 @@ export default function StudyNotesPanel({
     }
 
     setIsLoading(false);
-  }
+  });
 
   useEffect(() => {
     function syncViewport() {
@@ -429,9 +430,10 @@ export default function StudyNotesPanel({
       }
     }
 
-    setWindowState(getInitialWindowState());
     syncViewport();
-    void loadNotes();
+    queueMicrotask(() => {
+      void loadNotes();
+    });
 
     window.addEventListener("resize", syncViewport);
 
@@ -444,6 +446,43 @@ export default function StudyNotesPanel({
     if (!selectedNoteId) return;
     persistLastSelectedNote(selectedNoteId);
   }, [selectedNoteId]);
+
+  async function saveCurrentNote(nextTitle: string, nextContent: string) {
+      if (!selectedNoteId) return;
+
+      setIsSaving(true);
+      setErrorMessage("");
+
+      const { data, error } = await supabase
+        .from("study_notes")
+        .update({
+          title: nextTitle.trim() || "Nova nota",
+          content: nextContent,
+        })
+        .eq("id", selectedNoteId)
+        .select("id, title, content, created_at, updated_at")
+        .single();
+
+      setIsSaving(false);
+
+      if (error || !data) {
+        setErrorMessage("NÃ£o foi possÃ­vel salvar esta nota.");
+        return;
+      }
+
+      const updatedNote = data as StudyNote;
+
+      setNotes((prev) =>
+        prev
+          .map((note) => (note.id === updatedNote.id ? updatedNote : note))
+          .sort(
+            (a, b) =>
+              new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          )
+      );
+
+      setStatusMessage(`Salvo em ${formatDate(updatedNote.updated_at)}.`);
+  }
 
   useEffect(() => {
     if (!isOpen || !selectedNoteId || isNotesListOpen || isMinimized) return;
@@ -582,6 +621,7 @@ export default function StudyNotesPanel({
     windowState,
     isMinimized,
     isMobile,
+    saveCurrentNote,
   ]);
 
   async function handleCreateNote() {
@@ -621,7 +661,11 @@ export default function StudyNotesPanel({
     setIsOpen(true);
   }
 
-  async function saveCurrentNote(nextTitle: string, nextContent: string) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async function _saveCurrentNoteLegacy(
+    nextTitle: string,
+    nextContent: string
+  ) {
     if (!selectedNoteId) return;
 
     setIsSaving(true);
@@ -679,7 +723,7 @@ export default function StudyNotesPanel({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [title, content, selectedNoteId, isNotesListOpen]);
+  }, [title, content, selectedNoteId, isNotesListOpen, saveCurrentNote]);
 
   async function handleDeleteCurrentNote() {
     if (!selectedNoteId) return;
