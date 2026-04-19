@@ -120,6 +120,7 @@ export default function ReaderV2Client({
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const lastTapRef = useRef<number>(0);
   const controlsHideTimerRef = useRef<number | null>(null);
+  const numPagesRef = useRef(0);
 
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
@@ -165,6 +166,7 @@ export default function ReaderV2Client({
   const [isDictionaryOpen, setIsDictionaryOpen] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [isStudyToolsOpen, setIsStudyToolsOpen] = useState(false);
+  const [hasPageLinks, setHasPageLinks] = useState(false);
   const [statusHint, setStatusHint] = useState(
     "Ambiente de leitura ativo. Toque no centro para recolher os controles."
   );
@@ -263,19 +265,23 @@ export default function ReaderV2Client({
     [readingProgressKey]
   );
 
-  function goToPage(nextValue: number, shouldRevealChrome = true) {
-    const safePage = clamp(nextValue, 1, numPages || 1);
-    setPageNumber(safePage);
-    setPageInput(String(safePage));
-    setErrorMessage("");
-    const nextHint = `Pagina ${safePage} de ${numPages || safePage}`;
+  const goToPage = useCallback(
+    (nextValue: number, shouldRevealChrome = true) => {
+      const totalPages = numPagesRef.current || 1;
+      const safePage = clamp(nextValue, 1, totalPages);
+      setPageNumber(safePage);
+      setPageInput(String(safePage));
+      setErrorMessage("");
+      const nextHint = `Pagina ${safePage} de ${totalPages || safePage}`;
 
-    setStatusHint(nextHint);
+      setStatusHint(nextHint);
 
-    if (shouldRevealChrome) {
-      revealChromeTemporarily(nextHint);
-    }
-  }
+      if (shouldRevealChrome) {
+        revealChromeTemporarily(nextHint);
+      }
+    },
+    [revealChromeTemporarily]
+  );
 
   function goToPreviousPage(shouldRevealChrome = true) {
     setPageNumber((current) => {
@@ -417,10 +423,40 @@ export default function ReaderV2Client({
   function handlePageLoadSuccess(page: {
     originalWidth: number;
     originalHeight: number;
+    getAnnotations?: () => Promise<Array<{ subtype?: string }>>;
   }) {
     setPageOriginalWidth(page.originalWidth);
     setPageOriginalHeight(page.originalHeight);
+
+    if (!page.getAnnotations) {
+      setHasPageLinks(false);
+      return;
+    }
+
+    void page
+      .getAnnotations()
+      .then((annotations) => {
+        const containsLinks = annotations.some(
+          (annotation) => annotation.subtype === "Link"
+        );
+
+        setHasPageLinks(containsLinks);
+      })
+      .catch(() => {
+        setHasPageLinks(false);
+      });
   }
+
+  const handleDocumentItemClick = useCallback(
+    ({ pageNumber: nextPageNumber }: { pageNumber: number }) => {
+      if (!Number.isInteger(nextPageNumber)) {
+        return;
+      }
+
+      goToPage(nextPageNumber);
+    },
+    [goToPage]
+  );
 
   function handlePageInputSubmit() {
     const parsed = Number(pageInput);
@@ -696,6 +732,14 @@ export default function ReaderV2Client({
       window.removeEventListener("resize", updateResponsiveState);
     };
   }, []);
+
+  useEffect(() => {
+    numPagesRef.current = numPages;
+  }, [numPages]);
+
+  useEffect(() => {
+    setHasPageLinks(false);
+  }, [fileUrl, pageNumber]);
 
   useEffect(() => {
     const readingArea = readingAreaRef.current;
@@ -1119,11 +1163,13 @@ export default function ReaderV2Client({
     !isZoomed &&
     typeof mobileScaledHeight === "number" &&
     mobileScaledHeight > availableHeight + 12;
-  const shouldShowTapZones = isMobile ? !allowsBaseVerticalScroll : false;
+  const shouldShowTapZones =
+    isMobile && !hasPageLinks ? !allowsBaseVerticalScroll : false;
 
   return (
     <div
       ref={shellRef}
+      data-reader-shell="v2"
       className="fixed inset-0 z-[999] overflow-hidden bg-[#0b0c10] text-white outline-none"
       tabIndex={0}
       onKeyDown={handleShellKeyDown}
@@ -1458,6 +1504,7 @@ export default function ReaderV2Client({
                       loading=""
                       onLoadSuccess={handleDocumentLoadSuccess}
                       onLoadError={handleDocumentLoadError}
+                      onItemClick={handleDocumentItemClick}
                       className="block"
                     >
                       <Page
@@ -1465,7 +1512,12 @@ export default function ReaderV2Client({
                         pageNumber={pageNumber}
                         width={mobileBasePageWidth}
                         renderTextLayer={false}
-                        renderAnnotationLayer={false}
+                        renderAnnotationLayer
+                        filterAnnotations={({ annotations }) =>
+                          annotations.filter(
+                            (annotation) => annotation.subtype === "Link"
+                          )
+                        }
                         onLoadSuccess={handlePageLoadSuccess}
                         className="shadow-[0_32px_90px_rgba(0,0,0,0.42)]"
                       />
@@ -1480,6 +1532,7 @@ export default function ReaderV2Client({
                   loading=""
                   onLoadSuccess={handleDocumentLoadSuccess}
                   onLoadError={handleDocumentLoadError}
+                  onItemClick={handleDocumentItemClick}
                   className="flex items-center justify-center"
                 >
                   <Page
@@ -1487,7 +1540,12 @@ export default function ReaderV2Client({
                     pageNumber={pageNumber}
                     width={desktopRenderedPageWidth}
                     renderTextLayer={false}
-                    renderAnnotationLayer={false}
+                    renderAnnotationLayer
+                    filterAnnotations={({ annotations }) =>
+                      annotations.filter(
+                        (annotation) => annotation.subtype === "Link"
+                      )
+                    }
                     onLoadSuccess={handlePageLoadSuccess}
                     className="shadow-[0_36px_110px_rgba(0,0,0,0.42)]"
                   />
@@ -1702,6 +1760,14 @@ export default function ReaderV2Client({
           </div>
         </div>
       </div>
+
+      <style jsx global>{`
+        [data-reader-shell="v2"] .annotationLayer :is(.linkAnnotation, .buttonWidgetAnnotation.pushButton) > a:hover {
+          opacity: 1;
+          background: transparent;
+          box-shadow: none;
+        }
+      `}</style>
     </div>
   );
 }
