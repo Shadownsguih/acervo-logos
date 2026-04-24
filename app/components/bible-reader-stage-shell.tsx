@@ -205,6 +205,7 @@ export default function BibleReaderStageShell() {
   const [hebrewPassageError, setHebrewPassageError] = useState("");
   const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(false);
   const [isMobileHeaderCollapsed, setIsMobileHeaderCollapsed] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [showHebrewLayer, setShowHebrewLayer] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [submittedSearchTerm, setSubmittedSearchTerm] = useState("");
@@ -986,7 +987,7 @@ export default function BibleReaderStageShell() {
   function extractDictionaryTerm(value: string) {
     return value
       .trim()
-      .replace(/^[^0-9A-Za-zÀ-ÿ]+|[^0-9A-Za-zÀ-ÿ]+$/g, "");
+      .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
   }
 
   function handleDictionaryLookup(term: string) {
@@ -1129,7 +1130,7 @@ export default function BibleReaderStageShell() {
     <main className="min-h-[100dvh] bg-[#0a0a0f] px-3 py-3 pb-24 text-white md:h-[100dvh] md:overflow-hidden md:px-6 md:py-5 md:pb-6">
       <div className="mx-auto flex max-w-7xl flex-col md:h-full">
         <div
-          className={`mb-3 rounded-2xl border border-white/10 bg-white/[0.025] px-3 py-3 transition-all duration-300 md:mb-4 md:px-5 md:py-4 ${
+          className={`mb-3 rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,21,29,0.98),rgba(11,13,20,0.98))] px-3 py-3 shadow-[0_12px_28px_rgba(0,0,0,0.14)] transition-all duration-300 md:mb-4 md:rounded-[26px] md:px-5 md:py-4 md:shadow-[0_18px_48px_rgba(0,0,0,0.18)] ${
             isMobileHeaderCollapsed
               ? "sticky top-2 z-20 py-2 backdrop-blur-xl"
               : ""
@@ -1138,33 +1139,179 @@ export default function BibleReaderStageShell() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link
               href="/categoria/biblia"
-              className="inline-flex items-center gap-2 text-sm font-medium text-amber-400 transition hover:text-amber-300"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm font-medium text-amber-200 transition hover:bg-white/[0.08]"
             >
-              <span aria-hidden="true">←</span>
+              <span aria-hidden="true" className="text-amber-300/80">
+                {"<"}
+              </span>
               <span>Voltar</span>
             </Link>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.18em] text-amber-200">
+              <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-amber-200">
                 Biblia
               </span>
-              <span className="text-sm text-zinc-400">{selectedTranslationLabel}</span>
+              <span className="text-sm text-zinc-400 md:hidden">
+                {selectedTranslationLabel}
+              </span>
+              <span className="hidden rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-zinc-300 md:inline-flex">
+                {selectedTranslationLabel}
+              </span>
             </div>
           </div>
 
           <div
             className={`overflow-hidden transition-all duration-300 ${
               isMobileHeaderCollapsed
-                ? "mt-0 max-h-0 opacity-0 md:mt-4 md:max-h-32 md:opacity-100"
-                : "mt-3 max-h-32 opacity-100 md:mt-4"
+                ? "mt-0 max-h-0 opacity-0 md:mt-4 md:max-h-40 md:opacity-100"
+                : "mt-3 max-h-[240px] opacity-100 md:mt-4 md:max-h-40"
             }`}
           >
-            <p className="text-[10px] uppercase tracking-[0.26em] text-amber-400 md:text-[11px] md:tracking-[0.3em]">
+            <div className="md:hidden">
+              <div className="rounded-[18px] border border-white/10 bg-white/[0.03] p-3">
+                <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,0.6fr)] gap-2">
+                  <Select
+                    value={selectedTranslation}
+                    onChange={setSelectedTranslation}
+                    disabled={versionsLoading}
+                  >
+                    {translations.map((translation) => (
+                      <option key={translation.id} value={translation.id}>
+                        {translation.label}
+                      </option>
+                    ))}
+                  </Select>
+
+                  <Select
+                    value={selectedBook}
+                    onChange={setSelectedBook}
+                    disabled={booksLoading || !books.length}
+                  >
+                    {books.map((book) => (
+                      <option key={book.id} value={book.id}>
+                        {book.label}
+                      </option>
+                    ))}
+                  </Select>
+
+                  <Select
+                    value={selectedChapter}
+                    onChange={(value) => setSelectedChapter(Number(value))}
+                    disabled={booksLoading || !chapterOptions.length}
+                  >
+                    {chapterOptions.map((chapter) => (
+                      <option key={chapter} value={chapter}>
+                        {chapter}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isOldTestamentBook) {
+                        setIsMobileSearchOpen(false);
+                        return;
+                      }
+                      setShowHebrewLayer((current) => !current);
+                    }}
+                    className={`inline-flex h-11 items-center rounded-xl border px-3 text-sm font-medium transition ${
+                      isOldTestamentBook
+                        ? showHebrewLayer
+                          ? "border-amber-300/30 bg-amber-300/12 text-amber-200"
+                          : "border-white/10 bg-white/[0.04] text-zinc-200 hover:bg-white/[0.08]"
+                        : "border-white/10 bg-white/[0.02] text-zinc-400 hover:bg-white/[0.05]"
+                    }`}
+                  >
+                    Hebraico
+                  </button>
+
+                  <button
+                    type="button"
+                    aria-label="Abrir busca"
+                    onClick={() =>
+                      setIsMobileSearchOpen((current) => !current)
+                    }
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500 text-lg font-semibold text-white transition hover:bg-indigo-400"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3.5-3.5" />
+                    </svg>
+                  </button>
+                </div>
+
+                {isMobileSearchOpen ? (
+                  <form
+                    onSubmit={(event) => {
+                      handleSearchSubmit(event);
+                      setIsMobileSearchOpen(false);
+                      setIsMobileHeaderCollapsed(true);
+                    }}
+                    className="mt-3 flex flex-col gap-2"
+                  >
+                    <input
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="Buscar palavra ou frase na Biblia"
+                      className="h-11 rounded-xl border border-white/10 bg-[#12151d] px-4 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-amber-300/40"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        className="flex-1 rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-200"
+                      >
+                        Buscar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsMobileSearchOpen(false)}
+                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-100 transition hover:bg-white/10"
+                      >
+                        Fechar
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="hidden md:block">
+            <p className="text-[10px] uppercase tracking-[0.26em] text-amber-400/90 md:text-[11px] md:tracking-[0.3em]">
               Leitura biblica
             </p>
             <h1 className="mt-1.5 text-[1.45rem] font-bold leading-tight md:mt-2 md:text-3xl">
               {passage?.book ?? selectedBookLabel} {selectedChapter}
             </h1>
+            <div className="mt-3 hidden flex-wrap items-center gap-2 md:flex">
+              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-zinc-300">
+                Capitulo {selectedChapter}
+              </span>
+              {isOldTestamentBook ? (
+                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-zinc-300">
+                  Antigo Testamento
+                </span>
+              ) : (
+                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-zinc-300">
+                  Novo Testamento
+                </span>
+              )}
+            </div>
+            <p className="mt-2 text-sm text-zinc-400 md:mt-3">
+              {referenceLabel} | {selectedTranslationLabel}
+            </p>
+            </div>
           </div>
         </div>
 
@@ -1174,190 +1321,134 @@ export default function BibleReaderStageShell() {
           <div className="relative z-10 grid w-full gap-0 md:h-full xl:grid-cols-[minmax(0,1fr)_340px]">
             <section className="border-b border-white/10 md:flex md:min-h-0 md:flex-col xl:border-b-0 xl:border-r">
               <div className="border-b border-white/10 bg-black/20 px-3 py-3 backdrop-blur-xl md:px-6 md:py-4">
-                <form
-                  onSubmit={handleSearchSubmit}
-                  className="mb-3 flex flex-col gap-2 md:mb-4 md:flex-row"
-                >
-                  <input
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder="Buscar palavra ou frase na Biblia"
-                    className="h-11 flex-1 rounded-xl border border-white/10 bg-[#12151d] px-4 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-amber-300/40"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      className="rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-200"
-                    >
-                      Buscar
-                    </button>
-                    {submittedSearchTerm ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSearchTerm("");
-                          setSubmittedSearchTerm("");
-                          setSearchResults([]);
-                          setSearchError("");
-                        }}
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-100 transition hover:bg-white/10"
-                      >
-                        Limpar
-                      </button>
-                    ) : null}
-                  </div>
-                </form>
-
-                <div className="hidden items-center justify-between gap-3 xl:hidden">
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">
-                      Navegacao
-                    </p>
-                    <p className="mt-1 truncate text-sm font-medium text-zinc-100">
-                      {selectedBookLabel} {selectedChapter} •{" "}
-                      {selectedTranslationLabel}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setIsMobileControlsOpen((current) => !current)
-                    }
-                    className="inline-flex shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-zinc-100 transition hover:bg-white/10"
-                  >
-                    Alterar
-                  </button>
-                </div>
-
-                <div className="xl:hidden">
-                  <button
-                    type="button"
-                    onClick={() => setIsMobileControlsOpen(true)}
-                    className="w-full rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-4 py-4 text-left shadow-[0_18px_40px_rgba(0,0,0,0.16)] transition hover:bg-white/[0.06]"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-[0.24em] text-amber-300/75">
-                          Leitura atual
-                        </p>
-                        <p className="mt-1 truncate text-sm text-zinc-400">
-                          Toque para trocar livro, capítulo ou tradução
-                        </p>
-                        <p className="mt-1 text-lg font-semibold leading-tight text-zinc-50">
-                          {selectedBookLabel} {selectedChapter}
-                        </p>
-                        <p className="hidden mt-1 truncate text-sm text-zinc-400">
-                          {selectedBookLabel} {selectedChapter} •{" "}
-                          Toque para trocar livro, capítulo ou tradução
-                        </p>
-                      </div>
-
-                      <span className="shrink-0 rounded-full border border-amber-300/20 bg-amber-300/12 px-3 py-1.5 text-[11px] font-medium text-amber-100">
-                        Alterar
-                      </span>
+                <div className="md:rounded-[24px] md:border md:border-white/10 md:bg-white/[0.025] md:p-4">
+                  <div className="mb-3 hidden items-center justify-between gap-2 md:flex">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">
+                        Busca na Biblia
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-400">
+                        Encontre palavras e frases sem sair da leitura.
+                      </p>
                     </div>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-zinc-300">
-                        {selectedTranslationLabel}
-                      </span>
-                      <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-zinc-300">
-                        Capítulo {selectedChapter} de {maxChapter}
-                      </span>
-                    </div>
-                  </button>
-                </div>
-
-                <div className="hidden gap-3 md:grid-cols-3 xl:grid">
-                  <Field label="Traducao">
-                    <Select
-                      value={selectedTranslation}
-                      onChange={setSelectedTranslation}
-                      disabled={versionsLoading}
-                    >
-                      {translations.map((translation) => (
-                        <option key={translation.id} value={translation.id}>
-                          {translation.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-
-                  <Field label="Livro">
-                    <Select
-                      value={selectedBook}
-                      onChange={setSelectedBook}
-                      disabled={booksLoading || !books.length}
-                    >
-                      {books.map((book) => (
-                        <option key={book.id} value={book.id}>
-                          {book.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-
-                  <Field label="Capitulo">
-                    <Select
-                      value={selectedChapter}
-                      onChange={(value) => setSelectedChapter(Number(value))}
-                      disabled={booksLoading || !chapterOptions.length}
-                    >
-                      {chapterOptions.map((chapter) => (
-                        <option key={chapter} value={chapter}>
-                          {chapter}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 md:mt-4 md:gap-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm text-zinc-400">
-                      {referenceLabel} <span className="text-zinc-600">•</span>{" "}
+                    <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] text-zinc-400">
                       {selectedTranslationLabel}
                     </span>
-                    {isOldTestamentBook ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowHebrewLayer((current) => !current)}
-                        className={`inline-flex items-center rounded-full border px-3 py-1.5 text-[11px] font-medium tracking-[0.12em] transition ${
-                          showHebrewLayer
-                            ? "border-amber-300/30 bg-amber-300/12 text-amber-200"
-                            : "border-white/10 bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
-                        }`}
-                      >
-                        Hebraico + Transl.
-                      </button>
-                    ) : null}
                   </div>
 
-                  <div className="hidden items-center gap-2 text-sm sm:flex">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelectedChapter((current) => Math.max(current - 1, 1))
-                      }
-                      disabled={!canGoToPreviousChapter}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-zinc-100 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      Anterior
-                    </button>
+                  <form
+                    onSubmit={handleSearchSubmit}
+                    className="hidden md:mb-4 md:flex md:flex-row md:gap-2"
+                  >
+                    <input
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="Buscar palavra ou frase na Biblia"
+                      className="h-11 flex-1 rounded-xl border border-white/10 bg-[#12151d] px-4 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-amber-300/40"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        className="rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-200"
+                      >
+                        Buscar
+                      </button>
+                      {submittedSearchTerm ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearchTerm("");
+                            setSubmittedSearchTerm("");
+                            setSearchResults([]);
+                            setSearchError("");
+                          }}
+                          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-100 transition hover:bg-white/10"
+                        >
+                          Limpar
+                        </button>
+                      ) : null}
+                    </div>
+                  </form>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelectedChapter((current) =>
-                          Math.min(current + 1, maxChapter)
-                        )
-                      }
-                      disabled={!canGoToNextChapter}
-                      className="rounded-full bg-amber-300 px-3 py-2 text-xs font-semibold text-black transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      Proximo
-                    </button>
+                  <div className="hidden gap-3 md:grid-cols-3 xl:grid">
+                    <Field label="Traducao">
+                      <Select
+                        value={selectedTranslation}
+                        onChange={setSelectedTranslation}
+                        disabled={versionsLoading}
+                      >
+                        {translations.map((translation) => (
+                          <option key={translation.id} value={translation.id}>
+                            {translation.label}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+
+                    <Field label="Livro">
+                      <Select
+                        value={selectedBook}
+                        onChange={setSelectedBook}
+                        disabled={booksLoading || !books.length}
+                      >
+                        {books.map((book) => (
+                          <option key={book.id} value={book.id}>
+                            {book.label}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+
+                    <Field label="Capitulo">
+                      <Select
+                        value={selectedChapter}
+                        onChange={(value) => setSelectedChapter(Number(value))}
+                        disabled={booksLoading || !chapterOptions.length}
+                      >
+                        {chapterOptions.map((chapter) => (
+                          <option key={chapter} value={chapter}>
+                            {chapter}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 md:mt-4 md:gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm text-zinc-400 md:hidden">
+                        {referenceLabel}
+                      </span>
+                      <span className="hidden rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-zinc-300 md:inline-flex">
+                        {referenceLabel}
+                      </span>
+                    </div>
+
+                    <div className="hidden items-center gap-2 text-sm sm:flex">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedChapter((current) => Math.max(current - 1, 1))
+                        }
+                        disabled={!canGoToPreviousChapter}
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-zinc-100 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Anterior
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedChapter((current) =>
+                            Math.min(current + 1, maxChapter)
+                          )
+                        }
+                        disabled={!canGoToNextChapter}
+                        className="rounded-full bg-amber-300 px-3 py-2 text-xs font-semibold text-black transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Proximo
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1602,7 +1693,7 @@ export default function BibleReaderStageShell() {
                   className="mt-1 flex w-full items-center justify-between rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-white/[0.07]"
                 >
                   <span>Pesquisar</span>
-                  <span className="text-zinc-500">⌕</span>
+                  <span className="text-zinc-500">Ir</span>
                 </button>
 
                 <button
@@ -1616,7 +1707,7 @@ export default function BibleReaderStageShell() {
                   className="mt-2 flex w-full items-center justify-between rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-white/[0.07]"
                 >
                   <span>Compartilhar</span>
-                  <span className="text-zinc-500">↗</span>
+                  <span className="text-zinc-500">Abrir</span>
                 </button>
               </div>
             </div>
@@ -1658,7 +1749,7 @@ export default function BibleReaderStageShell() {
                   className="flex w-full items-center justify-between rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-sm font-medium text-zinc-100 transition hover:bg-white/[0.07]"
                 >
                   <span>Pesquisar no dicionario</span>
-                  <span className="text-zinc-500">⌕</span>
+                  <span className="text-zinc-500">Ir</span>
                 </button>
 
                 <button
@@ -1672,7 +1763,7 @@ export default function BibleReaderStageShell() {
                   className="flex w-full items-center justify-between rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-sm font-medium text-zinc-100 transition hover:bg-white/[0.07]"
                 >
                   <span>Compartilhar versiculo</span>
-                  <span className="text-zinc-500">↗</span>
+                  <span className="text-zinc-500">Abrir</span>
                 </button>
               </div>
             </div>
@@ -1688,7 +1779,7 @@ export default function BibleReaderStageShell() {
               className="absolute inset-0 bg-black/65 backdrop-blur-[6px]"
             />
 
-            <div className="absolute inset-x-0 bottom-0 rounded-t-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(16,19,26,0.98),rgba(10,12,18,0.98))] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-24px_60px_rgba(0,0,0,0.42)] backdrop-blur-xl">
+            <div className="absolute inset-x-0 bottom-0 rounded-t-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(16,19,26,0.985),rgba(10,12,18,0.99))] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-24px_60px_rgba(0,0,0,0.42)] backdrop-blur-xl">
               <div className="mb-3 flex justify-center">
                 <span className="h-1.5 w-14 rounded-full bg-white/15" />
               </div>
@@ -1696,13 +1787,13 @@ export default function BibleReaderStageShell() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-[0.24em] text-amber-300/75">
-                    Ir para
+                    Navegacao da Biblia
                   </p>
                   <h2 className="mt-1 text-lg font-semibold text-white">
                     {selectedBookLabel} {selectedChapter}
                   </h2>
                   <p className="mt-1 text-sm text-zinc-400">
-                    Escolha a tradução, o livro e o capítulo.
+                    Escolha a traducao, o livro e o capitulo.
                   </p>
                 </div>
 
@@ -1711,13 +1802,13 @@ export default function BibleReaderStageShell() {
                   onClick={() => setIsMobileControlsOpen(false)}
                   className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm font-medium text-zinc-200 transition hover:bg-white/10"
                 >
-                  X
+                  Fechar
                 </button>
               </div>
 
               <div className="mt-4 rounded-[24px] border border-white/10 bg-white/[0.03] p-3">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-                  Referência atual
+                  Referencia atual
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-zinc-300">
@@ -1727,7 +1818,7 @@ export default function BibleReaderStageShell() {
                     {selectedBookLabel}
                   </span>
                   <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-zinc-300">
-                    Capítulo {selectedChapter}
+                    Capitulo {selectedChapter}
                   </span>
                 </div>
               </div>
@@ -1753,9 +1844,9 @@ export default function BibleReaderStageShell() {
                       )
                     }
                     disabled={!canGoToNextChapter}
-                    className="rounded-[20px] border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm font-medium text-amber-100 transition hover:bg-amber-300/15 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    Próximo
+                  className="rounded-[20px] border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm font-medium text-amber-100 transition hover:bg-amber-300/15 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    Proximo
                   </button>
                 </div>
 
@@ -1823,49 +1914,39 @@ export default function BibleReaderStageShell() {
           </div>
         ) : null}
 
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-[max(0.75rem,env(safe-area-inset-left))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pr-[max(0.75rem,env(safe-area-inset-right))] xl:hidden">
-            <div className="pointer-events-auto flex items-center justify-between gap-2 rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,21,29,0.92),rgba(10,12,18,0.96))] px-3 py-2 shadow-[0_-16px_46px_rgba(0,0,0,0.24)] backdrop-blur-xl">
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-[max(0.75rem,env(safe-area-inset-left))] pb-[max(0.8rem,env(safe-area-inset-bottom))] pr-[max(0.75rem,env(safe-area-inset-right))] xl:hidden">
+          <div className="flex justify-center">
+            <div className="pointer-events-auto flex items-center gap-2">
               <button
                 type="button"
+                aria-label="Capitulo anterior"
                 onClick={() =>
                   setSelectedChapter((current) => Math.max(current - 1, 1))
-              }
-              disabled={!canGoToPreviousChapter}
-              className="inline-flex min-w-[84px] justify-center rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-zinc-100 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Anterior
-            </button>
+                }
+                disabled={!canGoToPreviousChapter}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(27,31,39,0.95),rgba(12,15,22,0.98))] text-sm font-semibold text-zinc-100 shadow-[0_-12px_28px_rgba(0,0,0,0.16)] backdrop-blur-xl transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {"<"}
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setIsMobileControlsOpen(true)}
-              className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2.5 transition hover:bg-white/10"
-            >
-              <div className="min-w-0 text-center">
-                <p className="truncate text-xs font-semibold text-zinc-100">
-                  {selectedBookLabel} {selectedChapter}
-                </p>
-                <p className="text-[10px] text-zinc-500">
-                  Toque para alterar
-                </p>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setSelectedChapter((current) =>
-                  Math.min(current + 1, maxChapter)
-                )
-              }
-              disabled={!canGoToNextChapter}
-              className="inline-flex min-w-[84px] justify-center rounded-full bg-amber-300 px-3 py-2 text-xs font-semibold text-black transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Próximo
-            </button>
+              <button
+                type="button"
+                aria-label="Proximo capitulo"
+                onClick={() =>
+                  setSelectedChapter((current) =>
+                    Math.min(current + 1, maxChapter)
+                  )
+                }
+                disabled={!canGoToNextChapter}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-amber-300/20 bg-[linear-gradient(180deg,rgba(44,31,17,0.94),rgba(18,14,10,0.98))] text-sm font-semibold text-amber-50 shadow-[0_-12px_28px_rgba(0,0,0,0.16)] backdrop-blur-xl transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {">"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </main>
   );
 }
+

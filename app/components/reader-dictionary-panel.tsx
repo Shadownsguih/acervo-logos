@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -86,7 +86,7 @@ function EntryContent({ entry }: { entry: EntryResponse }) {
     <div>
       <section className="overflow-hidden rounded-3xl border border-sky-300/20 bg-gradient-to-br from-sky-300/10 via-white/5 to-transparent p-6">
         <p className="text-[11px] uppercase tracking-[0.28em] text-sky-300">
-          Verbete bíblico
+          Verbete biblico
         </p>
 
         <h3 className="mt-3 text-3xl font-bold text-white">{entry.displayTerm}</h3>
@@ -105,7 +105,7 @@ function EntryContent({ entry }: { entry: EntryResponse }) {
         {entry.shortDefinition ? (
           <div className="mt-5 rounded-2xl border border-sky-300/20 bg-sky-300/10 p-4">
             <p className="text-[11px] uppercase tracking-[0.14em] text-sky-200">
-              Definição breve
+              Definicao breve
             </p>
             <p className="mt-2 text-sm leading-7 text-zinc-100">
               {entry.shortDefinition}
@@ -116,8 +116,8 @@ function EntryContent({ entry }: { entry: EntryResponse }) {
 
       <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <MetaCard label="Idioma" value={entry.language} />
-        <MetaCard label="Transliteração" value={entry.transliteration} />
-        <MetaCard label="Pronúncia" value={entry.pronunciation} />
+        <MetaCard label="Transliteracao" value={entry.transliteration} />
+        <MetaCard label="Pronuncia" value={entry.pronunciation} />
         <MetaCard label="Strong" value={entry.strong} />
       </section>
 
@@ -131,13 +131,13 @@ function EntryContent({ entry }: { entry: EntryResponse }) {
       ) : null}
 
       <section className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5 md:p-6">
-        <h4 className="text-sm font-semibold text-white">Definição completa</h4>
+        <h4 className="text-sm font-semibold text-white">Definicao completa</h4>
         <div className="mt-4 space-y-4 whitespace-pre-line text-sm leading-7 text-zinc-200">
           {entry.fullDefinition}
         </div>
       </section>
 
-      <BadgeList title="Referências bíblicas" items={entry.references} />
+      <BadgeList title="Referencias biblicas" items={entry.references} />
       <BadgeList title="Nomes e buscas equivalentes" items={entry.aliases} />
       <BadgeList title="Termos relacionados" items={entry.relatedTerms} />
     </div>
@@ -146,7 +146,7 @@ function EntryContent({ entry }: { entry: EntryResponse }) {
 
 export default function ReaderDictionaryPanel({
   variant = "floating",
-  embeddedLabel = "Dicionário",
+  embeddedLabel = "Dicionario",
   onOpenChange,
   requestedQuery = null,
 }: {
@@ -271,7 +271,7 @@ export default function ReaderDictionaryPanel({
         }
       }
     } catch {
-      // silêncio proposital
+      // silencio proposital
     } finally {
       setLoadingEntry(false);
     }
@@ -304,18 +304,17 @@ export default function ReaderDictionaryPanel({
               }`
             : `fixed z-40 inline-flex items-center gap-2 rounded-full border border-white/10 bg-sky-400 font-semibold text-black shadow-lg transition hover:bg-sky-300 ${
                 isMobile
-                  ? "bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 px-3.5 py-3 text-[13px]"
+                  ? "bottom-[calc(0.8rem+env(safe-area-inset-bottom))] left-3 h-11 w-[4.9rem] justify-center rounded-xl border border-white/12 bg-[linear-gradient(180deg,rgba(27,31,39,0.95),rgba(12,15,22,0.98))] px-2.5 text-center text-[10px] font-medium text-zinc-100 shadow-[0_-12px_28px_rgba(0,0,0,0.16)] backdrop-blur-xl hover:bg-white/[0.08]"
                   : "bottom-5 left-5 px-4 py-3 text-sm"
               }`
         }
       >
-        <span aria-hidden="true">📖</span>
-        <span>
+        <span className={isMobile ? "leading-none" : ""}>
           {isEmbedded
             ? embeddedLabel
             : isMobile
-            ? "Dicionário"
-            : "Dicionário bíblico"}
+            ? "Dicionario"
+            : "Dicionario biblico"}
         </span>
       </button>
 
@@ -369,13 +368,13 @@ export default function ReaderDictionaryPanel({
                         isMinimized ? "text-[10px]" : "text-[11px]"
                       }`}
                     >
-                      Dicionário bíblico
+                      Dicionario biblico
                     </p>
 
                     {isMinimized ? (
                       <div className="mt-1">
                         <h2 className="truncate text-[13px] font-semibold text-white">
-                          {selectedEntry?.word || "Consulta bíblica"}
+                          {selectedEntry?.word || "Consulta biblica"}
                         </h2>
                         <p className="truncate text-[10px] text-zinc-400">
                           Painel minimizado
@@ -456,7 +455,7 @@ export default function ReaderDictionaryPanel({
                               ) : mobileResults.length === 0 ? (
                                 <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-6 text-center">
                                   <p className="text-sm font-medium text-white">
-                                    Esta palavra não existe no dicionário.
+                                    Esta palavra nao existe no dicionario.
                                   </p>
                                 </div>
                               ) : (
@@ -490,7 +489,7 @@ export default function ReaderDictionaryPanel({
 
                           <div>
                             <label htmlFor="reader-dictionary-mobile-search" className="sr-only">
-                              Buscar termo bíblico
+                              Buscar termo biblico
                             </label>
 
                             <input
@@ -498,7 +497,7 @@ export default function ReaderDictionaryPanel({
                               type="text"
                               value={query}
                               onChange={(event) => setQuery(event.target.value)}
-                              placeholder="Ex.: amor, graça, Abraão..."
+                              placeholder="Ex.: amor, graca, Abraao..."
                               className="w-full rounded-2xl border border-white/10 bg-[#0d0d14] px-5 py-4 text-sm text-white placeholder:text-zinc-500 outline-none transition focus:border-sky-300/40"
                             />
 
@@ -539,7 +538,7 @@ export default function ReaderDictionaryPanel({
                                   onClick={() => setMobileMode("search")}
                                   className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition hover:bg-white/10"
                                 >
-                                  ← Voltar à pesquisa
+                                  {"<- Voltar para a pesquisa"}
                                 </button>
                               </div>
 
@@ -566,7 +565,7 @@ export default function ReaderDictionaryPanel({
                       <aside className="flex min-h-0 flex-col border-r border-white/10 bg-[#11141b]">
                         <div className="shrink-0 border-b border-white/10 p-4">
                           <label htmlFor="reader-dictionary-desktop-search" className="sr-only">
-                            Buscar termo bíblico
+                            Buscar termo biblico
                           </label>
 
                           <input
@@ -574,7 +573,7 @@ export default function ReaderDictionaryPanel({
                             type="text"
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
-                            placeholder="Buscar no dicionário..."
+                            placeholder="Buscar no dicionario..."
                             className="w-full rounded-2xl border border-white/10 bg-[#0d0d14] px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none transition focus:border-sky-300/40"
                           />
 
@@ -604,7 +603,7 @@ export default function ReaderDictionaryPanel({
                           {!hasQuery ? (
                             <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-8 text-center">
                               <p className="text-sm font-medium text-white">
-                                Digite uma palavra para pesquisar no dicionário.
+                                Digite uma palavra para pesquisar no dicionario.
                               </p>
                             </div>
                           ) : loading ? (
@@ -614,7 +613,7 @@ export default function ReaderDictionaryPanel({
                           ) : results.length === 0 ? (
                             <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-8 text-center">
                               <p className="text-sm font-medium text-white">
-                                Esta palavra não existe no dicionário.
+                                Esta palavra nao existe no dicionario.
                               </p>
                             </div>
                           ) : (
@@ -652,7 +651,7 @@ export default function ReaderDictionaryPanel({
                         {!hasQuery ? (
                           <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-10 text-center">
                             <p className="text-lg font-semibold text-white">
-                              Digite uma palavra para consultar o dicionário
+                              Digite uma palavra para consultar o dicionario
                             </p>
                           </div>
                         ) : !selectedEntry ? (
@@ -684,3 +683,4 @@ export default function ReaderDictionaryPanel({
     </>
   );
 }
+

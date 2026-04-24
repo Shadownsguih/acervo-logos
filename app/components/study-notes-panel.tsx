@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   useCallback,
@@ -62,7 +62,7 @@ function formatDate(value: string) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "Data indisponível";
+    return "Data indisponivel";
   }
 
   return new Intl.DateTimeFormat("pt-BR", {
@@ -398,7 +398,7 @@ export default function StudyNotesPanel({
       setNotes([]);
       setSelectedNoteId(null);
       setIsLoading(false);
-      setErrorMessage("Não foi possível identificar o usuário logado.");
+      setErrorMessage("Nao foi possivel identificar o usuario logado.");
       return;
     }
 
@@ -423,7 +423,7 @@ export default function StudyNotesPanel({
       setNotes([]);
       setSelectedNoteId(null);
       setIsLoading(false);
-      setErrorMessage("Não foi possível carregar suas notas.");
+      setErrorMessage("Nao foi possivel carregar suas notas.");
       return;
     }
 
@@ -510,7 +510,7 @@ export default function StudyNotesPanel({
       setIsSaving(false);
 
       if (error || !data) {
-        setErrorMessage("NÃ£o foi possÃ­vel salvar esta nota.");
+        setErrorMessage("Nao foi possivel salvar esta nota.");
         return;
       }
 
@@ -672,7 +672,7 @@ export default function StudyNotesPanel({
 
   async function handleCreateNote() {
     if (!userId) {
-      setErrorMessage("Usuário não encontrado.");
+      setErrorMessage("Usuario nao encontrado.");
       return;
     }
 
@@ -698,7 +698,7 @@ export default function StudyNotesPanel({
     setIsCreating(false);
 
     if (error || !data) {
-      setErrorMessage("Não foi possível criar uma nova nota.");
+      setErrorMessage("Nao foi possivel criar uma nova nota.");
       return;
     }
 
@@ -740,7 +740,7 @@ export default function StudyNotesPanel({
     setIsSaving(false);
 
     if (error || !data) {
-      setErrorMessage("Não foi possível salvar esta nota.");
+      setErrorMessage("Nao foi possivel salvar esta nota.");
       return;
     }
 
@@ -801,7 +801,7 @@ export default function StudyNotesPanel({
       .eq("id", deletingId);
 
     if (error) {
-      setErrorMessage("Não foi possível excluir esta nota.");
+      setErrorMessage("Nao foi possivel excluir esta nota.");
       return;
     }
 
@@ -820,7 +820,7 @@ export default function StudyNotesPanel({
       setIsNotesListOpen(false);
     }
 
-    setStatusMessage("Nota excluída.");
+    setStatusMessage("Nota excluida.");
   }
 
   const renderedWindowHeight = isMobile
@@ -846,13 +846,14 @@ export default function StudyNotesPanel({
               }`
             : `fixed z-40 inline-flex items-center gap-2 rounded-full border border-white/10 bg-amber-400 font-semibold text-black shadow-lg transition hover:bg-amber-300 ${
                 isMobile
-                  ? "bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 px-3.5 py-3 text-[13px]"
+                  ? "bottom-[calc(0.8rem+env(safe-area-inset-bottom))] right-3 h-11 w-[4.9rem] justify-center rounded-xl border border-white/12 bg-[linear-gradient(180deg,rgba(27,31,39,0.95),rgba(12,15,22,0.98))] px-2.5 text-center text-[10px] font-medium text-zinc-100 shadow-[0_-12px_28px_rgba(0,0,0,0.16)] backdrop-blur-xl hover:bg-white/[0.08]"
                   : "bottom-5 right-5 px-4 py-3 text-sm"
               }`
         }
       >
-        <span aria-hidden="true">📝</span>
-        <span>{isEmbedded ? embeddedLabel : isMobile ? "Notas" : "Bloco de notas"}</span>
+        <span className={isMobile ? "leading-none" : ""}>
+          {isEmbedded ? embeddedLabel : isMobile ? "Notas" : "Bloco de notas"}
+        </span>
       </button>
 
       {isOpen ? (
@@ -934,7 +935,7 @@ export default function StudyNotesPanel({
                     ) : (
                       <>
                         <h2 className="mt-1 text-sm font-semibold">
-                          Anotações de estudo
+                          Anotacoes de estudo
                         </h2>
                         <p className="mt-1 truncate text-[11px] text-zinc-400">
                           {scopedDocumentTitle}
@@ -985,10 +986,10 @@ export default function StudyNotesPanel({
                   {isMobile
                     ? "Painel otimizado para celular."
                     : isMinimized
-                    ? "Painel minimizado • Arraste pelo topo"
+                    ? "Painel minimizado | arraste pelo topo"
                     : isDesktopFullscreen
-                    ? "Modo tela cheia • Arraste pelo topo • Esc fecha"
-                    : "Arraste pelo topo • Redimensione no canto inferior direito • Ctrl+S/Cmd+S salva • Esc fecha"}
+                    ? "Modo tela cheia | arraste pelo topo | Esc fecha"
+                    : "Arraste pelo topo | redimensione no canto inferior direito | Ctrl+S/Cmd+S salva | Esc fecha"}
                 </p>
               </div>
 
@@ -1036,7 +1037,7 @@ export default function StudyNotesPanel({
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Título da nota"
+                                placeholder="Titulo da nota"
                                 className="w-full rounded-xl border border-white/10 bg-[#151821] px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-400/60"
                               />
 
@@ -1063,7 +1064,7 @@ export default function StudyNotesPanel({
                             <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-zinc-400">
                               {noteContext
                                 ? `Crie uma nova nota para ${scopedDocumentTitle}.`
-                                : "Crie uma nova nota para começar."}
+                                : "Crie uma nova nota para comecar."}
                             </div>
                           )}
 
@@ -1073,17 +1074,17 @@ export default function StudyNotesPanel({
                             </p>
                           ) : isSaving ? (
                             <p className="mt-3 flex items-center gap-2 text-sm text-yellow-400">
-                              <span>🟡</span>
+                              <span>•</span>
                               <span>Salvando...</span>
                             </p>
                           ) : statusMessage ? (
                             <p className="mt-3 flex items-center gap-2 text-sm text-emerald-400">
-                              <span>🟢</span>
+                              <span>•</span>
                               <span>{statusMessage}</span>
                             </p>
                           ) : (
                             <p className="mt-3 text-xs text-zinc-500">
-                              As alterações são salvas automaticamente enquanto você
+                              As alteracoes sao salvas automaticamente enquanto voce
                               escreve.
                             </p>
                           )}
@@ -1095,7 +1096,7 @@ export default function StudyNotesPanel({
                               ref={textareaRef}
                               value={content}
                               onChange={(e) => setContent(e.target.value)}
-                              placeholder="Escreva aqui suas anotações de estudo..."
+                              placeholder="Escreva aqui suas anotacoes de estudo..."
                               className="h-full min-h-0 w-full resize-none rounded-2xl border border-white/10 bg-[#151821] p-4 text-sm leading-6 text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-400/60"
                             />
                           ) : (
@@ -1156,14 +1157,14 @@ export default function StudyNotesPanel({
                           <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-zinc-400">
                             {noteContext ? (
                               <>
-                                Você ainda não tem notas para{" "}
+                                Voce ainda nao tem notas para{" "}
                                 <strong>{scopedDocumentTitle}</strong>. Clique
-                                em <strong>Nova nota</strong> para começar.
+                                em <strong>Nova nota</strong> para comecar.
                               </>
                             ) : (
                               <>
-                                Você ainda não tem notas. Clique em{" "}
-                                <strong>Nova nota</strong> para começar.
+                                Voce ainda nao tem notas. Clique em{" "}
+                                <strong>Nova nota</strong> para comecar.
                               </>
                             )}
                           </div>
@@ -1204,7 +1205,7 @@ export default function StudyNotesPanel({
                                   <p className="mt-2 line-clamp-2 text-xs text-zinc-400">
                                     {note.content?.trim()
                                       ? note.content
-                                      : "Sem conteúdo ainda."}
+                                      : "Sem conteudo ainda."}
                                   </p>
 
                                   <p className="mt-3 text-[11px] text-zinc-500">
@@ -1243,3 +1244,4 @@ export default function StudyNotesPanel({
     </>
   );
 }
+
