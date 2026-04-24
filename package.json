@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "bible:convert": "node scripts/convert-bible.js",
+    "bible:hebrew": "node scripts/generate-hebrew-transliteration.js",
+    "bible:import": "node scripts/import-bible-verses.js",
     "migrar:r2": "tsx scripts/migrar-pdfs.ts"
   },
   "dependencies": {

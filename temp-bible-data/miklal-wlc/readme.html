@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><html xmlns="http://www.w3.org/1999/xhtml" lang="eng" xml:lang="eng">
+<head><meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<title>Hebrew Bible Transliteration Readme</title>
+<style>
+body {font-family: "Times New Roman";}
+tr {vertical-align: top;}
+td {text-align: left; padding-right: 2em;}
+p {margin-top: .75em; margin-bottom: 0;}
+p.indent0 {margin-left: 0em;}
+p.indent1 {margin-left: 1em;}
+p.indent2 {margin-left: 2em;}
+p.indent3 {margin-left: 3em;}
+p.indent4 {margin-left: 4em;}
+p.indent5 {margin-left: 5em;}
+h1 {font-size: 125%; text-weight: bold; margin-top: 1em; margin-bottom: 0;}
+h2 {font-size: 115%; text-weight: bold; margin-top: 1em; margin-bottom: 0;}
+</style>
+</head>
+<body>
+<h1>License</h1>
+<p>This Hebrew Bible Transliteration is freely available for non-commerical use. For those interesting in licensing it for commerical use, please contact us at support@MiklalSoftware.com.</p>
+<p>© 2016 by Miklal Software Solutions, Inc (MiklalSoftware.com). This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="blank">http://creativecommons.org/licenses/by-nc-sa/4.0/</a>).</p>
+<p><a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license"><img style="border-width: 0;" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" alt="Creative Commons License" /></a>
+<h1>Text</h1>
+<p>The Hebrew text used to produce this transliteration is Westminster Leningrad Codex 4.18.</p>
+<h1>Contact</h1>
+<p>Please report any errors, typos, or comments that you have to support@MiklalSoftware.com.</p>
+<h1>Structure</h1>
+<p>The document structure of "TransliteratedHebrew.xml" is formally described in the accompanying DTD "TransliteratedHebrew.dtd." More intuitively, the document structure can be visualized:</p>
+<p class="indent0">&lt;text&gt;</p>
+<p class="indent1">&lt;transliteration&gt;</p>
+<p class="indent2">&lt;book&gt;</p>
+<p class="indent3">&lt;chapter&gt;</p>
+<p class="indent4">&lt;verse&gt;</p>
+<p class="indent5">&lt;word-translit&gt;&lt;/word-translit&gt;</p>
+<p class="indent5">&lt;space/&gt;</p>
+<p class="indent4">&lt;/verse&gt;</p>
+<p class="indent3">&lt;/chapter&gt;</p>
+<p class="indent2">&lt;/book&gt;</p>
+<p class="indent1">&lt;/transliteration&gt;</p>
+<p class="indent0">&lt;/text&gt;</p>
+
+<p>While the &lt;text&gt; and &lt;transliteration&gt; elements have no siblings, &lt;book&gt;, &lt;chapter&gt;, and &lt;verse&gt; elements can (and almost always do) have siblings.</p>
+
+<p>The &lt;book&gt;, &lt;chapter&gt;, and &lt;verse&gt; elements have "num" and "vid" (i.e. "Verse ID") attributes.</p>
+<p>For &lt;book&gt; elements, the value of the "num" attribute corresponds to the canonical book number of the Protestant canon, beginning with Genesis = 1. (The XML itself is arranged according to the Jewish canon.)</p>
+<p>For &lt;chapter&gt; elements, the value of the "num" attribute corresponds to the canonical chapter number of the given book.</p>
+<p>For &lt;verse&gt; elements, the value of the "num" attribute corresponds to the canonical verse number of the given chapter.</p>
+<p>The "vid" attribute, present on all &lt;book&gt;, &lt;chapter&gt;, and &lt;verse&gt; elements, encodes the reference information up to the appropriate degree of specificity in a 8-digit number of the format BBCCCVVV, where BB encodes the chapter in a 2-digit number and CCC/VVV encode the chapter and verse in a 3-digit number.</p>
+<p>For &lt;book&gt; elements, the value of the "vid" attribute has 0s for the CCC and VVV portions of the ID.</p>
+<p>For &lt;chapter&gt; elements, the value of the "vid" attribute has 0s for the VVV portion of the ID.</p>
+<p>For &lt;verse&gt; elements, the  value of the "vid" attribute is entirely filled out, so that e.g. vid="v30005027" corresponds to Amos 5:27 (book 30, chapter 005, verse 027).</p>
+
+<h1>Entities</h1>
+<p>Since the XML aims to conserve all of the information contained in the Hebrew orthography (apart from cantillation marks), the transliteration has been encoded using entitites. For example, one may not wish to represent the silent shewa in translieration for the purposes of presentation, but those conducting research on Biblical Hebrew orthography may want to know where all of the silent shewas are. For presentation, the entity values can be changed to fit various transliteration schemes. The entity declarations in the DTD simply use entity values that are equivalent to the entity names, and so these will need to be replaced with the desired UNICODE values if used for presentation purposes. The following entites are used in the XML:</p>
+<table>
+<tr>
+<td>
+<h2>Consonants</h2>
+<p class="entity">&amp;aleph;</p>
+<p class="entity">&amp;beth;</p>
+<p class="entity">&amp;gimel;</p>
+<p class="entity">&amp;daleth;</p>
+<p class="entity">&amp;he;</p>
+<p class="entity">&amp;waw;</p>
+<p class="entity">&amp;zayin;</p>
+<p class="entity">&amp;heth;</p>
+<p class="entity">&amp;teth;</p>
+<p class="entity">&amp;yod;</p>
+<p class="entity">&amp;kaph;</p>
+<p class="entity">&amp;lamed;</p>
+<p class="entity">&amp;mem;</p>
+<p class="entity"><p class="entity">&amp;nun;</p>
+<p class="entity">&amp;samek;</p>
+<p class="entity">&amp;ayin;</p>
+<p class="entity">&amp;pe;</p>
+<p class="entity">&amp;tsade;</p>
+<p class="entity">&amp;qoph;</p>
+<p class="entity">&amp;resh;</p>
+<p class="entity">&amp;sinShinUnpointed;</p>
+<p class="entity">&amp;taw;</p>
+<p class="entity">&amp;sin;</p>
+<p class="entity">&amp;shin;</p>
+<p class="entity">&amp;bethSpirantized;</p>
+<p class="entity">&amp;gimelSpirantized;</p>
+<p class="entity">&amp;dalethSpirantized;</p>
+<p class="entity">&amp;kaphSpirantized;</p>
+<p class="entity">&amp;peSpirantized;</p>
+<p class="entity">&amp;tawSpirantized;</p></td>
+<td>
+<h2>Vowels</h2>
+<p class="entity">&amp;patah;</p>
+<p class="entity">&amp;qamets;</p>
+<p class="entity">&amp;qametsHatuph;</p>
+<p class="entity">&amp;segol;</p>
+<p class="entity">&amp;hireq;</p>
+<p class="entity">&amp;tsere;</p>
+<p class="entity">&amp;holem;</p>
+<p class="entity">&amp;qibbuts;</p>
+<p class="entity">&amp;shewaVocal;</p>
+<p class="entity">&amp;shewaSilent;</p>
+<p class="entity">&amp;hatephPatah;</p>
+<p class="entity">&amp;haetphQamets;</p>
+<p class="entity">&amp;hatephSegol;</p>
+<p class="entity">&amp;sureq;</p>
+<p class="entity">&amp;patahFurtive;</p></td>
+
+<td>
+<h2>Matres lectionis</h2>
+<p class="entity">&amp;wawMater;</p>
+<p class="entity">&amp;yodMater;</p>
+<p class="entity">&amp;heMater;</p>
+<h2>Quiescent aleph</h2>
+<p class="entity">&amp;alephQuiescent;</p></td>
+
+<td>
+<h2>Other characters</h2>
+<p class="entity">&amp;maqqeph;</p>
+<p class="entity">&amp;space;</p>
+<p class="entity">&amp;nbsp;</p>
+<p class="entity">&amp;syllableBreak;</p></td></tr>
+</body>
+</html>

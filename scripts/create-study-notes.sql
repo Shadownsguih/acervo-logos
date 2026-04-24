@@ -15,15 +15,30 @@ create table if not exists public.study_notes (
   user_id uuid not null references auth.users(id) on delete cascade,
   title text not null default 'Nova nota',
   content text not null default '',
+  context_type text,
+  context_key text,
+  context_label text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.study_notes
+  add column if not exists context_type text;
+
+alter table public.study_notes
+  add column if not exists context_key text;
+
+alter table public.study_notes
+  add column if not exists context_label text;
 
 create index if not exists study_notes_user_id_idx
   on public.study_notes (user_id);
 
 create index if not exists study_notes_user_updated_at_idx
   on public.study_notes (user_id, updated_at desc);
+
+create index if not exists study_notes_user_context_idx
+  on public.study_notes (user_id, context_type, context_key, updated_at desc);
 
 alter table public.study_notes enable row level security;
 

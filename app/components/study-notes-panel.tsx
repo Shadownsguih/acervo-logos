@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createClient } from "@/lib/supabase-browser";
 
 type StudyNotesPanelProps = {
@@ -8,12 +15,20 @@ type StudyNotesPanelProps = {
   variant?: "floating" | "embedded";
   embeddedLabel?: string;
   onOpenChange?: (isOpen: boolean) => void;
+  noteContext?: {
+    type: string;
+    key: string;
+    label: string;
+  } | null;
 };
 
 type StudyNote = {
   id: string;
   title: string;
   content: string;
+  context_type: string | null;
+  context_key: string | null;
+  context_label: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -173,6 +188,7 @@ export default function StudyNotesPanel({
   variant = "floating",
   embeddedLabel = "Notas",
   onOpenChange,
+  noteContext = null,
 }: StudyNotesPanelProps) {
   const supabase = useMemo(() => createClient(), []);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -216,6 +232,14 @@ export default function StudyNotesPanel({
   const [errorMessage, setErrorMessage] = useState("");
   const isEmbedded = variant === "embedded";
   const isEmbeddedDesktop = isEmbedded && !isMobile;
+  const lastSelectedNoteStorageKey = useMemo(() => {
+    if (!noteContext) {
+      return LAST_NOTE_STORAGE_KEY;
+    }
+
+    return `${LAST_NOTE_STORAGE_KEY}:${noteContext.type}:${noteContext.key}`;
+  }, [noteContext]);
+  const scopedDocumentTitle = noteContext?.label ?? currentDocumentTitle;
 
   const selectedNote = notes.find((note) => note.id === selectedNoteId) ?? null;
 
@@ -253,16 +277,16 @@ export default function StudyNotesPanel({
     if (typeof window === "undefined") return;
 
     if (!noteId) {
-      window.localStorage.removeItem(LAST_NOTE_STORAGE_KEY);
+      window.localStorage.removeItem(lastSelectedNoteStorageKey);
       return;
     }
 
-    window.localStorage.setItem(LAST_NOTE_STORAGE_KEY, noteId);
+    window.localStorage.setItem(lastSelectedNoteStorageKey, noteId);
   }
 
   function getPersistedLastSelectedNote() {
     if (typeof window === "undefined") return null;
-    return window.localStorage.getItem(LAST_NOTE_STORAGE_KEY);
+    return window.localStorage.getItem(lastSelectedNoteStorageKey);
   }
 
   function persistWindowState(nextState: FloatingWindowState) {
@@ -380,10 +404,20 @@ export default function StudyNotesPanel({
 
     setUserId(user.id);
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("study_notes")
-      .select("id, title, content, created_at, updated_at")
+      .select(
+        "id, title, content, context_type, context_key, context_label, created_at, updated_at"
+      )
       .order("updated_at", { ascending: false });
+
+    if (noteContext) {
+      query = query
+        .eq("context_type", noteContext.type)
+        .eq("context_key", noteContext.key);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       setNotes([]);
@@ -431,9 +465,6 @@ export default function StudyNotesPanel({
     }
 
     syncViewport();
-    queueMicrotask(() => {
-      void loadNotes();
-    });
 
     window.addEventListener("resize", syncViewport);
 
@@ -443,11 +474,19 @@ export default function StudyNotesPanel({
   }, []);
 
   useEffect(() => {
-    if (!selectedNoteId) return;
-    persistLastSelectedNote(selectedNoteId);
-  }, [selectedNoteId]);
+    queueMicrotask(() => {
+      void loadNotes();
+    });
+  }, [noteContext]);
 
-  async function saveCurrentNote(nextTitle: string, nextContent: string) {
+  useEffect(() => {
+    if (typeof window === "undefined" || !selectedNoteId) return;
+
+    window.localStorage.setItem(lastSelectedNoteStorageKey, selectedNoteId);
+  }, [lastSelectedNoteStorageKey, selectedNoteId]);
+
+  const saveCurrentNote = useCallback(
+    async (nextTitle: string, nextContent: string) => {
       if (!selectedNoteId) return;
 
       setIsSaving(true);
@@ -458,9 +497,14 @@ export default function StudyNotesPanel({
         .update({
           title: nextTitle.trim() || "Nova nota",
           content: nextContent,
+          context_type: noteContext?.type ?? null,
+          context_key: noteContext?.key ?? null,
+          context_label: noteContext?.label ?? null,
         })
         .eq("id", selectedNoteId)
-        .select("id, title, content, created_at, updated_at")
+        .select(
+          "id, title, content, context_type, context_key, context_label, created_at, updated_at"
+        )
         .single();
 
       setIsSaving(false);
@@ -482,7 +526,9 @@ export default function StudyNotesPanel({
       );
 
       setStatusMessage(`Salvo em ${formatDate(updatedNote.updated_at)}.`);
-  }
+    },
+    [noteContext, selectedNoteId, supabase]
+  );
 
   useEffect(() => {
     if (!isOpen || !selectedNoteId || isNotesListOpen || isMinimized) return;
@@ -638,10 +684,15 @@ export default function StudyNotesPanel({
       .from("study_notes")
       .insert({
         user_id: userId,
-        title: "Nova nota",
+        title: noteContext?.label ?? "Nova nota",
         content: "",
+        context_type: noteContext?.type ?? null,
+        context_key: noteContext?.key ?? null,
+        context_label: noteContext?.label ?? null,
       })
-      .select("id, title, content, created_at, updated_at")
+      .select(
+        "id, title, content, context_type, context_key, context_label, created_at, updated_at"
+      )
       .single();
 
     setIsCreating(false);
@@ -676,9 +727,14 @@ export default function StudyNotesPanel({
       .update({
         title: nextTitle.trim() || "Nova nota",
         content: nextContent,
+        context_type: noteContext?.type ?? null,
+        context_key: noteContext?.key ?? null,
+        context_label: noteContext?.label ?? null,
       })
       .eq("id", selectedNoteId)
-      .select("id, title, content, created_at, updated_at")
+      .select(
+        "id, title, content, context_type, context_key, context_label, created_at, updated_at"
+      )
       .single();
 
     setIsSaving(false);
@@ -872,7 +928,7 @@ export default function StudyNotesPanel({
                           {minimizedTitle}
                         </h2>
                         <p className="truncate text-[10px] text-zinc-400">
-                          {currentDocumentTitle}
+                          {scopedDocumentTitle}
                         </p>
                       </div>
                     ) : (
@@ -881,7 +937,7 @@ export default function StudyNotesPanel({
                           Anotações de estudo
                         </h2>
                         <p className="mt-1 truncate text-[11px] text-zinc-400">
-                          {currentDocumentTitle}
+                          {scopedDocumentTitle}
                         </p>
                       </>
                     )}
@@ -1005,7 +1061,9 @@ export default function StudyNotesPanel({
                             </>
                           ) : (
                             <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-zinc-400">
-                              Crie uma nova nota para começar.
+                              {noteContext
+                                ? `Crie uma nova nota para ${scopedDocumentTitle}.`
+                                : "Crie uma nova nota para começar."}
                             </div>
                           )}
 
@@ -1042,7 +1100,9 @@ export default function StudyNotesPanel({
                             />
                           ) : (
                             <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/5 p-8 text-center text-zinc-400">
-                              Nenhuma nota selecionada.
+                              {noteContext
+                                ? `Nenhuma nota selecionada para ${scopedDocumentTitle}.`
+                                : "Nenhuma nota selecionada."}
                             </div>
                           )}
                         </div>
@@ -1094,8 +1154,18 @@ export default function StudyNotesPanel({
                           </div>
                         ) : notes.length === 0 ? (
                           <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-zinc-400">
-                            Você ainda não tem notas. Clique em{" "}
-                            <strong>Nova nota</strong> para começar.
+                            {noteContext ? (
+                              <>
+                                Você ainda não tem notas para{" "}
+                                <strong>{scopedDocumentTitle}</strong>. Clique
+                                em <strong>Nova nota</strong> para começar.
+                              </>
+                            ) : (
+                              <>
+                                Você ainda não tem notas. Clique em{" "}
+                                <strong>Nova nota</strong> para começar.
+                              </>
+                            )}
                           </div>
                         ) : filteredNotes.length === 0 ? (
                           <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-zinc-400">
@@ -1124,6 +1194,12 @@ export default function StudyNotesPanel({
                                   <p className="truncate text-sm font-semibold text-white">
                                     {note.title?.trim() || "Nova nota"}
                                   </p>
+
+                                  {note.context_label ? (
+                                    <p className="mt-1 truncate text-[11px] text-amber-300/80">
+                                      {note.context_label}
+                                    </p>
+                                  ) : null}
 
                                   <p className="mt-2 line-clamp-2 text-xs text-zinc-400">
                                     {note.content?.trim()

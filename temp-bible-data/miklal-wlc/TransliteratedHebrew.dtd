@@ -1,0 +1,83 @@
+<!ELEMENT text ( head, transliteration ) >
+<!ATTLIST text edition CDATA #REQUIRED >
+<!ATTLIST text xml:lang NMTOKEN #REQUIRED >
+
+<!ELEMENT head ( title, license, contributor+ ) >
+
+<!ELEMENT license ( #PCDATA ) >
+<!ELEMENT title ( #PCDATA ) >
+<!ELEMENT contributor ( #PCDATA ) >
+
+<!ELEMENT transliteration ( book+ ) >
+
+<!ELEMENT book ( chapter+ ) >
+<!ATTLIST book num NMTOKEN #REQUIRED >
+<!ATTLIST book vid NMTOKEN #REQUIRED >
+
+<!ELEMENT chapter ( verse+ ) >
+<!ATTLIST chapter num NMTOKEN #REQUIRED >
+<!ATTLIST chapter vid NMTOKEN #REQUIRED >
+
+<!ELEMENT verse ( space | word-translit )* >
+<!ATTLIST verse num NMTOKEN #REQUIRED >
+<!ATTLIST verse vid ID #REQUIRED >
+
+<!ELEMENT word-translit ( #PCDATA ) >
+<!ELEMENT space EMPTY >
+
+<!ELEMENT space EMPTY >
+<!ELEMENT word-translit EMPTY >
+
+<!ENTITY aleph 'aleph'>
+<!ENTITY beth 'beth'>
+<!ENTITY gimel 'gimel'>
+<!ENTITY daleth 'daleth'>
+<!ENTITY he 'he'>
+<!ENTITY waw 'waw'>
+<!ENTITY zayin 'zayin'>
+<!ENTITY heth 'heth'>
+<!ENTITY teth 'teth'>
+<!ENTITY yod 'yod'>
+<!ENTITY kaph 'kaph'>
+<!ENTITY lamed 'lamed'>
+<!ENTITY mem 'mem'>
+<!ENTITY nun 'nun'>
+<!ENTITY samek 'samek'>
+<!ENTITY ayin 'ayin'>
+<!ENTITY pe 'pe'>
+<!ENTITY tsade 'tsade'>
+<!ENTITY qoph 'qoph'>
+<!ENTITY resh 'resh'>
+<!ENTITY sinShinUnpointed 'sinShinUnpointed'>
+<!ENTITY taw 'taw'>
+<!ENTITY sin 'sin'>
+<!ENTITY shin 'shin'>
+<!ENTITY patah 'patah'>
+<!ENTITY qamets 'qamets'>
+<!ENTITY qametsHatuph 'qametsHatuph'>
+<!ENTITY segol 'segol'>
+<!ENTITY hireq 'hireq'>
+<!ENTITY tsere 'tsere'>
+<!ENTITY holem 'holem'>
+<!ENTITY qibbuts 'qibbuts'>
+<!ENTITY shewaVocal 'shewaVocal'>
+<!ENTITY shewaSilent 'shewaSilent'>
+<!ENTITY hatephPatah 'hatephPatah'>
+<!ENTITY haetphQamets 'haetphQamets'>
+<!ENTITY hatephSegol 'hatephSegol'>
+<!ENTITY sureq 'sureq'>
+<!ENTITY patahFurtive 'patahFurtive'>
+<!ENTITY alephQuiescent 'alephQuiescent'>
+<!ENTITY wawMater 'wawMater'>
+<!ENTITY yodMater 'yodMater'>
+<!ENTITY heMater 'heMater'>
+<!ENTITY bethSpirantized 'bethSpirantized'>
+<!ENTITY gimelSpirantized 'gimelSpirantized'>
+<!ENTITY dalethSpirantized 'dalethSpirantized'>
+<!ENTITY kaphSpirantized 'kaphSpirantized'>
+<!ENTITY peSpirantized 'peSpirantized'>
+<!ENTITY tawSpirantized 'tawSpirantized'>
+<!ENTITY maqqeph 'maqqeph'>
+<!ENTITY space 'space'>
+<!ENTITY nbsp 'nbsp'>
+<!ENTITY syllableBreak 'syllableBreak'>

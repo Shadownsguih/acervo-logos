@@ -148,10 +148,15 @@ export default function ReaderDictionaryPanel({
   variant = "floating",
   embeddedLabel = "Dicionário",
   onOpenChange,
+  requestedQuery = null,
 }: {
   variant?: "floating" | "embedded";
   embeddedLabel?: string;
   onOpenChange?: (isOpen: boolean) => void;
+  requestedQuery?: {
+    term: string;
+    nonce: number;
+  } | null;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -185,6 +190,19 @@ export default function ReaderDictionaryPanel({
       onOpenChange?.(false);
     };
   }, [isOpen, onOpenChange]);
+
+  useEffect(() => {
+    const nextTerm = requestedQuery?.term?.trim() ?? "";
+
+    if (!nextTerm) {
+      return;
+    }
+
+    setQuery(nextTerm);
+    setIsOpen(true);
+    setIsMinimized(false);
+    setMobileMode("search");
+  }, [requestedQuery]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -235,7 +253,7 @@ export default function ReaderDictionaryPanel({
     if (!selectedEntry || !results.some((item) => item.id === selectedEntry.id)) {
       void openEntry(first.id, false);
     }
-  }, [results]);
+  }, [results, selectedEntry]);
 
   async function openEntry(id: string, switchMobile = true) {
     setLoadingEntry(true);
@@ -313,7 +331,7 @@ export default function ReaderDictionaryPanel({
               isMobile
                 ? "fixed inset-x-0 bottom-0 h-[84vh] rounded-t-[1.5rem] rounded-b-none"
                 : isEmbeddedDesktop
-                ? "fixed bottom-24 right-6 w-[min(1120px,calc(100vw-4rem))] rounded-[28px]"
+                ? "fixed left-1/2 top-1/2 w-[min(960px,calc(100vw-5rem))] -translate-x-1/2 -translate-y-1/2 rounded-[28px]"
                 : isMinimized
                 ? "fixed bottom-5 left-5 h-[92px] w-[360px] rounded-2xl"
                 : "fixed bottom-5 left-5 h-[76vh] w-[min(920px,calc(100vw-3rem))] max-w-[920px] rounded-2xl"
@@ -397,13 +415,21 @@ export default function ReaderDictionaryPanel({
                     <button
                       type="button"
                       onClick={closePanel}
-                      className={`rounded-lg border border-white/10 bg-white/5 font-medium text-white transition hover:bg-white/10 ${
-                        isMinimized
-                          ? "px-2.5 py-1 text-[10px]"
-                          : "px-3 py-1.5 text-[11px]"
+                      aria-label="Fechar dicionario"
+                      className={`inline-flex items-center justify-center rounded-full border border-white/12 bg-white/10 font-medium text-white transition hover:bg-white/15 ${
+                        isMobile
+                          ? "h-10 w-10 text-sm"
+                          : isMinimized
+                          ? "h-8 min-w-8 px-2 text-[10px]"
+                          : "h-9 min-w-9 px-3 text-[11px]"
                       }`}
                     >
-                      Fechar
+                      <span aria-hidden="true" className="text-base leading-none">
+                        X
+                      </span>
+                      {!isMobile ? (
+                        <span className="ml-2 leading-none">Fechar</span>
+                      ) : null}
                     </button>
                   </div>
                 </div>
@@ -533,7 +559,7 @@ export default function ReaderDictionaryPanel({
                     <div
                       className={`grid min-h-0 flex-1 ${
                         isEmbeddedDesktop
-                          ? "grid-cols-[320px_minmax(0,1fr)]"
+                          ? "grid-cols-[280px_minmax(0,1fr)]"
                           : "grid-cols-[340px_minmax(0,1fr)]"
                       }`}
                     >

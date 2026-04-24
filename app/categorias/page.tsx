@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import CategoriesContinueReadingCard from "@/app/components/categories-continue-reading-card";
 import CategoryScroll from "@/app/components/category-scroll";
+import { BIBLE_VIRTUAL_CATEGORY } from "@/lib/bible-reader";
 
 type Categoria = {
   id: string;
@@ -107,6 +108,13 @@ export default async function CategoriasPage() {
   }
 
   const typedCategorias = (categorias ?? []) as Categoria[];
+  const hasBibleCategory = typedCategorias.some((categoria) => {
+    const normalized = normalizeCategoryPath(categoria.slug || categoria.name);
+    return normalized === "biblia";
+  });
+  const categoriesWithVirtualBible = hasBibleCategory
+    ? typedCategorias
+    : [BIBLE_VIRTUAL_CATEGORY, ...typedCategorias];
 
   return (
     <main className="min-h-screen bg-[#050816] text-white">
@@ -124,7 +132,7 @@ export default async function CategoriasPage() {
 
         <section className="mt-6">
           <CategoryScroll>
-            {typedCategorias.map((categoria) => {
+            {categoriesWithVirtualBible.map((categoria) => {
               const visual = getCategoryVisual(categoria.name);
 
               return (
