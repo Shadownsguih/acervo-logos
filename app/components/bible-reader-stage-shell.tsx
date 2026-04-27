@@ -1204,7 +1204,7 @@ export default function BibleReaderStageShell() {
   function buildShareData(reference: string, verseText: string) {
     const siteUrl = ACERVO_LOGOS_PUBLIC_URL;
     const shareHeader = `${reference} | ${selectedTranslationLabel}`;
-    const shareText = `${shareHeader}\n\n${verseText}\n\n@acervo-logos | acesse ${siteUrl} e estude esse versiculo completo`;
+    const shareText = `${shareHeader}\n\n${verseText}\n\n@acervo-logos | Estude mais no Acervo Logos: ${siteUrl}`;
 
     return {
       shareText,
