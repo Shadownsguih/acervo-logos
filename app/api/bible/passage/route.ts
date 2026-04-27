@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
 import { getBibleBookSlug } from "@/lib/bible-canon";
 import { getBibleBookMetadataBySlug } from "@/lib/bible-metadata";
-import { getAvailableBibleBooks } from "@/lib/bible-books";
-
-type BibleVerseRow = {
-  version: string;
-  book: string;
-  abbrev: string | null;
-  chapter: number;
-  verse: number;
-  reference: string;
-  text: string;
-};
+import { getLocalBiblePassage } from "@/lib/local-bible-source";
 
 export async function GET(request: NextRequest) {
   const version = request.nextUrl.searchParams.get("version")?.trim() ?? "";
@@ -28,19 +17,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const availableBooks = await getAvailableBibleBooks(version);
-
-  if (availableBooks.error) {
-    return NextResponse.json(
-      { ok: false, error: availableBooks.error.message, passage: null },
-      { status: 500 }
-    );
-  }
-
   const resolvedBook =
-    availableBooks.data?.find((item) => item.id === book)?.label ??
-    getBibleBookMetadataBySlug(version, book)?.label ??
-    null;
+    getBibleBookMetadataBySlug(version, book)?.label ?? null;
 
   if (!resolvedBook) {
     return NextResponse.json(
@@ -49,22 +27,23 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { data, error } = await supabase
-    .from("bible_verses")
-    .select("version, book, abbrev, chapter, verse, reference, text")
-    .eq("version", version)
-    .eq("book", resolvedBook)
-    .eq("chapter", chapter)
-    .order("verse", { ascending: true });
+  let verses;
 
-  if (error) {
+  try {
+    verses = await getLocalBiblePassage(version, book, chapter);
+  } catch (error) {
     return NextResponse.json(
-      { ok: false, error: error.message, passage: null },
+      {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Nao foi possivel carregar este capitulo.",
+        passage: null,
+      },
       { status: 500 }
     );
   }
-
-  const verses = (data ?? []) as BibleVerseRow[];
 
   if (verses.length === 0) {
     return NextResponse.json(

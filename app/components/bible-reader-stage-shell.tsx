@@ -85,6 +85,52 @@ type HebrewPassageResponse = {
   generatedAt: string;
 };
 
+type GreekVerseWord = {
+  position: number;
+  bookNumber: number;
+  chapter: number;
+  verse: number;
+  verseCode: string | null;
+  partOfSpeech: string;
+  parsing: string;
+  text: string;
+  word: string;
+  normalizedWord: string;
+  lemma: string;
+  transliteration: string;
+  lemmaTransliteration: string;
+};
+
+type GreekVerseItem = {
+  bookNumber: number;
+  bookId: string;
+  bookCode: string;
+  book: string;
+  chapter: number;
+  verse: number;
+  reference: string;
+  greek: string;
+  transliteration: string;
+  words: GreekVerseWord[];
+  source: {
+    greek: string;
+    morphology: string;
+    transliteration: string;
+  };
+};
+
+type GreekPassageResponse = {
+  bookId: string;
+  chapter: number;
+  verses: GreekVerseItem[];
+  license: {
+    greek: string;
+    morphology: string;
+    transliteration: string;
+  };
+  generatedAt: string;
+};
+
 type DictionaryContextMenuState = {
   term: string;
   reference: string;
@@ -195,16 +241,21 @@ export default function BibleReaderStageShell() {
   const [hebrewPassage, setHebrewPassage] = useState<HebrewPassageResponse | null>(
     null
   );
+  const [greekPassage, setGreekPassage] = useState<GreekPassageResponse | null>(
+    null
+  );
   const [versionsLoading, setVersionsLoading] = useState(true);
   const [booksLoading, setBooksLoading] = useState(false);
   const [passageLoading, setPassageLoading] = useState(false);
   const [hebrewPassageLoading, setHebrewPassageLoading] = useState(false);
+  const [greekPassageLoading, setGreekPassageLoading] = useState(false);
   const [versionsError, setVersionsError] = useState("");
   const [booksError, setBooksError] = useState("");
   const [passageError, setPassageError] = useState("");
   const [hebrewPassageError, setHebrewPassageError] = useState("");
+  const [greekPassageError, setGreekPassageError] = useState("");
   const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(false);
-  const [isMobileHeaderCollapsed, setIsMobileHeaderCollapsed] = useState(false);
+  const [isMobileHeaderCollapsed] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [showHebrewLayer, setShowHebrewLayer] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -430,6 +481,21 @@ export default function BibleReaderStageShell() {
   const selectedBookLabel = selectedBookOption?.label ?? "Selecione";
   const maxChapter = selectedBookOption?.chapters ?? 1;
   const isOldTestamentBook = selectedBookOption?.testament === "AT";
+  const isNewTestamentBook = selectedBookOption?.testament === "NT";
+  const originalLayerLabel = isOldTestamentBook ? "Hebraico" : "Grego";
+  const originalLayerActionLabel = `Consultar ${originalLayerLabel}`;
+  const originalLayerDescription = isOldTestamentBook
+    ? "Hebraico original e transliteracao acima do texto em portugues."
+    : "Grego original e transliteracao acima do texto em portugues.";
+  const originalLayerLoadingLabel = isOldTestamentBook
+    ? "Carregando hebraico e transliteracao..."
+    : "Carregando grego e transliteracao...";
+  const originalLayerShowLabel = isOldTestamentBook
+    ? "Mostrar hebraico + transliteracao"
+    : "Mostrar grego + transliteracao";
+  const originalLayerHideLabel = isOldTestamentBook
+    ? "Ocultar hebraico + transliteracao"
+    : "Ocultar grego + transliteracao";
 
   useEffect(() => {
     setSelectedChapter((current) => Math.min(Math.max(current, 1), maxChapter));
@@ -451,22 +517,6 @@ export default function BibleReaderStageShell() {
   useEffect(() => {
     setIsMobileControlsOpen(false);
   }, [selectedTranslation, selectedBook, selectedChapter]);
-
-  useEffect(() => {
-    function handleScroll() {
-      const nextCollapsed = window.scrollY > 72;
-      setIsMobileHeaderCollapsed((current) =>
-        current === nextCollapsed ? current : nextCollapsed
-      );
-    }
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
 
   useEffect(() => {
     function closeContextMenu() {
@@ -834,6 +884,66 @@ export default function BibleReaderStageShell() {
   }, [isOldTestamentBook, selectedBook, selectedChapter, showHebrewLayer]);
 
   useEffect(() => {
+    if (!showHebrewLayer || !selectedBook || !selectedChapter || !isNewTestamentBook) {
+      setGreekPassage(null);
+      setGreekPassageError("");
+      setGreekPassageLoading(false);
+      return;
+    }
+
+    let active = true;
+
+    async function loadGreekPassage() {
+      setGreekPassageLoading(true);
+      setGreekPassageError("");
+
+      try {
+        const response = await fetch(
+          `/api/bible/greek-passage?book=${encodeURIComponent(
+            selectedBook
+          )}&chapter=${selectedChapter}`
+        );
+        const result = await readJsonSafely<{
+          ok: boolean;
+          error?: string;
+          passage?: GreekPassageResponse;
+        }>(response);
+
+        if (!active) {
+          return;
+        }
+
+        if (!response.ok || !result?.ok || !result.passage) {
+          setGreekPassage(null);
+          setGreekPassageError(
+            result?.error || "Nao foi possivel carregar a camada grega."
+          );
+          return;
+        }
+
+        setGreekPassage(result.passage);
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setGreekPassage(null);
+        setGreekPassageError("Nao foi possivel carregar a camada grega.");
+      } finally {
+        if (active) {
+          setGreekPassageLoading(false);
+        }
+      }
+    }
+
+    void loadGreekPassage();
+
+    return () => {
+      active = false;
+    };
+  }, [isNewTestamentBook, selectedBook, selectedChapter, showHebrewLayer]);
+
+  useEffect(() => {
     if (!hasRestoredInitialState) {
       return;
     }
@@ -920,6 +1030,9 @@ export default function BibleReaderStageShell() {
   const hebrewVersesByNumber = useMemo(() => {
     return new Map((hebrewPassage?.verses ?? []).map((item) => [item.verse, item]));
   }, [hebrewPassage]);
+  const greekVersesByNumber = useMemo(() => {
+    return new Map((greekPassage?.verses ?? []).map((item) => [item.verse, item]));
+  }, [greekPassage]);
 
   const referenceLabel = useMemo(() => {
     return `${selectedBookLabel} ${selectedChapter}${
@@ -1207,7 +1320,19 @@ export default function BibleReaderStageShell() {
                   </Select>
                 </div>
 
-                <div className="mt-3 flex justify-end">
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowHebrewLayer((current) => !current)}
+                    className={`inline-flex h-11 items-center rounded-xl border px-3 text-xs font-medium transition ${
+                      showHebrewLayer
+                        ? "border-amber-300/30 bg-amber-300/12 text-amber-200"
+                        : "border-white/10 bg-white/[0.04] text-zinc-200"
+                    }`}
+                  >
+                    {originalLayerLabel}
+                  </button>
+
                   <button
                     type="button"
                     aria-label="Abrir busca"
@@ -1237,7 +1362,6 @@ export default function BibleReaderStageShell() {
                     onSubmit={(event) => {
                       handleSearchSubmit(event);
                       setIsMobileSearchOpen(false);
-                      setIsMobileHeaderCollapsed(true);
                       passageContainerRef.current?.scrollTo({
                         top: 0,
                         behavior: "smooth",
@@ -1406,19 +1530,17 @@ export default function BibleReaderStageShell() {
                       <span className="hidden rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-zinc-300 md:inline-flex">
                         {referenceLabel}
                       </span>
-                      {isOldTestamentBook ? (
-                        <button
-                          type="button"
-                          onClick={() => setShowHebrewLayer((current) => !current)}
-                          className={`inline-flex items-center rounded-full border px-3 py-1.5 text-[11px] font-medium tracking-[0.12em] transition ${
-                            showHebrewLayer
-                              ? "border-amber-300/30 bg-amber-300/12 text-amber-200"
-                              : "border-white/10 bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
-                          }`}
-                        >
-                          Consultar Hebraico
-                        </button>
-                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setShowHebrewLayer((current) => !current)}
+                        className={`inline-flex items-center rounded-full border px-3 py-1.5 text-[11px] font-medium tracking-[0.12em] transition ${
+                          showHebrewLayer
+                            ? "border-amber-300/30 bg-amber-300/12 text-amber-200"
+                            : "border-white/10 bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
+                        }`}
+                      >
+                        {originalLayerActionLabel}
+                      </button>
                     </div>
 
                     <div className="hidden items-center gap-2 text-sm sm:flex">
@@ -1529,21 +1651,22 @@ export default function BibleReaderStageShell() {
                     </div>
                   ) : passage?.verses?.length ? (
                     <div className="rounded-[30px] border border-white/10 bg-[#0d1016]/80 p-3 shadow-[0_24px_70px_rgba(0,0,0,0.26)] backdrop-blur-sm md:p-4">
-                      {showHebrewLayer && isOldTestamentBook ? (
+                      {showHebrewLayer &&
+                      (isOldTestamentBook || isNewTestamentBook) ? (
                         <div className="mb-4 rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-3">
                           <p className="text-[10px] uppercase tracking-[0.22em] text-amber-200/70">
-                            Camada Hebraica
+                            {`Camada ${originalLayerLabel}`}
                           </p>
                           <p className="mt-1 text-sm text-zinc-400">
-                            Hebraico original e transliteracao acima do texto em portugues.
+                            {originalLayerDescription}
                           </p>
-                          {hebrewPassageLoading ? (
+                          {hebrewPassageLoading || greekPassageLoading ? (
                             <p className="mt-2 text-sm text-zinc-400">
-                              Carregando hebraico e transliteracao...
+                              {originalLayerLoadingLabel}
                             </p>
-                          ) : hebrewPassageError ? (
+                          ) : hebrewPassageError || greekPassageError ? (
                             <p className="mt-2 text-sm text-red-200">
-                              {hebrewPassageError}
+                              {hebrewPassageError || greekPassageError}
                             </p>
                           ) : null}
                         </div>
@@ -1555,6 +1678,11 @@ export default function BibleReaderStageShell() {
                             searchHighlightVerse?.verse === item.verse;
                           const hebrewVerse =
                             hebrewVersesByNumber.get(item.verse) ?? null;
+                          const greekVerse =
+                            greekVersesByNumber.get(item.verse) ?? null;
+                          const hasOriginalVerse = isOldTestamentBook
+                            ? !!hebrewVerse
+                            : !!greekVerse;
 
                           return (
                             <div
@@ -1579,19 +1707,25 @@ export default function BibleReaderStageShell() {
                                   : "hover:bg-white/[0.04]"
                               }`}
                             >
-                              {showHebrewLayer && hebrewVerse ? (
+                              {showHebrewLayer && hasOriginalVerse ? (
                                 <div className="mb-3 rounded-[16px] border border-white/6 bg-white/[0.025] px-3 py-2.5">
                                   <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-                                    Hebraico
+                                    {originalLayerLabel}
                                   </p>
                                   <p
-                                    dir="rtl"
-                                    className="mt-1.5 text-right font-serif text-[1.08rem] leading-8 text-zinc-100 md:text-[1.16rem]"
+                                    dir={isOldTestamentBook ? "rtl" : "ltr"}
+                                    className={`mt-1.5 font-serif text-[1.08rem] leading-8 text-zinc-100 md:text-[1.16rem] ${
+                                      isOldTestamentBook ? "text-right" : "text-left"
+                                    }`}
                                   >
-                                    {hebrewVerse.hebrew}
+                                    {isOldTestamentBook
+                                      ? hebrewVerse?.hebrew
+                                      : greekVerse?.greek}
                                   </p>
                                   <p className="mt-2 border-t border-white/6 pt-2 text-[0.92rem] italic leading-6 text-zinc-400">
-                                    {hebrewVerse.transliteration}
+                                    {isOldTestamentBook
+                                      ? hebrewVerse?.transliteration
+                                      : greekVerse?.transliteration}
                                   </p>
                                 </div>
                               ) : null}
@@ -1891,21 +2025,19 @@ export default function BibleReaderStageShell() {
                   </Field>
                 </div>
 
-                {isOldTestamentBook ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowHebrewLayer((current) => !current)}
-                    className={`w-full rounded-2xl border px-4 py-3 text-sm font-medium transition ${
-                      showHebrewLayer
-                        ? "border-amber-300/30 bg-amber-300/12 text-amber-200"
-                        : "border-white/10 bg-white/[0.04] text-zinc-200"
-                    }`}
-                  >
-                    {showHebrewLayer
-                      ? "Ocultar hebraico + transliteracao"
-                      : "Mostrar hebraico + transliteracao"}
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setShowHebrewLayer((current) => !current)}
+                  className={`w-full rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+                    showHebrewLayer
+                      ? "border-amber-300/30 bg-amber-300/12 text-amber-200"
+                      : "border-white/10 bg-white/[0.04] text-zinc-200"
+                  }`}
+                >
+                  {showHebrewLayer
+                    ? originalLayerHideLabel
+                    : originalLayerShowLabel}
+                </button>
               </div>
             </div>
           </div>

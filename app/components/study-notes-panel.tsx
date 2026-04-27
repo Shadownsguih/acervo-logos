@@ -409,6 +409,7 @@ export default function StudyNotesPanel({
       .select(
         "id, title, content, context_type, context_key, context_label, created_at, updated_at"
       )
+      .eq("user_id", user.id)
       .order("updated_at", { ascending: false });
 
     if (noteContext) {

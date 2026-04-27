@@ -19,7 +19,15 @@ export type AvailableBibleBook = {
   testament: "AT" | "NT";
 };
 
-export async function getAvailableBibleBooks(version: string) {
+const availableBibleBooksPromiseCache = new Map<
+  string,
+  Promise<{
+    data: AvailableBibleBook[] | null;
+    error: unknown;
+  }>
+>();
+
+async function loadAvailableBibleBooks(version: string) {
   const { data, error } = await fetchAllBibleRows<BibleBookAvailabilityRow>({
     columns: "book, abbrev, chapter",
     version,
@@ -71,4 +79,27 @@ export async function getAvailableBibleBooks(version: string) {
   });
 
   return { data: books, error: null };
+}
+
+export async function getAvailableBibleBooks(version: string) {
+  const normalizedVersion = version.trim().toUpperCase();
+
+  if (!normalizedVersion) {
+    return { data: null, error: new Error("Versao nao informada.") };
+  }
+
+  const cachedPromise = availableBibleBooksPromiseCache.get(normalizedVersion);
+
+  if (cachedPromise) {
+    return cachedPromise;
+  }
+
+  const nextPromise = loadAvailableBibleBooks(normalizedVersion).catch((error) => {
+    availableBibleBooksPromiseCache.delete(normalizedVersion);
+    throw error;
+  });
+
+  availableBibleBooksPromiseCache.set(normalizedVersion, nextPromise);
+
+  return nextPromise;
 }

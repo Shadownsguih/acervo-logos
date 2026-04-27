@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getBibleBooksMetadata } from "@/lib/bible-metadata";
-import { getAvailableBibleBooks } from "@/lib/bible-books";
+import { getLocalBibleBooks } from "@/lib/local-bible-source";
 
 export async function GET(request: NextRequest) {
   const version = request.nextUrl.searchParams.get("version")?.trim() ?? "";
@@ -12,13 +11,11 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const availableBooks = await getAvailableBibleBooks(version);
-
-  if (availableBooks.data?.length) {
+  try {
     return NextResponse.json(
       {
         ok: true,
-        books: availableBooks.data,
+        books: await getLocalBibleBooks(version),
       },
       {
         headers: {
@@ -26,17 +23,17 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-  }
-
-  return NextResponse.json(
-    {
-      ok: true,
-      books: getBibleBooksMetadata(version),
-    },
-    {
-      headers: {
-        "Cache-Control": "public, max-age=3600, s-maxage=3600",
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Nao foi possivel carregar os livros da Biblia.",
+        books: [],
       },
-    }
-  );
+      { status: 500 }
+    );
+  }
 }
