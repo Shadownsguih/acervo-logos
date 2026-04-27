@@ -1210,19 +1210,64 @@ export default function BibleReaderStageShell() {
                 <div className="mt-3 flex justify-end">
                   <button
                     type="button"
-                    aria-label="Ir para leitura"
-                    onClick={() => {
+                    aria-label="Abrir busca"
+                    onClick={() =>
+                      setIsMobileSearchOpen((current) => !current)
+                    }
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500 text-lg font-semibold text-white transition hover:bg-indigo-400"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3.5-3.5" />
+                    </svg>
+                  </button>
+                </div>
+
+                {isMobileSearchOpen ? (
+                  <form
+                    onSubmit={(event) => {
+                      handleSearchSubmit(event);
+                      setIsMobileSearchOpen(false);
                       setIsMobileHeaderCollapsed(true);
                       passageContainerRef.current?.scrollTo({
                         top: 0,
                         behavior: "smooth",
                       });
                     }}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500 text-lg font-semibold text-white transition hover:bg-indigo-400"
+                    className="mt-3 flex flex-col gap-2"
                   >
-                    {">"}
-                  </button>
-                </div>
+                    <input
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="Buscar palavra ou frase na Biblia"
+                      className="h-11 rounded-xl border border-white/10 bg-[#12151d] px-4 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-amber-300/40"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        className="flex-1 rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-200"
+                      >
+                        Buscar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsMobileSearchOpen(false)}
+                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-100 transition hover:bg-white/10"
+                      >
+                        Fechar
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
               </div>
             </div>
 
@@ -1277,7 +1322,7 @@ export default function BibleReaderStageShell() {
 
                   <form
                     onSubmit={handleSearchSubmit}
-                    className="flex flex-col gap-2 md:mb-4 md:flex-row"
+                    className="hidden md:mb-4 md:flex md:flex-row md:gap-2"
                   >
                     <input
                       value={searchTerm}
@@ -1371,7 +1416,7 @@ export default function BibleReaderStageShell() {
                               : "border-white/10 bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
                           }`}
                         >
-                          Hebraico + Transl.
+                          Consultar Hebraico
                         </button>
                       ) : null}
                     </div>
@@ -1868,15 +1913,33 @@ export default function BibleReaderStageShell() {
 
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-[max(0.75rem,env(safe-area-inset-left))] pb-[max(0.8rem,env(safe-area-inset-bottom))] pr-[max(0.75rem,env(safe-area-inset-right))] xl:hidden">
           <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={() => setIsMobileControlsOpen(true)}
-              className="pointer-events-auto flex h-11 w-[min(150px,calc(100vw-10.75rem))] items-center justify-center rounded-xl border border-amber-300/20 bg-[linear-gradient(180deg,rgba(44,31,17,0.94),rgba(18,14,10,0.98))] px-3 text-center shadow-[0_-12px_28px_rgba(0,0,0,0.16)] backdrop-blur-xl transition hover:bg-white/[0.08]"
-            >
-              <p className="truncate text-[11px] font-semibold text-amber-50">
-                {selectedBookLabel} {selectedChapter}
-              </p>
-            </button>
+            <div className="pointer-events-auto flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Capitulo anterior"
+                onClick={() =>
+                  setSelectedChapter((current) => Math.max(current - 1, 1))
+                }
+                disabled={!canGoToPreviousChapter}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(27,31,39,0.95),rgba(12,15,22,0.98))] text-sm font-semibold text-zinc-100 shadow-[0_-12px_28px_rgba(0,0,0,0.16)] backdrop-blur-xl transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {"<"}
+              </button>
+
+              <button
+                type="button"
+                aria-label="Proximo capitulo"
+                onClick={() =>
+                  setSelectedChapter((current) =>
+                    Math.min(current + 1, maxChapter)
+                  )
+                }
+                disabled={!canGoToNextChapter}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-amber-300/20 bg-[linear-gradient(180deg,rgba(44,31,17,0.94),rgba(18,14,10,0.98))] text-sm font-semibold text-amber-50 shadow-[0_-12px_28px_rgba(0,0,0,0.16)] backdrop-blur-xl transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {">"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

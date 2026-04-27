@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { getBibleBookSlug } from "@/lib/bible-canon";
 import { getBibleBookMetadataBySlug } from "@/lib/bible-metadata";
+import { getAvailableBibleBooks } from "@/lib/bible-books";
 
 type BibleVerseRow = {
   version: string;
@@ -27,7 +28,19 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const resolvedBook = getBibleBookMetadataBySlug(version, book)?.label ?? null;
+  const availableBooks = await getAvailableBibleBooks(version);
+
+  if (availableBooks.error) {
+    return NextResponse.json(
+      { ok: false, error: availableBooks.error.message, passage: null },
+      { status: 500 }
+    );
+  }
+
+  const resolvedBook =
+    availableBooks.data?.find((item) => item.id === book)?.label ??
+    getBibleBookMetadataBySlug(version, book)?.label ??
+    null;
 
   if (!resolvedBook) {
     return NextResponse.json(
