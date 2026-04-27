@@ -135,6 +135,7 @@ type DictionaryContextMenuState = {
   term: string;
   reference: string;
   verseText: string;
+  verse: number;
   x: number;
   y: number;
 };
@@ -142,6 +143,7 @@ type DictionaryContextMenuState = {
 const BIBLE_READER_STATE_STORAGE_KEY = "acervo-logos:bible-reader-state";
 const BIBLE_READER_HEBREW_LAYER_STORAGE_KEY =
   "acervo-logos:bible-reader-hebrew-layer";
+const ACERVO_LOGOS_PUBLIC_URL = "https://acervo-logos.vercel.app/";
 
 function Field({
   label,
@@ -255,7 +257,7 @@ export default function BibleReaderStageShell() {
   const [hebrewPassageError, setHebrewPassageError] = useState("");
   const [greekPassageError, setGreekPassageError] = useState("");
   const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(false);
-  const [isMobileHeaderCollapsed] = useState(false);
+  const [isMobileHeaderCollapsed, setIsMobileHeaderCollapsed] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [showHebrewLayer, setShowHebrewLayer] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -285,9 +287,25 @@ export default function BibleReaderStageShell() {
   const [contextMenu, setContextMenu] = useState<DictionaryContextMenuState | null>(
     null
   );
+  const [shareFeedback, setShareFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const verseRefs = useRef(new Map<number, HTMLDivElement | null>());
   const passageContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!shareFeedback) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShareFeedback(null);
+    }, 2600);
+
+    return () => clearTimeout(timer);
+  }, [shareFeedback]);
 
   useEffect(() => {
     if (hasInitialReaderQuery) {
@@ -1120,6 +1138,7 @@ export default function BibleReaderStageShell() {
     term: string,
     reference: string,
     verseText: string,
+    verse: number,
     x: number,
     y: number
   ) {
@@ -1133,8 +1152,22 @@ export default function BibleReaderStageShell() {
       term: nextTerm,
       reference,
       verseText,
+      verse,
       x: Math.min(window.innerWidth - 180, Math.max(16, x)),
       y: Math.min(window.innerHeight - 120, Math.max(16, y)),
+    });
+  }
+
+  function handleContextMenuDictionaryAction() {
+    if (!contextMenu) {
+      return;
+    }
+
+    const nextTerm = contextMenu.term;
+    setContextMenu(null);
+
+    requestAnimationFrame(() => {
+      handleDictionaryLookup(nextTerm);
     });
   }
 
@@ -1145,51 +1178,96 @@ export default function BibleReaderStageShell() {
     }
   }
 
-  async function handleShareReference(reference: string, verseText: string) {
-    const params = new URLSearchParams();
-
-    if (selectedTranslation) {
-      params.set("version", selectedTranslation);
+  async function copySharePayload(payload: string) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(payload);
+      return;
     }
 
-    if (selectedBook) {
-      params.set("book", selectedBook);
+    const textarea = document.createElement("textarea");
+    textarea.value = payload;
+    textarea.setAttribute("readonly", "true");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    textarea.style.top = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    const copied = document.execCommand("copy");
+    document.body.removeChild(textarea);
+
+    if (!copied) {
+      throw new Error("copy_failed");
     }
+  }
 
-    if (selectedChapter > 0) {
-      params.set("chapter", String(selectedChapter));
-    }
+  function buildShareData(reference: string, verseText: string) {
+    const siteUrl = ACERVO_LOGOS_PUBLIC_URL;
+    const shareHeader = `${reference} | ${selectedTranslationLabel}`;
+    const shareText = `${shareHeader}\n\n${verseText}\n\n@acervo-logos | acesse ${siteUrl} e estude esse versiculo completo`;
 
-    if (selectedVerse) {
-      params.set("verse", String(selectedVerse));
-    }
+    return {
+      shareText,
+      sharePayload: shareText,
+    };
+  }
 
-    const query = params.toString();
-    const shareUrl =
-      typeof window !== "undefined"
-        ? `${window.location.origin}${pathname}${query ? `?${query}` : ""}`
-        : `${pathname}${query ? `?${query}` : ""}`;
-
+  async function handleShareReference(
+    reference: string,
+    verseText: string
+  ) {
     try {
-      const shareText = `${reference}\n\n${verseText}`;
+      const { shareText, sharePayload } = buildShareData(reference, verseText);
 
       if (navigator.share) {
-        await navigator.share({
-          title: reference,
-          text: shareText,
-          url: shareUrl,
-        });
-      } else if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`);
+        try {
+          await navigator.share({
+            title: reference,
+            text: shareText,
+          });
+          setShareFeedback({
+            type: "success",
+            message: "Versiculo compartilhado com sucesso.",
+          });
+          return;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") {
+            return;
+          }
+        }
       }
-    } catch {
-      // silencio proposital
+
+      await copySharePayload(sharePayload);
+      setShareFeedback({
+        type: "success",
+        message: "Versiculo copiado para voce compartilhar.",
+      });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
+      setShareFeedback({
+        type: "error",
+        message: "Nao foi possivel compartilhar este versiculo.",
+      });
     } finally {
       setContextMenu(null);
     }
   }
 
-  function renderVerseText(text: string, reference: string) {
+  function handleContextMenuShareAction() {
+    if (!contextMenu) {
+      return;
+    }
+
+    void handleShareReference(
+      contextMenu.reference,
+      contextMenu.verseText
+    );
+  }
+
+  function renderVerseText(text: string, reference: string, verse: number) {
     return text.split(/(\s+)/).map((part, index) => {
       if (!part) {
         return null;
@@ -1215,14 +1293,28 @@ export default function BibleReaderStageShell() {
           onContextMenu={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            openContextMenu(part, reference, text, event.clientX, event.clientY);
+            openContextMenu(
+              part,
+              reference,
+              text,
+              verse,
+              event.clientX,
+              event.clientY
+            );
           }}
           onTouchStart={(event) => {
             const touch = event.touches[0];
 
             clearLongPressTimer();
             longPressTimerRef.current = setTimeout(() => {
-              openContextMenu(part, reference, text, touch.clientX, touch.clientY);
+              openContextMenu(
+                part,
+                reference,
+                text,
+                verse,
+                touch.clientX,
+                touch.clientY
+              );
             }, 450);
           }}
           onTouchEnd={() => {
@@ -1271,6 +1363,30 @@ export default function BibleReaderStageShell() {
                 {selectedTranslationLabel}
               </span>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsMobileHeaderCollapsed((current) => !current)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-zinc-200 transition hover:bg-white/[0.08] md:hidden"
+              aria-label={
+                isMobileHeaderCollapsed ? "Expandir navegacao" : "Recolher navegacao"
+              }
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className={`h-4 w-4 transition-transform duration-300 ${
+                  isMobileHeaderCollapsed ? "rotate-180" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
           </div>
 
           <div
@@ -1739,7 +1855,13 @@ export default function BibleReaderStageShell() {
                                 >
                                   {item.verse}
                                 </span>
-                                <span>{renderVerseText(item.text, item.reference)}</span>
+                                <span>
+                                  {renderVerseText(
+                                    item.text,
+                                    item.reference,
+                                    item.verse
+                                  )}
+                                </span>
                               </p>
                             </div>
                           );
@@ -1817,10 +1939,7 @@ export default function BibleReaderStageShell() {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    handleDictionaryLookup(contextMenu.term);
-                    setContextMenu(null);
-                  }}
+                  onClick={handleContextMenuDictionaryAction}
                   className="mt-1 flex w-full items-center justify-between rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-white/[0.07]"
                 >
                   <span>Pesquisar</span>
@@ -1829,12 +1948,7 @@ export default function BibleReaderStageShell() {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    void handleShareReference(
-                      contextMenu.reference,
-                      contextMenu.verseText
-                    )
-                  }
+                  onClick={handleContextMenuShareAction}
                   className="mt-2 flex w-full items-center justify-between rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-white/[0.07]"
                 >
                   <span>Compartilhar</span>
@@ -1843,7 +1957,11 @@ export default function BibleReaderStageShell() {
               </div>
             </div>
 
-            <div className="absolute inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] rounded-[26px] border border-white/10 bg-[#0f1117]/96 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.32)] backdrop-blur-xl xl:hidden">
+            <div
+              className="absolute inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] rounded-[26px] border border-white/10 bg-[#0f1117]/96 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.32)] backdrop-blur-xl xl:hidden"
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+            >
               <div className="mb-3 flex justify-center">
                 <span className="h-1.5 w-12 rounded-full bg-white/15" />
               </div>
@@ -1864,6 +1982,11 @@ export default function BibleReaderStageShell() {
                 <button
                   type="button"
                   onClick={() => setContextMenu(null)}
+                  onTouchEnd={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setContextMenu(null);
+                  }}
                   className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-zinc-200 transition hover:bg-white/10"
                 >
                   Fechar
@@ -1873,9 +1996,11 @@ export default function BibleReaderStageShell() {
               <div className="mt-4 grid gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    handleDictionaryLookup(contextMenu.term);
-                    setContextMenu(null);
+                  onClick={handleContextMenuDictionaryAction}
+                  onTouchEnd={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleContextMenuDictionaryAction();
                   }}
                   className="flex w-full items-center justify-between rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-sm font-medium text-zinc-100 transition hover:bg-white/[0.07]"
                 >
@@ -1885,18 +2010,32 @@ export default function BibleReaderStageShell() {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    void handleShareReference(
-                      contextMenu.reference,
-                      contextMenu.verseText
-                    )
-                  }
+                  onClick={handleContextMenuShareAction}
+                  onTouchEnd={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleContextMenuShareAction();
+                  }}
                   className="flex w-full items-center justify-between rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-sm font-medium text-zinc-100 transition hover:bg-white/[0.07]"
                 >
                   <span>Compartilhar versiculo</span>
                   <span className="text-zinc-500">Abrir</span>
                 </button>
               </div>
+            </div>
+          </div>
+        ) : null}
+
+        {shareFeedback ? (
+          <div className="pointer-events-none fixed inset-x-3 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-[70] flex justify-center">
+            <div
+              className={`max-w-sm rounded-2xl border px-4 py-3 text-sm font-medium shadow-[0_18px_44px_rgba(0,0,0,0.34)] backdrop-blur-xl transition-all ${
+                shareFeedback.type === "success"
+                  ? "border-emerald-300/20 bg-emerald-500/12 text-emerald-100"
+                  : "border-red-300/20 bg-red-500/12 text-red-100"
+              }`}
+            >
+              {shareFeedback.message}
             </div>
           </div>
         ) : null}
