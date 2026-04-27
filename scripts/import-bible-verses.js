@@ -32,6 +32,10 @@ function getTranslationCode() {
   return value;
 }
 
+function shouldReplaceExistingTranslation() {
+  return process.argv.some((argument) => argument === "--replace");
+}
+
 function chunkArray(array, size) {
   const chunks = [];
 
@@ -44,6 +48,7 @@ function chunkArray(array, size) {
 
 async function main() {
   const translationCode = getTranslationCode();
+  const replaceExistingTranslation = shouldReplaceExistingTranslation();
   const inputPath = path.join(
     process.cwd(),
     "temp-bible-data",
@@ -102,10 +107,32 @@ async function main() {
   }
 
   if ((count ?? 0) > 0) {
-    console.error(
-      `A traducao ${translationCode} ja existe no banco com ${count} versiculos. Importacao cancelada para evitar duplicacao.`
+    if (!replaceExistingTranslation) {
+      console.error(
+        `A traducao ${translationCode} ja existe no banco com ${count} versiculos. Importacao cancelada para evitar duplicacao.`
+      );
+      console.error(
+        "Use --replace para substituir a traducao existente com o arquivo atual."
+      );
+      process.exit(1);
+    }
+
+    console.log(
+      `Traducao ${translationCode} encontrada com ${count} versiculos. Removendo registros antigos...`
     );
-    process.exit(1);
+
+    const { error: deleteError } = await supabase
+      .from("bible_verses")
+      .delete()
+      .eq("version", translationCode);
+
+    if (deleteError) {
+      console.error("Erro ao remover os versiculos antigos:");
+      console.error(deleteError);
+      process.exit(1);
+    }
+
+    console.log(`Versiculos antigos da ${translationCode} removidos com sucesso.`);
   }
 
   console.log(`Traducao: ${translationCode}`);

@@ -18,6 +18,7 @@ export async function fetchAllBibleRows<T>({
     let query = supabase
       .from("bible_verses")
       .select(columns)
+      .order("id", { ascending: true })
       .range(from, from + pageSize - 1);
 
     if (version) {

@@ -69,6 +69,12 @@ const CANONICAL_BOOK_SLUGS = [
   "apocalipse",
 ] as const;
 
+const CANONICAL_BOOK_ALIASES: Record<string, string> = {
+  canticos: "cantares",
+  "cantares-de-salomao": "cantares",
+  "lamentacoes-de-jeremias": "lamentacoes",
+};
+
 export function normalizeBibleText(value: string) {
   return value
     .normalize("NFD")
@@ -83,8 +89,13 @@ export function getBibleBookSlug(book: string) {
   return normalizeBibleText(book);
 }
 
-export function getBibleBookOrder(book: string) {
+export function getCanonicalBibleBookSlug(book: string) {
   const slug = getBibleBookSlug(book);
+  return CANONICAL_BOOK_ALIASES[slug] ?? slug;
+}
+
+export function getBibleBookOrder(book: string) {
+  const slug = getCanonicalBibleBookSlug(book);
   const index = CANONICAL_BOOK_SLUGS.indexOf(
     slug as (typeof CANONICAL_BOOK_SLUGS)[number]
   );
