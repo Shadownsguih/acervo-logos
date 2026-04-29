@@ -7,6 +7,7 @@ import MaterialWithVolumesForm from "./material-with-volumes-form";
 import AddVolumeExistingForm from "./add-volume-existing-form";
 import MaterialsManager from "./materials-manager";
 import SubscriptionsManager from "./subscriptions-manager";
+import DailyBibleVerseLibraryManager from "./daily-bible-verse-library-manager";
 
 type Category = {
   id: string;
@@ -52,6 +53,20 @@ type AuthUser = {
   id: string;
   email?: string | null;
   created_at?: string | null;
+};
+
+type DailyBibleVerseLibraryRow = {
+  id: string;
+  version: string;
+  book: string;
+  abbrev: string | null;
+  chapter: number;
+  verse: number;
+  reference: string;
+  text: string;
+  insight: string;
+  display_order: number | null;
+  is_active: boolean | null;
 };
 
 function AdminSectionShell({
@@ -165,6 +180,7 @@ export default async function AdminPage() {
     { data: volumesManagerData },
     { data: profilesData, error: profilesError },
     authUsersResponse,
+    { data: dailyVerseLibraryData, error: dailyVerseLibraryError },
   ] = await Promise.all([
     supabase.from("materials").select("*", { head: true, count: "exact" }),
     supabase
@@ -192,10 +208,24 @@ export default async function AdminPage() {
       )
       .order("created_at", { ascending: false }),
     adminSupabase.auth.admin.listUsers(),
+    adminSupabase
+      .from("daily_bible_verse_library")
+      .select(
+        "id, version, book, abbrev, chapter, verse, reference, text, insight, display_order, is_active"
+      )
+      .order("display_order", { ascending: true, nullsFirst: false })
+      .order("reference", { ascending: true }),
   ]);
 
   if (profilesError) {
     console.error("Erro ao buscar user_profiles no admin:", profilesError);
+  }
+
+  if (dailyVerseLibraryError) {
+    console.error(
+      "Erro ao buscar daily_bible_verse_library no admin:",
+      dailyVerseLibraryError
+    );
   }
 
   const categories = (categoriesData ?? []) as Category[];
@@ -204,6 +234,8 @@ export default async function AdminPage() {
   const volumesRows = (volumesManagerData ?? []) as VolumeRow[];
   const profileRows = (profilesData ?? []) as UserProfileRow[];
   const authUsers = (authUsersResponse.data?.users ?? []) as AuthUser[];
+  const dailyVerseLibraryRows =
+    (dailyVerseLibraryData ?? []) as DailyBibleVerseLibraryRow[];
 
   const categoryMap = new Map<string, Category>(
     categories.map((category) => [category.id, category])
@@ -248,6 +280,20 @@ export default async function AdminPage() {
       createdAt: profile?.created_at ?? authUser.created_at ?? null,
     };
   });
+
+  const managedDailyVerseLibrary = dailyVerseLibraryRows.map((item) => ({
+    id: item.id,
+    version: item.version,
+    book: item.book,
+    abbrev: item.abbrev,
+    chapter: item.chapter,
+    verse: item.verse,
+    reference: item.reference,
+    text: item.text,
+    insight: item.insight,
+    displayOrder: item.display_order,
+    isActive: item.is_active ?? true,
+  }));
 
   const overviewCards = [
     {
@@ -458,6 +504,14 @@ export default async function AdminPage() {
               materials={managedMaterials}
               categories={categories}
             />
+          </AdminSectionShell>
+
+          <AdminSectionShell
+            eyebrow="Home"
+            title="Versiculo diario curado"
+            description="Gerencie a biblioteca de versiculos diarios com reflexoes curtas, ordem de exibicao e ativacao individual para a home."
+          >
+            <DailyBibleVerseLibraryManager items={managedDailyVerseLibrary} />
           </AdminSectionShell>
         </div>
       </div>

@@ -1,4 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
+import curatedDailyBibleVerseLibrary from "@/data/daily-bible-verse-library.json";
+import { createAdminClient } from "@/lib/supabase-admin";
 
 export type DailyBibleVerse = {
   id: string;
@@ -11,11 +12,12 @@ export type DailyBibleVerse = {
   verse: number;
   reference: string;
   text: string;
+  insight: string;
   created_at: string;
 };
 
-type BibleVerseRow = {
-  id: string;
+type DailyBibleVerseLibraryEntry = {
+  id?: string;
   version: string;
   book: string;
   abbrev: string | null;
@@ -23,6 +25,10 @@ type BibleVerseRow = {
   verse: number;
   reference: string;
   text: string;
+  insight: string;
+  display_order?: number | null;
+  is_active?: boolean;
+  created_at?: string | null;
 };
 
 function getBrazilDateKey() {
@@ -34,109 +40,66 @@ function getBrazilDateKey() {
   }).format(new Date());
 }
 
-function createAdminSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
+function getDailyVerseIndex(dateKey: string, total: number) {
+  const numericKey = Number(dateKey.replaceAll("-", ""));
+  return numericKey % total;
+}
 
-  if (!supabaseUrl) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL não está definida.");
+function getFallbackLibrary() {
+  return curatedDailyBibleVerseLibrary as DailyBibleVerseLibraryEntry[];
+}
+
+async function getDailyVerseLibrary() {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("daily_bible_verse_library")
+    .select(
+      "id, version, book, abbrev, chapter, verse, reference, text, insight, display_order, is_active, created_at"
+    )
+    .eq("is_active", true)
+    .order("display_order", { ascending: true, nullsFirst: false })
+    .order("reference", { ascending: true });
+
+  if (error) {
+    console.error(
+      "Erro ao buscar a biblioteca curada do versiculo diario:",
+      error.message
+    );
+    return getFallbackLibrary();
   }
 
-  if (!supabaseSecretKey) {
-    throw new Error("SUPABASE_SECRET_KEY não está definida.");
+  if (!data || data.length === 0) {
+    return getFallbackLibrary();
   }
 
-  return createClient(supabaseUrl, supabaseSecretKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
+  return data as DailyBibleVerseLibraryEntry[];
 }
 
 export async function getOrCreateDailyBibleVerse() {
-  const supabase = createAdminSupabaseClient();
-  const todayKey = getBrazilDateKey();
+  const dateKey = getBrazilDateKey();
+  const library = await getDailyVerseLibrary();
 
-  const { data: existingDailyVerse, error: existingDailyVerseError } = await supabase
-    .from("daily_bible_verses")
-    .select("*")
-    .eq("date_key", todayKey)
-    .maybeSingle();
-
-  if (existingDailyVerseError) {
+  if (library.length === 0) {
     throw new Error(
-      `Erro ao buscar o versículo diário existente: ${existingDailyVerseError.message}`
+      "Nenhum versiculo curado foi encontrado para o versiculo diario."
     );
   }
 
-  if (existingDailyVerse) {
-    return existingDailyVerse as DailyBibleVerse;
-  }
+  const selectedVerse = library[getDailyVerseIndex(dateKey, library.length)];
 
-  const { count, error: countError } = await supabase
-    .from("bible_verses")
-    .select("*", { count: "exact", head: true })
-    .eq("version", "NVI");
-
-  if (countError) {
-    throw new Error(`Erro ao contar versículos da NVI: ${countError.message}`);
-  }
-
-  if (!count || count <= 0) {
-    throw new Error("Nenhum versículo da NVI foi encontrado em bible_verses.");
-  }
-
-  const randomIndex = Math.floor(Math.random() * count);
-
-  const { data: randomVerse, error: randomVerseError } = await supabase
-    .from("bible_verses")
-    .select("id, version, book, abbrev, chapter, verse, reference, text")
-    .eq("version", "NVI")
-    .range(randomIndex, randomIndex)
-    .maybeSingle();
-
-  if (randomVerseError) {
-    throw new Error(`Erro ao buscar versículo aleatório: ${randomVerseError.message}`);
-  }
-
-  if (!randomVerse) {
-    throw new Error("Não foi possível encontrar um versículo aleatório da NVI.");
-  }
-
-  const verse = randomVerse as BibleVerseRow;
-
-  const payload = {
-    date_key: todayKey,
-    bible_verse_id: verse.id,
-    version: verse.version,
-    book: verse.book,
-    abbrev: verse.abbrev,
-    chapter: verse.chapter,
-    verse: verse.verse,
-    reference: verse.reference,
-    text: verse.text,
-  };
-
-  const { error: insertError } = await supabase
-    .from("daily_bible_verses")
-    .upsert(payload, { onConflict: "date_key" });
-
-  if (insertError) {
-    throw new Error(`Erro ao salvar o versículo diário: ${insertError.message}`);
-  }
-
-  const { data: savedDailyVerse, error: savedDailyVerseError } = await supabase
-    .from("daily_bible_verses")
-    .select("*")
-    .eq("date_key", todayKey)
-    .single();
-
-  if (savedDailyVerseError) {
-    throw new Error(
-      `Erro ao confirmar o versículo diário salvo: ${savedDailyVerseError.message}`
-    );
-  }
-
-  return savedDailyVerse as DailyBibleVerse;
+  return {
+    id: selectedVerse.id ?? `daily-${dateKey}`,
+    date_key: dateKey,
+    bible_verse_id: null,
+    version: selectedVerse.version,
+    book: selectedVerse.book,
+    abbrev: selectedVerse.abbrev,
+    chapter: selectedVerse.chapter,
+    verse: selectedVerse.verse,
+    reference: selectedVerse.reference,
+    text: selectedVerse.text,
+    insight: selectedVerse.insight,
+    created_at: selectedVerse.created_at ?? `${dateKey}T00:00:00-03:00`,
+  } satisfies DailyBibleVerse;
 }

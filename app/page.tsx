@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { createClient } from "@/lib/supabase-server";
 import HomeMostReadCarousel from "@/app/components/home-most-read-carousel";
 import { getOrCreateDailyBibleVerse } from "@/lib/daily-bible-verse";
+import DailyVerseShareButton from "@/app/components/daily-verse-share-button";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -138,6 +139,30 @@ export default async function HomePage() {
                                   {dailyVerse.version}
                                 </span>
                               </div>
+
+                              <details className="group mt-5 rounded-[22px] border border-white/10 bg-white/[0.04]">
+                                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-left">
+                                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200/90">
+                                    Mostrar explicacao
+                                  </span>
+                                  <span className="text-lg text-amber-200/80 transition group-open:rotate-45">
+                                    +
+                                  </span>
+                                </summary>
+
+                                <div className="border-t border-white/10 px-4 py-4">
+                                  <p className="text-sm leading-7 text-zinc-200">
+                                    {dailyVerse.insight}
+                                  </p>
+
+                                  <DailyVerseShareButton
+                                    reference={dailyVerse.reference}
+                                    version={dailyVerse.version}
+                                    text={dailyVerse.text}
+                                    insight={dailyVerse.insight}
+                                  />
+                                </div>
+                              </details>
                             </div>
 
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-300/10 bg-amber-300/10 text-xl text-amber-200 shadow-lg shadow-black/20 sm:h-14 sm:w-14 sm:text-2xl">
