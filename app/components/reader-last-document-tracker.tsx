@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { dispatchLastReadDocumentChange } from "@/app/components/recent-reading-utils";
 
 type ReaderLastDocumentTrackerProps = {
   documentId: string;
@@ -59,6 +60,7 @@ export default function ReaderLastDocumentTracker({
           LAST_DOCUMENT_STORAGE_KEY,
           JSON.stringify(payload)
         );
+        dispatchLastReadDocumentChange();
       } catch {
         // evita quebrar a aplicacao se o localStorage falhar
       }

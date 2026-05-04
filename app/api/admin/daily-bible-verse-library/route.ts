@@ -9,6 +9,7 @@ function isAdminEmail(email?: string | null) {
 
 function normalizePayload(body: Record<string, unknown>) {
   const version = typeof body.version === "string" ? body.version.trim() : "";
+  const theme = typeof body.theme === "string" ? body.theme.trim() : "";
   const book = typeof body.book === "string" ? body.book.trim() : "";
   const abbrev =
     typeof body.abbrev === "string" && body.abbrev.trim()
@@ -28,7 +29,7 @@ function normalizePayload(body: Record<string, unknown>) {
       : Number(body.displayOrder);
   const isActive = Boolean(body.isActive);
 
-  if (!version || !book || !reference || !text || !insight) {
+  if (!version || !theme || !book || !reference || !text || !insight) {
     throw new Error("Preencha todos os campos obrigatorios do versiculo.");
   }
 
@@ -49,6 +50,7 @@ function normalizePayload(body: Record<string, unknown>) {
 
   return {
     version,
+    theme,
     book,
     abbrev,
     chapter,

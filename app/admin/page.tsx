@@ -58,6 +58,7 @@ type AuthUser = {
 type DailyBibleVerseLibraryRow = {
   id: string;
   version: string;
+  theme: string | null;
   book: string;
   abbrev: string | null;
   chapter: number;
@@ -211,7 +212,7 @@ export default async function AdminPage() {
     adminSupabase
       .from("daily_bible_verse_library")
       .select(
-        "id, version, book, abbrev, chapter, verse, reference, text, insight, display_order, is_active"
+        "id, version, theme, book, abbrev, chapter, verse, reference, text, insight, display_order, is_active"
       )
       .order("display_order", { ascending: true, nullsFirst: false })
       .order("reference", { ascending: true }),
@@ -284,6 +285,7 @@ export default async function AdminPage() {
   const managedDailyVerseLibrary = dailyVerseLibraryRows.map((item) => ({
     id: item.id,
     version: item.version,
+    theme: item.theme ?? "geral",
     book: item.book,
     abbrev: item.abbrev,
     chapter: item.chapter,

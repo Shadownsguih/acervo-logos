@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 type DailyVerseLibraryItem = {
   id: string;
   version: string;
+  theme: string;
   book: string;
   abbrev: string | null;
   chapter: number;
@@ -23,6 +24,7 @@ type DailyVerseLibraryManagerProps = {
 
 type DailyVerseFormState = {
   version: string;
+  theme: string;
   book: string;
   abbrev: string;
   chapter: string;
@@ -42,6 +44,7 @@ type FeedbackState = {
 
 const emptyForm: DailyVerseFormState = {
   version: "NVI",
+  theme: "confianca",
   book: "",
   abbrev: "",
   chapter: "",
@@ -55,6 +58,14 @@ const emptyForm: DailyVerseFormState = {
 
 const fieldClassName =
   "w-full rounded-[20px] border border-white/10 bg-[#11151d] px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-300/60 focus:bg-[#141924]";
+
+function prettifyTheme(theme: string) {
+  return theme
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 export default function DailyBibleVerseLibraryManager({
   items,
@@ -80,6 +91,7 @@ export default function DailyBibleVerseLibraryManager({
       [
         item.reference,
         item.book,
+        item.theme,
         item.version,
         item.text,
         item.insight,
@@ -91,9 +103,26 @@ export default function DailyBibleVerseLibraryManager({
     );
   }, [items, search]);
 
+  const groupedItems = useMemo(() => {
+    return filteredItems.reduce<Record<string, DailyVerseLibraryItem[]>>(
+      (groups, item) => {
+        const themeKey = item.theme || "geral";
+
+        if (!groups[themeKey]) {
+          groups[themeKey] = [];
+        }
+
+        groups[themeKey].push(item);
+        return groups;
+      },
+      {}
+    );
+  }, [filteredItems]);
+
   function fillFormFromItem(item: DailyVerseLibraryItem): DailyVerseFormState {
     return {
       version: item.version,
+      theme: item.theme,
       book: item.book,
       abbrev: item.abbrev ?? "",
       chapter: String(item.chapter),
@@ -118,6 +147,10 @@ export default function DailyBibleVerseLibraryManager({
 
     if (!form.version.trim()) {
       throw new Error("A traducao e obrigatoria.");
+    }
+
+    if (!form.theme.trim()) {
+      throw new Error("O tema e obrigatorio.");
     }
 
     if (!form.book.trim()) {
@@ -153,6 +186,7 @@ export default function DailyBibleVerseLibraryManager({
 
     return {
       version: form.version.trim(),
+      theme: form.theme.trim().toLowerCase(),
       book: form.book.trim(),
       abbrev: form.abbrev.trim() || null,
       chapter,
@@ -316,8 +350,8 @@ export default function DailyBibleVerseLibraryManager({
             Versiculos diarios
           </h2>
           <p className="mt-4 text-zinc-400">
-            Cadastre, edite, ative e reorganize a biblioteca de versiculos
-            diarios com o texto reflexivo que aparece na home.
+            Cadastre, edite, ative e agrupe a biblioteca de versiculos diarios
+            por tema para facilitar a curadoria da home.
           </p>
         </div>
 
@@ -330,7 +364,7 @@ export default function DailyBibleVerseLibraryManager({
             type="text"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar por referencia, livro, texto ou reflexao"
+            placeholder="Buscar por tema, referencia, livro, texto ou reflexao"
             className={fieldClassName}
           />
         </div>
@@ -353,6 +387,18 @@ export default function DailyBibleVerseLibraryManager({
             }
             className={fieldClassName}
             placeholder="Traducao"
+          />
+          <input
+            type="text"
+            value={createForm.theme}
+            onChange={(event) =>
+              setCreateForm((current) => ({
+                ...current,
+                theme: event.target.value,
+              }))
+            }
+            className={fieldClassName}
+            placeholder="Tema"
           />
           <input
             type="text"
@@ -429,7 +475,7 @@ export default function DailyBibleVerseLibraryManager({
             className={fieldClassName}
             placeholder="Ordem de exibicao"
           />
-          <label className="flex items-center gap-3 rounded-[20px] border border-white/10 bg-[#11151d] px-4 py-3 text-sm text-zinc-200">
+          <label className="flex items-center gap-3 rounded-[20px] border border-white/10 bg-[#11151d] px-4 py-3 text-sm text-zinc-200 md:col-span-2">
             <input
               type="checkbox"
               checked={createForm.isActive}
@@ -494,244 +540,287 @@ export default function DailyBibleVerseLibraryManager({
         </div>
       </div>
 
-      <div className="mt-8 space-y-4">
+      <div className="mt-8 space-y-5">
         {filteredItems.length > 0 ? (
-          filteredItems.map((item, index) => {
-            const itemFeedback =
-              feedback?.targetId === item.id ? feedback : null;
-            const isEditing = editingId === item.id;
-
-            return (
-              <article
-                key={item.id}
-                className="rounded-[28px] border border-white/10 bg-[#0b0f16]/85 p-5"
+          Object.entries(groupedItems)
+            .sort(([themeA], [themeB]) => themeA.localeCompare(themeB))
+            .map(([theme, themeItems]) => (
+              <section
+                key={theme}
+                className="rounded-[28px] border border-white/10 bg-[#080b11]/80 p-3 md:p-4"
               >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="max-w-3xl">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="inline-flex rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200">
-                        #{index + 1}
-                      </span>
-                      <span className="inline-flex rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
-                        {item.version}
-                      </span>
-                      <span
-                        className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${
-                          item.isActive
-                            ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
-                            : "border-zinc-500/20 bg-zinc-500/10 text-zinc-400"
-                        }`}
-                      >
-                        {item.isActive ? "Ativo" : "Inativo"}
-                      </span>
-                    </div>
-
-                    <h3 className="mt-4 text-2xl font-bold text-white">
-                      {item.reference}
+                <div className="rounded-[24px] border border-amber-300/15 bg-amber-300/5 px-4 py-4">
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-amber-300">
+                    Tema
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="text-xl font-bold text-white">
+                      {prettifyTheme(theme)}
                     </h3>
-                    <p className="mt-3 text-sm leading-7 text-zinc-300">
-                      {item.text}
-                    </p>
-                    <p className="mt-4 text-sm leading-7 text-zinc-400">
-                      {item.insight}
-                    </p>
-                  </div>
-
-                  <div className="grid gap-3 lg:w-64">
-                    <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4 text-sm text-zinc-300">
-                      <p>Livro: {item.book}</p>
-                      <p className="mt-2">
-                        Capitulo {item.chapter} | Versiculo {item.verse}
-                      </p>
-                      <p className="mt-2">
-                        Ordem: {item.displayOrder ?? "Sem ordem"}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => startEditing(item)}
-                      className="rounded-2xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-200 transition hover:bg-amber-300/15"
-                    >
-                      Editar
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => void handleDelete(item.id)}
-                      disabled={deletingId === item.id}
-                      className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {deletingId === item.id ? "Excluindo..." : "Excluir"}
-                    </button>
+                    <span className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-300">
+                      {themeItems.length} versiculo(s)
+                    </span>
                   </div>
                 </div>
 
-                {itemFeedback ? (
-                  <div
-                    className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${
-                      itemFeedback.type === "success"
-                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
-                        : "border-red-500/20 bg-red-500/10 text-red-300"
-                    }`}
-                  >
-                    {itemFeedback.message}
-                  </div>
-                ) : null}
+                <div className="mt-4 space-y-4">
+                  {themeItems.map((item, index) => {
+                    const itemFeedback =
+                      feedback?.targetId === item.id ? feedback : null;
+                    const isEditing = editingId === item.id;
 
-                {isEditing ? (
-                  <div className="mt-5 rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <input
-                        type="text"
-                        value={editForm.version}
-                        onChange={(event) =>
-                          setEditForm((current) => ({
-                            ...current,
-                            version: event.target.value,
-                          }))
-                        }
-                        className={fieldClassName}
-                        placeholder="Traducao"
-                      />
-                      <input
-                        type="text"
-                        value={editForm.reference}
-                        onChange={(event) =>
-                          setEditForm((current) => ({
-                            ...current,
-                            reference: event.target.value,
-                          }))
-                        }
-                        className={fieldClassName}
-                        placeholder="Referencia"
-                      />
-                      <input
-                        type="text"
-                        value={editForm.book}
-                        onChange={(event) =>
-                          setEditForm((current) => ({
-                            ...current,
-                            book: event.target.value,
-                          }))
-                        }
-                        className={fieldClassName}
-                        placeholder="Livro"
-                      />
-                      <input
-                        type="text"
-                        value={editForm.abbrev}
-                        onChange={(event) =>
-                          setEditForm((current) => ({
-                            ...current,
-                            abbrev: event.target.value,
-                          }))
-                        }
-                        className={fieldClassName}
-                        placeholder="Abreviacao"
-                      />
-                      <input
-                        type="number"
-                        min={1}
-                        value={editForm.chapter}
-                        onChange={(event) =>
-                          setEditForm((current) => ({
-                            ...current,
-                            chapter: event.target.value,
-                          }))
-                        }
-                        className={fieldClassName}
-                        placeholder="Capitulo"
-                      />
-                      <input
-                        type="number"
-                        min={1}
-                        value={editForm.verse}
-                        onChange={(event) =>
-                          setEditForm((current) => ({
-                            ...current,
-                            verse: event.target.value,
-                          }))
-                        }
-                        className={fieldClassName}
-                        placeholder="Versiculo"
-                      />
-                      <input
-                        type="number"
-                        min={1}
-                        value={editForm.displayOrder}
-                        onChange={(event) =>
-                          setEditForm((current) => ({
-                            ...current,
-                            displayOrder: event.target.value,
-                          }))
-                        }
-                        className={fieldClassName}
-                        placeholder="Ordem de exibicao"
-                      />
-                      <label className="flex items-center gap-3 rounded-[20px] border border-white/10 bg-[#11151d] px-4 py-3 text-sm text-zinc-200">
-                        <input
-                          type="checkbox"
-                          checked={editForm.isActive}
-                          onChange={(event) =>
-                            setEditForm((current) => ({
-                              ...current,
-                              isActive: event.target.checked,
-                            }))
-                          }
-                        />
-                        Ativo na rotacao
-                      </label>
-                    </div>
-
-                    <textarea
-                      value={editForm.text}
-                      onChange={(event) =>
-                        setEditForm((current) => ({
-                          ...current,
-                          text: event.target.value,
-                        }))
-                      }
-                      rows={4}
-                      className={`${fieldClassName} mt-4`}
-                    />
-
-                    <textarea
-                      value={editForm.insight}
-                      onChange={(event) =>
-                        setEditForm((current) => ({
-                          ...current,
-                          insight: event.target.value,
-                        }))
-                      }
-                      rows={5}
-                      className={`${fieldClassName} mt-4`}
-                    />
-
-                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                      <button
-                        type="button"
-                        onClick={() => void handleSave(item.id)}
-                        disabled={savingEdit}
-                        className="rounded-2xl bg-amber-400 px-5 py-3 text-sm font-semibold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    return (
+                      <article
+                        key={item.id}
+                        className="rounded-[28px] border border-white/10 bg-[#0b0f16]/85 p-5"
                       >
-                        {savingEdit ? "Salvando..." : "Salvar alteracoes"}
-                      </button>
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="max-w-3xl">
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span className="inline-flex rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200">
+                                #{index + 1}
+                              </span>
+                              <span className="inline-flex rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+                                {item.version}
+                              </span>
+                              <span className="inline-flex rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-200">
+                                {prettifyTheme(item.theme)}
+                              </span>
+                              <span
+                                className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${
+                                  item.isActive
+                                    ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                                    : "border-zinc-500/20 bg-zinc-500/10 text-zinc-400"
+                                }`}
+                              >
+                                {item.isActive ? "Ativo" : "Inativo"}
+                              </span>
+                            </div>
 
-                      <button
-                        type="button"
-                        onClick={cancelEditing}
-                        disabled={savingEdit}
-                        className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-              </article>
-            );
-          })
+                            <h3 className="mt-4 text-2xl font-bold text-white">
+                              {item.reference}
+                            </h3>
+                            <p className="mt-3 text-sm leading-7 text-zinc-300">
+                              {item.text}
+                            </p>
+                            <p className="mt-4 text-sm leading-7 text-zinc-400">
+                              {item.insight}
+                            </p>
+                          </div>
+
+                          <div className="grid gap-3 lg:w-64">
+                            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4 text-sm text-zinc-300">
+                              <p>Tema: {prettifyTheme(item.theme)}</p>
+                              <p className="mt-2">Livro: {item.book}</p>
+                              <p className="mt-2">
+                                Capitulo {item.chapter} | Versiculo {item.verse}
+                              </p>
+                              <p className="mt-2">
+                                Ordem: {item.displayOrder ?? "Sem ordem"}
+                              </p>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => startEditing(item)}
+                              className="rounded-2xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-200 transition hover:bg-amber-300/15"
+                            >
+                              Editar
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => void handleDelete(item.id)}
+                              disabled={deletingId === item.id}
+                              className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {deletingId === item.id
+                                ? "Excluindo..."
+                                : "Excluir"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {itemFeedback ? (
+                          <div
+                            className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${
+                              itemFeedback.type === "success"
+                                ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                                : "border-red-500/20 bg-red-500/10 text-red-300"
+                            }`}
+                          >
+                            {itemFeedback.message}
+                          </div>
+                        ) : null}
+
+                        {isEditing ? (
+                          <div className="mt-5 rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <input
+                                type="text"
+                                value={editForm.version}
+                                onChange={(event) =>
+                                  setEditForm((current) => ({
+                                    ...current,
+                                    version: event.target.value,
+                                  }))
+                                }
+                                className={fieldClassName}
+                                placeholder="Traducao"
+                              />
+                              <input
+                                type="text"
+                                value={editForm.theme}
+                                onChange={(event) =>
+                                  setEditForm((current) => ({
+                                    ...current,
+                                    theme: event.target.value,
+                                  }))
+                                }
+                                className={fieldClassName}
+                                placeholder="Tema"
+                              />
+                              <input
+                                type="text"
+                                value={editForm.reference}
+                                onChange={(event) =>
+                                  setEditForm((current) => ({
+                                    ...current,
+                                    reference: event.target.value,
+                                  }))
+                                }
+                                className={fieldClassName}
+                                placeholder="Referencia"
+                              />
+                              <input
+                                type="text"
+                                value={editForm.book}
+                                onChange={(event) =>
+                                  setEditForm((current) => ({
+                                    ...current,
+                                    book: event.target.value,
+                                  }))
+                                }
+                                className={fieldClassName}
+                                placeholder="Livro"
+                              />
+                              <input
+                                type="text"
+                                value={editForm.abbrev}
+                                onChange={(event) =>
+                                  setEditForm((current) => ({
+                                    ...current,
+                                    abbrev: event.target.value,
+                                  }))
+                                }
+                                className={fieldClassName}
+                                placeholder="Abreviacao"
+                              />
+                              <input
+                                type="number"
+                                min={1}
+                                value={editForm.chapter}
+                                onChange={(event) =>
+                                  setEditForm((current) => ({
+                                    ...current,
+                                    chapter: event.target.value,
+                                  }))
+                                }
+                                className={fieldClassName}
+                                placeholder="Capitulo"
+                              />
+                              <input
+                                type="number"
+                                min={1}
+                                value={editForm.verse}
+                                onChange={(event) =>
+                                  setEditForm((current) => ({
+                                    ...current,
+                                    verse: event.target.value,
+                                  }))
+                                }
+                                className={fieldClassName}
+                                placeholder="Versiculo"
+                              />
+                              <input
+                                type="number"
+                                min={1}
+                                value={editForm.displayOrder}
+                                onChange={(event) =>
+                                  setEditForm((current) => ({
+                                    ...current,
+                                    displayOrder: event.target.value,
+                                  }))
+                                }
+                                className={fieldClassName}
+                                placeholder="Ordem de exibicao"
+                              />
+                              <label className="flex items-center gap-3 rounded-[20px] border border-white/10 bg-[#11151d] px-4 py-3 text-sm text-zinc-200 md:col-span-2">
+                                <input
+                                  type="checkbox"
+                                  checked={editForm.isActive}
+                                  onChange={(event) =>
+                                    setEditForm((current) => ({
+                                      ...current,
+                                      isActive: event.target.checked,
+                                    }))
+                                  }
+                                />
+                                Ativo na rotacao
+                              </label>
+                            </div>
+
+                            <textarea
+                              value={editForm.text}
+                              onChange={(event) =>
+                                setEditForm((current) => ({
+                                  ...current,
+                                  text: event.target.value,
+                                }))
+                              }
+                              rows={4}
+                              className={`${fieldClassName} mt-4`}
+                            />
+
+                            <textarea
+                              value={editForm.insight}
+                              onChange={(event) =>
+                                setEditForm((current) => ({
+                                  ...current,
+                                  insight: event.target.value,
+                                }))
+                              }
+                              rows={5}
+                              className={`${fieldClassName} mt-4`}
+                            />
+
+                            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                              <button
+                                type="button"
+                                onClick={() => void handleSave(item.id)}
+                                disabled={savingEdit}
+                                className="rounded-2xl bg-amber-400 px-5 py-3 text-sm font-semibold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {savingEdit ? "Salvando..." : "Salvar alteracoes"}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={cancelEditing}
+                                disabled={savingEdit}
+                                className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            ))
         ) : (
           <div className="rounded-[28px] border border-white/10 bg-[#0b0f16]/82 p-8 text-center text-zinc-400">
             Nenhum versiculo curado encontrado para a busca informada.

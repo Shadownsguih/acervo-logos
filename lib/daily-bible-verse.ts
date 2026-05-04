@@ -6,6 +6,7 @@ export type DailyBibleVerse = {
   date_key: string;
   bible_verse_id: string | null;
   version: string;
+  theme: string;
   book: string;
   abbrev: string | null;
   chapter: number;
@@ -19,6 +20,7 @@ export type DailyBibleVerse = {
 type DailyBibleVerseLibraryEntry = {
   id?: string;
   version: string;
+  theme?: string;
   book: string;
   abbrev: string | null;
   chapter: number;
@@ -55,7 +57,7 @@ async function getDailyVerseLibrary() {
   const { data, error } = await supabase
     .from("daily_bible_verse_library")
     .select(
-      "id, version, book, abbrev, chapter, verse, reference, text, insight, display_order, is_active, created_at"
+      "id, version, theme, book, abbrev, chapter, verse, reference, text, insight, display_order, is_active, created_at"
     )
     .eq("is_active", true)
     .order("display_order", { ascending: true, nullsFirst: false })
@@ -93,6 +95,7 @@ export async function getOrCreateDailyBibleVerse() {
     date_key: dateKey,
     bible_verse_id: null,
     version: selectedVerse.version,
+    theme: selectedVerse.theme ?? "geral",
     book: selectedVerse.book,
     abbrev: selectedVerse.abbrev,
     chapter: selectedVerse.chapter,

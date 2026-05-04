@@ -30,20 +30,24 @@ async function copyText(payload: string) {
 export default function DailyVerseShareButton({
   reference,
   version,
+  verse,
   text,
   insight,
 }: {
   reference: string;
   version: string;
+  verse: number;
   text: string;
   insight: string;
 }) {
   const [feedback, setFeedback] = useState("");
 
+  const referenceVerseLabel = reference.match(/:(\d+(?:-\d+)?)$/)?.[1] ?? String(verse);
+
   async function handleShare() {
     const shareText = `${reference} | ${version}
 
-${text}
+${referenceVerseLabel}. ${text}
 
 ${insight}
 

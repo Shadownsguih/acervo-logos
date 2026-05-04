@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import PdfCoverPreview from "@/app/components/pdf-cover-preview";
 import MaterialVolumesSection from "@/app/components/material-volumes-section";
+import MaterialFavoriteButton from "@/app/components/material-favorite-button";
 
 type MaterialCategory = {
   name: string;
@@ -317,6 +318,8 @@ export default function MaterialPage() {
                       Ler agora
                     </Link>
                   ) : null}
+
+                  <MaterialFavoriteButton materialId={material.id} />
 
                   <Link
                     href={backHref}

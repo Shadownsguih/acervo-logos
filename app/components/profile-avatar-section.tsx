@@ -1,12 +1,20 @@
 "use client";
 
-import { ChangeEvent, PointerEvent as ReactPointerEvent, useMemo, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  PointerEvent as ReactPointerEvent,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createClient } from "@/lib/supabase-browser";
 
 type ProfileAvatarSectionProps = {
   userId: string;
   initialAvatarUrl: string | null;
   displayName: string;
+  initialBio?: string;
+  variant?: "full" | "compact";
 };
 
 const MAX_DIMENSION = 500;
@@ -37,11 +45,11 @@ function readFileAsDataUrl(file: File) {
         return;
       }
 
-      reject(new Error("Não foi possível ler a imagem."));
+      reject(new Error("Nao foi possivel ler a imagem."));
     };
 
     reader.onerror = () => {
-      reject(new Error("Não foi possível ler a imagem."));
+      reject(new Error("Nao foi possivel ler a imagem."));
     };
 
     reader.readAsDataURL(file);
@@ -53,7 +61,8 @@ function loadImage(src: string) {
     const image = new Image();
 
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Não foi possível processar a imagem."));
+    image.onerror = () =>
+      reject(new Error("Nao foi possivel processar a imagem."));
     image.src = src;
   });
 }
@@ -63,7 +72,7 @@ function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {
     canvas.toBlob(
       (blob) => {
         if (!blob) {
-          reject(new Error("Não foi possível compactar a imagem."));
+          reject(new Error("Nao foi possivel compactar a imagem."));
           return;
         }
 
@@ -114,7 +123,7 @@ async function buildCroppedAvatar(options: {
   const context = canvas.getContext("2d");
 
   if (!context) {
-    throw new Error("Não foi possível preparar a imagem.");
+    throw new Error("Nao foi possivel preparar a imagem.");
   }
 
   const previewToOutputRatio = MAX_DIMENSION / PREVIEW_SIZE;
@@ -125,7 +134,8 @@ async function buildCroppedAvatar(options: {
   const drawHeight = image.naturalHeight * finalScale;
 
   const drawX = (MAX_DIMENSION - drawWidth) / 2 + offsetX * previewToOutputRatio;
-  const drawY = (MAX_DIMENSION - drawHeight) / 2 + offsetY * previewToOutputRatio;
+  const drawY =
+    (MAX_DIMENSION - drawHeight) / 2 + offsetY * previewToOutputRatio;
 
   context.clearRect(0, 0, MAX_DIMENSION, MAX_DIMENSION);
   context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
@@ -154,6 +164,8 @@ export default function ProfileAvatarSection({
   userId,
   initialAvatarUrl,
   displayName,
+  initialBio = "",
+  variant = "full",
 }: ProfileAvatarSectionProps) {
   const supabase = useMemo(() => createClient(), []);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -196,7 +208,7 @@ export default function ProfileAvatarSection({
     );
 
     if (error) {
-      throw new Error("Não foi possível atualizar o perfil do usuário.");
+      throw new Error("Nao foi possivel atualizar o perfil do usuario.");
     }
   }
 
@@ -228,7 +240,7 @@ export default function ProfileAvatarSection({
     }
 
     if (selectedFile.size > MAX_INPUT_FILE_SIZE) {
-      setErrorMessage("A imagem original é muito grande. Envie um arquivo menor que 8 MB.");
+      setErrorMessage("Envie um arquivo menor que 8 MB.");
       event.target.value = "";
       return;
     }
@@ -247,7 +259,7 @@ export default function ProfileAvatarSection({
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Não foi possível preparar a imagem."
+          : "Nao foi possivel preparar a imagem."
       );
     } finally {
       event.target.value = "";
@@ -343,7 +355,7 @@ export default function ProfileAvatarSection({
         });
 
       if (uploadError) {
-        throw new Error("Não foi possível enviar a foto de perfil.");
+        throw new Error("Nao foi possivel enviar a foto de perfil.");
       }
 
       const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
@@ -357,7 +369,7 @@ export default function ProfileAvatarSection({
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Não foi possível atualizar a foto de perfil."
+          : "Nao foi possivel atualizar a foto de perfil."
       );
     } finally {
       setIsUploading(false);
@@ -377,7 +389,7 @@ export default function ProfileAvatarSection({
         .remove([filePath]);
 
       if (removeStorageError) {
-        throw new Error("Não foi possível remover a imagem do storage.");
+        throw new Error("Nao foi possivel remover a imagem do storage.");
       }
 
       await persistAvatarUrl(null);
@@ -387,7 +399,7 @@ export default function ProfileAvatarSection({
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Não foi possível remover a foto de perfil."
+          : "Nao foi possivel remover a foto de perfil."
       );
     } finally {
       setIsRemoving(false);
@@ -415,30 +427,139 @@ export default function ProfileAvatarSection({
 
   return (
     <>
-      <section className="rounded-[32px] border border-white/10 bg-white/[0.03] p-6">
+      {variant === "compact" ? (
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="relative">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Foto de perfil do usuario"
+                    className="h-16 w-16 rounded-full border border-white/10 object-cover shadow-[0_10px_25px_-18px_rgba(0,0,0,0.9)]"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-[#12151d] text-base font-semibold text-amber-300 shadow-[0_10px_25px_-18px_rgba(0,0,0,0.9)]">
+                    {initials}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={openFilePicker}
+                  disabled={isUploading || isRemoving}
+                  className="absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-amber-400 text-black shadow-[0_12px_24px_-16px_rgba(245,158,11,0.95)] transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  aria-label="Editar foto de perfil"
+                  title="Editar foto de perfil"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 20h9" />
+                    <path d="m16.5 3.5 4 4L7 21l-4 1 1-4L16.5 3.5Z" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-white/55">
+                  Hello
+                </p>
+                <p className="mt-1 truncate text-lg font-semibold text-white">
+                  {displayName}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+
+          {errorMessage ? (
+            <div className="mt-4 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-300">
+              {errorMessage}
+            </div>
+          ) : null}
+
+          {statusMessage ? (
+            <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-300">
+              {statusMessage}
+            </div>
+          ) : null}
+
+          <div className="mt-5 rounded-[20px] border border-amber-400/12 bg-amber-400/[0.06] px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-amber-300/75">
+              Biografia curta
+            </p>
+            <p className="mt-2 text-sm leading-6 text-white/72">
+              {initialBio.trim()
+                ? initialBio.trim()
+                : "Adicione uma biografia curta para apresentar melhor seu perfil."}
+            </p>
+          </div>
+        </>
+      ) : (
+      <section className="rounded-[24px] bg-[#171827] p-4 shadow-[0_18px_48px_-30px_rgba(0,0,0,0.85)] md:rounded-[32px] md:border md:border-white/10 md:bg-white/[0.03] md:p-6 md:shadow-none">
         <p className="text-xs uppercase tracking-[0.3em] text-amber-400">
           Foto de perfil
         </p>
 
-        <h2 className="mt-2 text-xl font-bold">Avatar do usuário</h2>
+        <h2 className="mt-2 text-xl font-bold">Avatar do usuario</h2>
 
-        <div className="mt-6 flex flex-col items-center gap-4 rounded-3xl border border-white/10 bg-black/20 p-5">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt="Foto de perfil do usuário"
-              className="h-28 w-28 rounded-full border border-white/10 object-cover"
-            />
-          ) : (
-            <div className="flex h-28 w-28 items-center justify-center rounded-full border border-white/10 bg-[#12151d] text-2xl font-semibold text-amber-300">
-              {initials}
-            </div>
-          )}
+        <div className="mt-5 flex flex-col items-center gap-4 p-2">
+          <div className="relative">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Foto de perfil do usuario"
+                className="h-24 w-24 rounded-full border border-white/10 object-cover md:h-28 md:w-28"
+              />
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border border-white/10 bg-[#181c28] text-xl font-semibold text-amber-300 md:h-28 md:w-28 md:text-2xl">
+                {initials}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={openFilePicker}
+              disabled={isUploading || isRemoving}
+              className="absolute -bottom-1 -right-1 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-amber-400 text-black shadow-[0_12px_24px_-16px_rgba(245,158,11,0.95)] transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+              aria-label="Editar foto de perfil"
+              title="Editar foto de perfil"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 20h9" />
+                <path d="m16.5 3.5 4 4L7 21l-4 1 1-4L16.5 3.5Z" />
+              </svg>
+            </button>
+          </div>
 
           <div className="text-center">
             <p className="text-sm font-medium text-zinc-100">{displayName}</p>
             <p className="mt-1 text-xs text-zinc-500">
-              Agora o usuário pode enquadrar a imagem antes do upload.
+              Toque no lapis para alterar sua foto.
             </p>
           </div>
 
@@ -450,25 +571,16 @@ export default function ProfileAvatarSection({
             className="hidden"
           />
 
-          <div className="flex w-full flex-wrap justify-center gap-2">
-            <button
-              type="button"
-              onClick={openFilePicker}
-              disabled={isUploading || isRemoving}
-              className="rounded-full bg-amber-400 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isUploading ? "Enviando..." : "Escolher foto"}
-            </button>
-
+          {avatarUrl ? (
             <button
               type="button"
               onClick={handleRemoveAvatar}
-              disabled={!avatarUrl || isUploading || isRemoving}
+              disabled={isUploading || isRemoving}
               className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isRemoving ? "Removendo..." : "Remover foto"}
+              {isRemoving ? "Removendo..." : "Remover"}
             </button>
-          </div>
+          ) : null}
 
           {errorMessage ? (
             <div className="w-full rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-300">
@@ -481,14 +593,9 @@ export default function ProfileAvatarSection({
               {statusMessage}
             </div>
           ) : null}
-
-          <div className="w-full rounded-2xl border border-white/10 bg-[#12151d] px-4 py-3 text-xs leading-6 text-zinc-400">
-            <p>Formatos aceitos: JPG, PNG e WEBP.</p>
-            <p>O sistema converte a imagem para WEBP antes do upload.</p>
-            <p>O avatar final é gerado em até 500x500 px.</p>
-          </div>
         </div>
       </section>
+      )}
 
       {isCropOpen && cropImage && cropSource ? (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
@@ -503,8 +610,7 @@ export default function ProfileAvatarSection({
                 </h3>
                 <p className="mt-3 max-w-xl text-sm leading-7 text-zinc-400">
                   Arraste a imagem para centralizar melhor o rosto e use o zoom
-                  para aproximar ou afastar. O recorte final será usado no ícone
-                  do perfil.
+                  para aproximar ou afastar.
                 </p>
               </div>
 
@@ -537,7 +643,7 @@ export default function ProfileAvatarSection({
                   {cropTransform ? (
                     <img
                       src={cropSource}
-                      alt="Pré-visualização do avatar"
+                      alt="Pre-visualizacao do avatar"
                       draggable={false}
                       className="pointer-events-none absolute select-none object-cover"
                       style={{
@@ -564,7 +670,7 @@ export default function ProfileAvatarSection({
                 </div>
 
                 <p className="mt-3 text-xs text-zinc-500">
-                  Arraste a imagem dentro da área para ajustar o enquadramento.
+                  Arraste a imagem dentro da area para ajustar o enquadramento.
                 </p>
               </div>
 
@@ -580,7 +686,9 @@ export default function ProfileAvatarSection({
                     max={3}
                     step={0.01}
                     value={cropZoom}
-                    onChange={(event) => handleZoomChange(Number(event.target.value))}
+                    onChange={(event) =>
+                      handleZoomChange(Number(event.target.value))
+                    }
                     className="mt-4 w-full"
                   />
 
@@ -591,7 +699,7 @@ export default function ProfileAvatarSection({
 
                 <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
                   <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-                    Prévia
+                    Previa
                   </p>
 
                   <div className="mt-4 flex justify-center">
@@ -600,7 +708,7 @@ export default function ProfileAvatarSection({
                         <div className="relative h-full w-full overflow-hidden rounded-full">
                           <img
                             src={cropSource}
-                            alt="Prévia circular do avatar"
+                            alt="Previa circular do avatar"
                             draggable={false}
                             className="pointer-events-none absolute select-none object-cover"
                             style={{
@@ -618,9 +726,8 @@ export default function ProfileAvatarSection({
                 </div>
 
                 <div className="rounded-3xl border border-white/10 bg-black/20 p-4 text-xs leading-6 text-zinc-400">
-                  <p>O sistema gera uma imagem otimizada em WEBP.</p>
-                  <p>O recorte final será exportado em até 500x500 px.</p>
-                  <p>Isso reduz consumo de storage e melhora o carregamento.</p>
+                  O sistema gera uma imagem otimizada em WEBP para melhorar o
+                  carregamento.
                 </div>
               </div>
             </div>

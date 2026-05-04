@@ -5,15 +5,14 @@ import { Suspense } from "react";
 import "./globals.css";
 import { createClient } from "@/lib/supabase-server";
 import { logoutUserAction } from "@/app/login/actions";
-import UserMenuDropdown from "@/app/components/user-menu-dropdown";
-import HeaderSearch from "@/app/components/header-search";
+import AppHeaderDrawer from "@/app/components/app-header-drawer";
 import PwaRegister from "@/app/components/pwa-register";
 import PwaInstallButton from "@/app/components/pwa-install-button";
 import GlobalRouteLoading from "@/app/components/global-route-loading";
 
 export const metadata: Metadata = {
   title: "Acervo Logos",
-  description: "Biblioteca teológica digital",
+  description: "Biblioteca teologica digital",
 };
 
 function getInitials(name: string) {
@@ -61,7 +60,7 @@ export default async function RootLayout({
         user.user_metadata?.full_name ?? user.user_metadata?.name ?? ""
       ).trim() ||
       user.email ||
-      "Usuário do Acervo Logos";
+      "Usuario do Acervo Logos";
   }
 
   const avatarInitials = getInitials(profileFullName);
@@ -80,11 +79,23 @@ export default async function RootLayout({
 
         <div className="flex min-h-screen flex-col overflow-x-hidden bg-[#05060a]">
           <header className="sticky top-0 z-50 border-b border-white/10 bg-[#05060a]/88 backdrop-blur-xl">
-            <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:px-4 md:px-6">
+            <div className="mx-auto grid w-full max-w-7xl grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-3 px-3 py-3 sm:px-4 md:px-6">
+              <div className="flex justify-start">
+                <AppHeaderDrawer
+                  isLoggedIn={Boolean(user)}
+                  isAdminUser={isAdminUser}
+                  profileFullName={profileFullName}
+                  userEmail={user?.email ?? ""}
+                  profileAvatarUrl={profileAvatarUrl}
+                  avatarInitials={avatarInitials}
+                  logoutAction={logoutUserAction}
+                />
+              </div>
+
               <Link
                 href="/"
-                className="group flex min-w-0 items-center gap-2.5 sm:gap-3"
-                aria-label="Ir para a página inicial do Acervo Logos"
+                className="group mx-auto flex min-w-0 items-center justify-center gap-2.5 sm:gap-3"
+                aria-label="Ir para a pagina inicial do Acervo Logos"
               >
                 <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition group-hover:bg-white/10 sm:h-11 sm:w-11">
                   <Image
@@ -101,55 +112,10 @@ export default async function RootLayout({
                   <div className="truncate text-sm font-semibold text-white sm:text-base md:text-lg">
                     Acervo Logos
                   </div>
-                  <div className="hidden text-[10px] uppercase tracking-[0.22em] text-zinc-500 md:block">
-                    Biblioteca Teológica Digital
-                  </div>
                 </div>
               </Link>
 
-              <div className="hidden flex-1 justify-center lg:flex">
-                <HeaderSearch />
-              </div>
-
-              <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-                <div className="lg:hidden">
-                  <HeaderSearch mobileVariant="icon" />
-                </div>
-
-                {!user ? (
-                  <div className="hidden items-center gap-3 xl:flex">
-                    <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs uppercase tracking-[0.24em] text-zinc-400">
-                      Acesso restrito
-                    </span>
-                  </div>
-                ) : null}
-
-                {isAdminUser ? (
-                  <Link
-                    href="/admin"
-                    className="rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs font-medium text-amber-300 transition hover:bg-amber-400/20 sm:px-4 sm:text-sm"
-                  >
-                    Admin
-                  </Link>
-                ) : null}
-
-                {user ? (
-                  <UserMenuDropdown
-                    profileFullName={profileFullName}
-                    userEmail={user.email ?? ""}
-                    profileAvatarUrl={profileAvatarUrl}
-                    avatarInitials={avatarInitials}
-                    logoutAction={logoutUserAction}
-                  />
-                ) : (
-                  <Link
-                    href="/login"
-                    className="rounded-full bg-amber-400 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-amber-300 sm:px-5"
-                  >
-                    Entrar
-                  </Link>
-                )}
-              </div>
+              <div aria-hidden="true" className="h-11 w-11" />
             </div>
           </header>
 

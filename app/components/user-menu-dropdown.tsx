@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { formatRecentReadingRelativeText } from "@/app/components/recent-reading-utils";
+import { useLastReadDocument } from "@/app/components/use-last-read-document";
 
 type UserMenuDropdownProps = {
   profileFullName: string;
@@ -20,6 +23,7 @@ export default function UserMenuDropdown({
 }: UserMenuDropdownProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const lastRead = useLastReadDocument();
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent | PointerEvent) {
@@ -51,6 +55,14 @@ export default function UserMenuDropdown({
     setIsOpen(false);
   }
 
+  const recentReadingLabel = useMemo(() => {
+    if (!lastRead) {
+      return "";
+    }
+
+    return formatRecentReadingRelativeText(lastRead.updatedAt);
+  }, [lastRead]);
+
   return (
     <div ref={containerRef} className="relative">
       <button
@@ -62,10 +74,12 @@ export default function UserMenuDropdown({
       >
         {profileAvatarUrl ? (
           <div className="relative h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-white/5">
-            <img
+            <Image
               src={profileAvatarUrl}
               alt={`Foto de perfil de ${profileFullName}`}
-              className="h-full w-full object-cover"
+              fill
+              sizes="40px"
+              className="object-cover"
             />
           </div>
         ) : (
@@ -116,12 +130,49 @@ export default function UserMenuDropdown({
           </div>
 
           <div className="p-2">
+            {lastRead ? (
+              <>
+                <Link
+                  href={lastRead.readerHref}
+                  onClick={handleMenuLinkClick}
+                  className="mb-2 block rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 transition hover:bg-amber-400/15"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-300">
+                    Continuar leitura
+                  </p>
+                  <p className="mt-2 truncate text-sm font-semibold text-white">
+                    {lastRead.documentTitle}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-400">
+                    {recentReadingLabel}
+                    {lastRead.lastPage ? ` | Pagina ${lastRead.lastPage}` : ""}
+                  </p>
+                </Link>
+              </>
+            ) : null}
+
             <Link
               href="/perfil#perfil-topo"
               onClick={handleMenuLinkClick}
               className="flex items-center rounded-2xl px-4 py-3 text-sm text-white transition hover:bg-white/5"
             >
               Meu perfil
+            </Link>
+
+            <Link
+              href="/perfil#leituras-recentes"
+              onClick={handleMenuLinkClick}
+              className="flex items-center rounded-2xl px-4 py-3 text-sm text-white transition hover:bg-white/5"
+            >
+              Leituras recentes
+            </Link>
+
+            <Link
+              href="/perfil#favoritos-salvos"
+              onClick={handleMenuLinkClick}
+              className="flex items-center rounded-2xl px-4 py-3 text-sm text-white transition hover:bg-white/5"
+            >
+              Favoritos
             </Link>
 
             <Link
@@ -137,7 +188,7 @@ export default function UserMenuDropdown({
               onClick={handleMenuLinkClick}
               className="flex items-center rounded-2xl px-4 py-3 text-sm text-white transition hover:bg-white/5"
             >
-              Segurança
+              Seguranca
             </Link>
 
             <div className="my-2 border-t border-white/10" />

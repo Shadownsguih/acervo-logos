@@ -19,7 +19,7 @@ import StudyNotesPanel from "@/app/components/study-notes-panel";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs?v=${pdfjs.version}`;
 
 const SMALL_MOBILE_BREAKPOINT = 390;
 const MOBILE_BREAKPOINT = 768;

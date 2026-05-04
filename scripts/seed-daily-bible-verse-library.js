@@ -57,6 +57,23 @@ async function main() {
 }
 
 main().catch((error) => {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (
+    message.includes(
+      "Could not find the 'theme' column of 'daily_bible_verse_library'"
+    )
+  ) {
+    console.error(
+      [
+        "Erro ao semear daily_bible_verse_library: a coluna 'theme' ainda nao existe no banco.",
+        "Rode primeiro o SQL atualizado em scripts/create-daily-bible-verse-library.sql no Supabase.",
+        "Depois execute novamente: node scripts/seed-daily-bible-verse-library.js",
+      ].join("\n")
+    );
+    process.exit(1);
+  }
+
   console.error("Erro ao semear daily_bible_verse_library:", error.message);
   process.exit(1);
 });

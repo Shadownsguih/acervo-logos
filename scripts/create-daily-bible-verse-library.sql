@@ -1,6 +1,7 @@
 create table if not exists public.daily_bible_verse_library (
   id uuid primary key default gen_random_uuid(),
   version text not null,
+  theme text not null default 'geral',
   book text not null,
   abbrev text,
   chapter integer not null,
@@ -13,6 +14,9 @@ create table if not exists public.daily_bible_verse_library (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.daily_bible_verse_library
+  add column if not exists theme text not null default 'geral';
 
 do $$
 begin
@@ -28,3 +32,6 @@ end $$;
 
 create index if not exists daily_bible_verse_library_active_order_idx
   on public.daily_bible_verse_library (is_active, display_order, reference);
+
+create index if not exists daily_bible_verse_library_theme_idx
+  on public.daily_bible_verse_library (theme, is_active, display_order);
