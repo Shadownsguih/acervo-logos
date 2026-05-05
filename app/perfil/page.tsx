@@ -140,6 +140,25 @@ function getCategoryHref(category: FavoriteMaterialCategory | null) {
   return `/categoria/${normalizeCategoryPath(category.name)}`;
 }
 
+function ProfileDisclosureChevron() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      className="h-4 w-4 text-amber-300/80 transition duration-200 group-open:rotate-90"
+    >
+      <path
+        d="M7 4.5L12.5 10L7 15.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function normalizeFavoriteMaterial(
   item: FavoriteMaterialRaw
 ): FavoriteMaterial | null {
@@ -237,12 +256,12 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
     initialFullName || user.email || "Usuario do Acervo Logos";
 
   const editProfileSection = (
-    <section className="p-1 text-[#1f2430] md:rounded-[32px] md:border md:border-white/10 md:bg-white/[0.03] md:p-8 md:text-white md:shadow-none">
+    <section className="p-1 text-white md:rounded-[32px] md:border md:border-white/10 md:bg-white/[0.03] md:p-8 md:text-white md:shadow-none">
       <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-[#93a0b8] md:text-amber-400">
+        <p className="text-xs uppercase tracking-[0.3em] text-amber-400/80 md:text-amber-400">
           Dados basicos
         </p>
-        <h2 className="mt-2 text-xl font-bold text-[#16213b] md:text-2xl md:text-white">
+        <h2 className="mt-2 text-xl font-bold text-white md:text-2xl md:text-white">
           Editar perfil
         </h2>
       </div>
@@ -263,7 +282,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
         <div>
           <label
             htmlFor="full_name"
-            className="mb-2 block text-sm font-medium text-zinc-200"
+            className="mb-2 block text-sm font-medium text-zinc-300"
           >
             Nome
           </label>
@@ -275,14 +294,14 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
             defaultValue={initialFullName}
             maxLength={120}
             placeholder="Digite seu nome"
-            className="w-full rounded-none border-0 border-b border-[#d5dbea] bg-transparent px-0 py-3 text-sm text-[#16213b] outline-none transition placeholder:text-[#9aa3b8] focus:border-[#16213b] md:rounded-2xl md:border md:border-white/10 md:bg-[#12151d] md:px-4 md:text-white md:placeholder:text-zinc-500 md:focus:border-amber-400/60"
+            className="w-full rounded-none border-0 border-b border-white/10 bg-transparent px-0 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-400/60 md:rounded-2xl md:border md:border-white/10 md:bg-[#12151d] md:px-4 md:text-white md:placeholder:text-zinc-500 md:focus:border-amber-400/60"
           />
         </div>
 
         <div>
           <label
             htmlFor="bio"
-            className="mb-2 block text-sm font-medium text-zinc-200"
+            className="mb-2 block text-sm font-medium text-zinc-300"
           >
             Biografia curta
           </label>
@@ -294,14 +313,14 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
             maxLength={500}
             rows={5}
             placeholder="Fale um pouco sobre voce ou sobre seu foco de estudo."
-            className="w-full rounded-none border-0 border-b border-[#d5dbea] bg-transparent px-0 py-3 text-sm leading-6 text-[#16213b] outline-none transition placeholder:text-[#9aa3b8] focus:border-[#16213b] md:rounded-2xl md:border md:border-white/10 md:bg-[#12151d] md:px-4 md:text-white md:placeholder:text-zinc-500 md:focus:border-amber-400/60"
+            className="w-full rounded-none border-0 border-b border-white/10 bg-transparent px-0 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-400/60 md:rounded-2xl md:border md:border-white/10 md:bg-[#12151d] md:px-4 md:text-white md:placeholder:text-zinc-500 md:focus:border-amber-400/60"
           />
         </div>
 
         <div>
           <label
             htmlFor="location"
-            className="mb-2 block text-sm font-medium text-zinc-200"
+            className="mb-2 block text-sm font-medium text-zinc-300"
           >
             Sua cidade
           </label>
@@ -313,7 +332,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
             defaultValue={initialLocation}
             maxLength={120}
             placeholder="Ex.: Macarani - BA"
-            className="w-full rounded-none border-0 border-b border-[#d5dbea] bg-transparent px-0 py-3 text-sm text-[#16213b] outline-none transition placeholder:text-[#9aa3b8] focus:border-[#16213b] md:rounded-2xl md:border md:border-white/10 md:bg-[#12151d] md:px-4 md:text-white md:placeholder:text-zinc-500 md:focus:border-amber-400/60"
+            className="w-full rounded-none border-0 border-b border-white/10 bg-transparent px-0 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-400/60 md:rounded-2xl md:border md:border-white/10 md:bg-[#12151d] md:px-4 md:text-white md:placeholder:text-zinc-500 md:focus:border-amber-400/60"
           />
         </div>
 
@@ -342,12 +361,12 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
             favoritar dentro de um material, ele aparecera aqui.
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {favorites.map((favorite) =>
               favorite.material ? (
                 <article
                   key={`${favorite.material.id}:${favorite.created_at}:mobile`}
-                  className="rounded-[22px] border border-white/8 bg-[#131722] p-4"
+                  className="w-[286px] shrink-0 snap-start rounded-[22px] border border-white/8 bg-[#131722] p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -506,11 +525,11 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
             bloco de notas do leitor, elas aparecerao aqui.
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {notes.map((note) => (
               <article
                 key={`${note.id}:mobile`}
-                className="rounded-[22px] border border-white/8 bg-[#131722] p-4"
+                className="w-[286px] shrink-0 snap-start rounded-[22px] border border-white/8 bg-[#131722] p-4"
               >
                 <h3 className="text-base font-semibold text-white">
                   {note.title?.trim() || "Nova nota"}
@@ -596,29 +615,29 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
   );
 
   const accountInfoSection = (
-    <section className="border-t border-[#dfe4ef] px-1 pt-5 text-[#1f2430] md:rounded-[32px] md:border md:border-white/10 md:bg-white/[0.03] md:p-6 md:text-white md:shadow-none">
-      <p className="text-xs uppercase tracking-[0.3em] text-[#93a0b8] md:text-amber-400">
+    <section className="border-t border-white/10 px-1 pt-5 text-white md:rounded-[32px] md:border md:border-white/10 md:bg-white/[0.03] md:p-6 md:text-white md:shadow-none">
+      <p className="text-xs uppercase tracking-[0.3em] text-amber-400/80 md:text-amber-400">
         Conta
       </p>
-      <h2 className="mt-2 text-lg font-bold text-[#16213b] md:text-xl md:text-white">
+      <h2 className="mt-2 text-lg font-bold text-white md:text-xl md:text-white">
         Informacoes da conta
       </h2>
 
       <div className="mt-5 space-y-3">
-        <div className="border-b border-[#dfe4ef] px-0 pb-4 md:rounded-2xl md:border md:border-white/10 md:bg-black/20 md:p-4">
-          <p className="text-xs uppercase tracking-[0.24em] text-[#8e97ab] md:text-zinc-500">
+        <div className="border-b border-white/10 px-0 pb-4 md:rounded-2xl md:border md:border-white/10 md:bg-black/20 md:p-4">
+          <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
             E-mail
           </p>
-          <p className="mt-2 break-all text-sm text-[#1f2430] md:text-zinc-200">
+          <p className="mt-2 break-all text-sm text-zinc-200 md:text-zinc-200">
             {user.email ?? "E-mail indisponivel"}
           </p>
         </div>
 
         <div className="px-0 pt-1 md:rounded-2xl md:border md:border-white/10 md:bg-black/20 md:p-4">
-          <p className="text-xs uppercase tracking-[0.24em] text-[#8e97ab] md:text-zinc-500">
+          <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 md:text-zinc-500">
             ID do usuario
           </p>
-          <p className="mt-2 break-all text-xs text-[#5b647a] md:text-zinc-400">
+          <p className="mt-2 break-all text-xs text-zinc-400 md:text-zinc-400">
             {user.id}
           </p>
         </div>
@@ -670,14 +689,9 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
             <details open className="group border-b border-white/8">
               <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between px-5 py-4 text-[15px] font-medium text-white marker:hidden">
                 <span>Dados</span>
-                <span
-                  aria-hidden="true"
-                  className="text-amber-300/75 transition group-open:rotate-90"
-                >
-                  â€º
-                </span>
+                <ProfileDisclosureChevron />
               </summary>
-              <div className="border-t border-white/8 bg-white p-5">
+              <div className="border-t border-white/8 bg-[#0f1117] p-5">
                 <div className="space-y-4">
                   {editProfileSection}
                   {accountInfoSection}
@@ -688,12 +702,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
             <details className="group border-b border-white/8">
               <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between px-5 py-4 text-[15px] font-medium text-white marker:hidden">
                 <span>Leitura</span>
-                <span
-                  aria-hidden="true"
-                  className="text-amber-300/75 transition group-open:rotate-90"
-                >
-                  â€º
-                </span>
+                <ProfileDisclosureChevron />
               </summary>
               <div className="border-t border-white/8 bg-[#0f1117] p-5">
                 <ProfileRecentReadingSection variant="embedded" />
@@ -703,12 +712,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
             <details className="group border-b border-white/8">
               <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between px-5 py-4 text-[15px] font-medium text-white marker:hidden">
                 <span>Favoritos</span>
-                <span
-                  aria-hidden="true"
-                  className="text-amber-300/75 transition group-open:rotate-90"
-                >
-                  â€º
-                </span>
+                <ProfileDisclosureChevron />
               </summary>
               <div className="border-t border-white/8 bg-[#0f1117] p-5">
                 {favoritesSection}
@@ -718,12 +722,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
             <details className="group border-b border-white/8">
               <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between px-5 py-4 text-[15px] font-medium text-white marker:hidden">
                 <span>Notas</span>
-                <span
-                  aria-hidden="true"
-                  className="text-amber-300/75 transition group-open:rotate-90"
-                >
-                  â€º
-                </span>
+                <ProfileDisclosureChevron />
               </summary>
               <div className="border-t border-white/8 bg-[#0f1117] p-5">
                 {notesSection}
@@ -733,14 +732,9 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
             <details className="group">
               <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between px-5 py-4 text-[15px] font-medium text-white marker:hidden">
                 <span>Seguranca</span>
-                <span
-                  aria-hidden="true"
-                  className="text-amber-300/75 transition group-open:rotate-90"
-                >
-                  â€º
-                </span>
+                <ProfileDisclosureChevron />
               </summary>
-              <div className="border-t border-white/8 bg-white p-5">
+              <div className="border-t border-white/8 bg-[#0f1117] p-5">
                 <AccountSecuritySection
                   userEmail={user.email ?? ""}
                   variant="embedded"

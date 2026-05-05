@@ -140,6 +140,13 @@ type DictionaryContextMenuState = {
   y: number;
 };
 
+type VerseComparisonState = {
+  reference: string;
+  verse: number;
+  sourceVersionLabel: string;
+  sourceText: string;
+};
+
 const BIBLE_READER_STATE_STORAGE_KEY = "acervo-logos:bible-reader-state";
 const BIBLE_READER_HEBREW_LAYER_STORAGE_KEY =
   "acervo-logos:bible-reader-hebrew-layer";
@@ -287,6 +294,14 @@ export default function BibleReaderStageShell() {
   const [contextMenu, setContextMenu] = useState<DictionaryContextMenuState | null>(
     null
   );
+  const [verseComparison, setVerseComparison] =
+    useState<VerseComparisonState | null>(null);
+  const [selectedComparisonTranslation, setSelectedComparisonTranslation] =
+    useState("");
+  const [comparisonPassage, setComparisonPassage] =
+    useState<PassageResponse | null>(null);
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [comparisonError, setComparisonError] = useState("");
   const [shareFeedback, setShareFeedback] = useState<{
     type: "success" | "error";
     message: string;
@@ -428,6 +443,38 @@ export default function BibleReaderStageShell() {
     translations.find((item) => item.id === selectedTranslation) ?? null;
   const selectedTranslationValue = selectedTranslationOption?.value ?? "";
   const selectedTranslationLabel = selectedTranslationOption?.label ?? "Carregando";
+  const comparisonTranslationOptions = useMemo(
+    () => translations.filter((item) => item.id !== selectedTranslation),
+    [selectedTranslation, translations]
+  );
+  const selectedComparisonTranslationOption =
+    comparisonTranslationOptions.find(
+      (item) => item.id === selectedComparisonTranslation
+    ) ??
+    comparisonTranslationOptions[0] ??
+    null;
+  const selectedComparisonTranslationValue =
+    selectedComparisonTranslationOption?.value ?? "";
+  const selectedComparisonTranslationLabel =
+    selectedComparisonTranslationOption?.label ?? "Comparacao";
+
+  useEffect(() => {
+    if (!comparisonTranslationOptions.length) {
+      setSelectedComparisonTranslation("");
+      return;
+    }
+
+    setSelectedComparisonTranslation((current) => {
+      if (
+        current &&
+        comparisonTranslationOptions.some((translation) => translation.id === current)
+      ) {
+        return current;
+      }
+
+      return comparisonTranslationOptions[0].id;
+    });
+  }, [comparisonTranslationOptions]);
 
   useEffect(() => {
     if (!selectedTranslationValue) {
@@ -840,6 +887,76 @@ export default function BibleReaderStageShell() {
       active = false;
     };
   }, [selectedBook, selectedChapter, selectedTranslationValue]);
+
+  useEffect(() => {
+    if (
+      !verseComparison ||
+      !selectedComparisonTranslationValue ||
+      !selectedBook ||
+      !selectedChapter
+    ) {
+      setComparisonPassage(null);
+      setComparisonError("");
+      setComparisonLoading(false);
+      return;
+    }
+
+    let active = true;
+
+    async function loadComparisonPassage() {
+      setComparisonLoading(true);
+      setComparisonError("");
+
+      try {
+        const response = await fetch(
+          `/api/bible/passage?version=${encodeURIComponent(
+            selectedComparisonTranslationValue
+          )}&book=${encodeURIComponent(selectedBook)}&chapter=${selectedChapter}`
+        );
+        const result = await readJsonSafely<{
+          ok: boolean;
+          error?: string;
+          passage?: PassageResponse;
+        }>(response);
+
+        if (!active) {
+          return;
+        }
+
+        if (!response.ok || !result?.ok || !result.passage) {
+          setComparisonPassage(null);
+          setComparisonError(
+            result?.error || "Nao foi possivel carregar a outra traducao."
+          );
+          return;
+        }
+
+        setComparisonPassage(result.passage);
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setComparisonPassage(null);
+        setComparisonError("Nao foi possivel carregar a outra traducao.");
+      } finally {
+        if (active) {
+          setComparisonLoading(false);
+        }
+      }
+    }
+
+    void loadComparisonPassage();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    verseComparison,
+    selectedBook,
+    selectedChapter,
+    selectedComparisonTranslationValue,
+  ]);
 
   useEffect(() => {
     if (!showHebrewLayer || !selectedBook || !selectedChapter || !isOldTestamentBook) {
@@ -1267,6 +1384,22 @@ export default function BibleReaderStageShell() {
     );
   }
 
+  function handleContextMenuComparisonAction() {
+    if (!contextMenu) {
+      return;
+    }
+
+    setVerseComparison({
+      reference: contextMenu.reference,
+      verse: contextMenu.verse,
+      sourceVersionLabel: selectedTranslationLabel,
+      sourceText: contextMenu.verseText,
+    });
+    setComparisonError("");
+    setComparisonPassage(null);
+    setContextMenu(null);
+  }
+
   function renderVerseText(text: string, reference: string, verse: number) {
     return text.split(/(\s+)/).map((part, index) => {
       if (!part) {
@@ -1437,17 +1570,19 @@ export default function BibleReaderStageShell() {
                 </div>
 
                 <div className="mt-3 flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowHebrewLayer((current) => !current)}
-                    className={`inline-flex h-11 items-center rounded-xl border px-3 text-xs font-medium transition ${
-                      showHebrewLayer
-                        ? "border-amber-300/30 bg-amber-300/12 text-amber-200"
-                        : "border-white/10 bg-white/[0.04] text-zinc-200"
-                    }`}
-                  >
-                    {originalLayerLabel}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowHebrewLayer((current) => !current)}
+                      className={`inline-flex h-11 items-center rounded-xl border px-3 text-xs font-medium transition ${
+                        showHebrewLayer
+                          ? "border-amber-300/30 bg-amber-300/12 text-amber-200"
+                          : "border-white/10 bg-white/[0.04] text-zinc-200"
+                      }`}
+                    >
+                      {originalLayerLabel}
+                    </button>
+                  </div>
 
                   <button
                     type="button"
@@ -1508,6 +1643,7 @@ export default function BibleReaderStageShell() {
                     </div>
                   </form>
                 ) : null}
+
               </div>
             </div>
 
@@ -1916,6 +2052,103 @@ export default function BibleReaderStageShell() {
           />
         </div>
 
+        {verseComparison ? (
+          <div className="fixed inset-0 z-[58]">
+            <div
+              className="absolute inset-0 bg-black/45 backdrop-blur-[3px]"
+              onClick={() => setVerseComparison(null)}
+            />
+
+            <div className="absolute inset-x-3 top-1/2 max-h-[78vh] -translate-y-1/2 overflow-y-auto rounded-[28px] border border-white/10 bg-[#0f1117]/98 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl md:left-1/2 md:right-auto md:w-[min(680px,92vw)] md:-translate-x-1/2 md:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-sky-200/75">
+                    Consultar outra versao
+                  </p>
+                  <h3 className="mt-1 text-lg font-semibold text-white">
+                    {verseComparison.reference}
+                  </h3>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setVerseComparison(null)}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-zinc-200 transition hover:bg-white/10"
+                >
+                  Fechar
+                </button>
+              </div>
+
+              <div className="mt-4">
+                <Field label="Outra traducao">
+                  <Select
+                    value={selectedComparisonTranslation}
+                    onChange={setSelectedComparisonTranslation}
+                    disabled={!comparisonTranslationOptions.length}
+                  >
+                    {comparisonTranslationOptions.map((translation) => (
+                      <option key={translation.id} value={translation.id}>
+                        {translation.label}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <div className="rounded-[22px] border border-amber-300/14 bg-amber-300/[0.05] p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-amber-200/75">
+                    {verseComparison.sourceVersionLabel}
+                  </p>
+                  <p className="mt-3 text-[1rem] leading-8 text-zinc-100">
+                    <span className="mr-2 text-sm font-semibold text-amber-300">
+                      {verseComparison.verse}
+                    </span>
+                    <span>{verseComparison.sourceText}</span>
+                  </p>
+                </div>
+
+                <div className="rounded-[22px] border border-sky-300/14 bg-sky-300/[0.04] p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-sky-200/75">
+                    {selectedComparisonTranslationLabel}
+                  </p>
+                  {comparisonLoading ? (
+                    <p className="mt-3 text-sm text-zinc-400">
+                      Carregando outra traducao...
+                    </p>
+                  ) : comparisonError ? (
+                    <p className="mt-3 text-sm text-red-200">
+                      {comparisonError}
+                    </p>
+                  ) : (() => {
+                    const comparisonVerse =
+                      comparisonPassage?.verses.find(
+                        (item) => item.verse === verseComparison.verse
+                      ) ?? null;
+
+                    if (!comparisonVerse) {
+                      return (
+                        <p className="mt-3 text-sm text-zinc-400">
+                          Este versiculo nao foi encontrado na traducao selecionada.
+                        </p>
+                      );
+                    }
+
+                    return (
+                      <p className="mt-3 text-[1rem] leading-8 text-zinc-100">
+                        <span className="mr-2 text-sm font-semibold text-sky-200/80">
+                          {comparisonVerse.verse}
+                        </span>
+                        <span>{comparisonVerse.text}</span>
+                      </p>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {contextMenu ? (
           <div className="fixed inset-0 z-[60]">
             <div
@@ -1944,6 +2177,15 @@ export default function BibleReaderStageShell() {
                 >
                   <span>Pesquisar</span>
                   <span className="text-zinc-500">Ir</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleContextMenuComparisonAction}
+                  className="mt-2 flex w-full items-center justify-between rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-white/[0.07]"
+                >
+                  <span>Consultar outra versao</span>
+                  <span className="text-zinc-500">Abrir</span>
                 </button>
 
                 <button
@@ -2006,6 +2248,20 @@ export default function BibleReaderStageShell() {
                 >
                   <span>Pesquisar no dicionario</span>
                   <span className="text-zinc-500">Ir</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleContextMenuComparisonAction}
+                  onTouchEnd={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleContextMenuComparisonAction();
+                  }}
+                  className="flex w-full items-center justify-between rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-sm font-medium text-zinc-100 transition hover:bg-white/[0.07]"
+                >
+                  <span>Consultar outra versao</span>
+                  <span className="text-zinc-500">Abrir</span>
                 </button>
 
                 <button

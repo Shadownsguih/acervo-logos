@@ -113,15 +113,23 @@ export default function AccountSecuritySection({
     <section
       className={
         isEmbedded
-          ? "text-[#1f2430] md:rounded-[32px] md:border md:border-white/10 md:bg-white/[0.03] md:p-6 md:text-white md:shadow-none"
+          ? "text-white md:rounded-[32px] md:border md:border-white/10 md:bg-white/[0.03] md:p-6 md:text-white md:shadow-none"
           : "rounded-[24px] bg-white p-5 text-[#1f2430] shadow-[0_18px_48px_-30px_rgba(15,23,42,0.28)] md:rounded-[32px] md:border md:border-white/10 md:bg-white/[0.03] md:p-6 md:text-white md:shadow-none"
       }
     >
-      <p className="text-xs uppercase tracking-[0.3em] text-[#93a0b8] md:text-amber-400">
+      <p
+        className={`text-xs uppercase tracking-[0.3em] ${
+          isEmbedded ? "text-amber-400/80" : "text-[#93a0b8]"
+        } md:text-amber-400`}
+      >
         Seguranca
       </p>
 
-      <h2 className="mt-2 text-xl font-bold text-[#16213b] md:text-white">
+      <h2
+        className={`mt-2 text-xl font-bold ${
+          isEmbedded ? "text-white" : "text-[#16213b]"
+        } md:text-white`}
+      >
         Alterar senha
       </h2>
 
@@ -129,7 +137,9 @@ export default function AccountSecuritySection({
         <div>
           <label
             htmlFor="current_password"
-            className="mb-2 block text-sm font-medium text-[#7f8aa3] md:text-zinc-200"
+            className={`mb-2 block text-sm font-medium ${
+              isEmbedded ? "text-zinc-300" : "text-[#7f8aa3]"
+            } md:text-zinc-200`}
           >
             Senha atual
           </label>
@@ -142,14 +152,20 @@ export default function AccountSecuritySection({
             onChange={(event) => setCurrentPassword(event.target.value)}
             autoComplete="current-password"
             placeholder="Digite sua senha atual"
-            className="w-full rounded-none border-0 border-b border-[#d5dbea] bg-transparent px-0 py-3 text-sm text-[#16213b] outline-none transition placeholder:text-[#9aa3b8] focus:border-[#16213b] md:rounded-2xl md:border md:border-white/10 md:bg-[#12151d] md:px-4 md:text-white md:placeholder:text-zinc-500 md:focus:border-amber-400/60"
+            className={`w-full rounded-none border-0 bg-transparent px-0 py-3 text-sm outline-none transition md:rounded-2xl md:border md:border-white/10 md:bg-[#12151d] md:px-4 md:text-white md:placeholder:text-zinc-500 md:focus:border-amber-400/60 ${
+              isEmbedded
+                ? "border-b border-white/10 text-white placeholder:text-zinc-500 focus:border-amber-400/60"
+                : "border-b border-[#d5dbea] text-[#16213b] placeholder:text-[#9aa3b8] focus:border-[#16213b]"
+            }`}
           />
         </div>
 
         <div>
           <label
             htmlFor="new_password"
-            className="mb-2 block text-sm font-medium text-[#7f8aa3] md:text-zinc-200"
+            className={`mb-2 block text-sm font-medium ${
+              isEmbedded ? "text-zinc-300" : "text-[#7f8aa3]"
+            } md:text-zinc-200`}
           >
             Nova senha
           </label>
@@ -162,14 +178,20 @@ export default function AccountSecuritySection({
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="new-password"
             placeholder="Digite a nova senha"
-            className="w-full rounded-none border-0 border-b border-[#d5dbea] bg-transparent px-0 py-3 text-sm text-[#16213b] outline-none transition placeholder:text-[#9aa3b8] focus:border-[#16213b] md:rounded-2xl md:border md:border-white/10 md:bg-[#12151d] md:px-4 md:text-white md:placeholder:text-zinc-500 md:focus:border-amber-400/60"
+            className={`w-full rounded-none border-0 bg-transparent px-0 py-3 text-sm outline-none transition md:rounded-2xl md:border md:border-white/10 md:bg-[#12151d] md:px-4 md:text-white md:placeholder:text-zinc-500 md:focus:border-amber-400/60 ${
+              isEmbedded
+                ? "border-b border-white/10 text-white placeholder:text-zinc-500 focus:border-amber-400/60"
+                : "border-b border-[#d5dbea] text-[#16213b] placeholder:text-[#9aa3b8] focus:border-[#16213b]"
+            }`}
           />
         </div>
 
         <div>
           <label
             htmlFor="confirm_new_password"
-            className="mb-2 block text-sm font-medium text-[#7f8aa3] md:text-zinc-200"
+            className={`mb-2 block text-sm font-medium ${
+              isEmbedded ? "text-zinc-300" : "text-[#7f8aa3]"
+            } md:text-zinc-200`}
           >
             Confirmar nova senha
           </label>
@@ -182,7 +204,11 @@ export default function AccountSecuritySection({
             onChange={(event) => setConfirmPassword(event.target.value)}
             autoComplete="new-password"
             placeholder="Digite novamente a nova senha"
-            className="w-full rounded-none border-0 border-b border-[#d5dbea] bg-transparent px-0 py-3 text-sm text-[#16213b] outline-none transition placeholder:text-[#9aa3b8] focus:border-[#16213b] md:rounded-2xl md:border md:border-white/10 md:bg-[#12151d] md:px-4 md:text-white md:placeholder:text-zinc-500 md:focus:border-amber-400/60"
+            className={`w-full rounded-none border-0 bg-transparent px-0 py-3 text-sm outline-none transition md:rounded-2xl md:border md:border-white/10 md:bg-[#12151d] md:px-4 md:text-white md:placeholder:text-zinc-500 md:focus:border-amber-400/60 ${
+              isEmbedded
+                ? "border-b border-white/10 text-white placeholder:text-zinc-500 focus:border-amber-400/60"
+                : "border-b border-[#d5dbea] text-[#16213b] placeholder:text-[#9aa3b8] focus:border-[#16213b]"
+            }`}
           />
         </div>
 
