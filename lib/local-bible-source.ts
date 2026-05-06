@@ -3,9 +3,13 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { getBibleBookSlug } from "@/lib/bible-canon";
-import { getBibleBooksMetadata, type BibleMetadataBook } from "@/lib/bible-metadata";
+import {
+  getBibleBooksMetadata,
+  getBibleVersionsMetadata,
+  type BibleMetadataBook,
+} from "@/lib/bible-metadata";
 
-type FlatBibleVerse = {
+export type FlatBibleVerse = {
   version: string;
   book: string;
   abbrev: string | null;
@@ -18,6 +22,7 @@ type FlatBibleVerse = {
 type LocalBibleVersionIndex = {
   books: BibleMetadataBook[];
   chapters: Map<string, FlatBibleVerse[]>;
+  verses: FlatBibleVerse[];
 };
 
 const localBibleIndexCache = new Map<string, Promise<LocalBibleVersionIndex>>();
@@ -33,6 +38,7 @@ async function loadLocalBibleVersionIndex(version: string) {
   const metadataBooks = getBibleBooksMetadata(normalizedVersion);
   const booksBySlug = new Map(metadataBooks.map((book) => [book.id, book]));
   const chapters = new Map<string, FlatBibleVerse[]>();
+  const normalizedVerses: FlatBibleVerse[] = [];
 
   for (const verse of verses) {
     const bookSlug = getBibleBookSlug(verse.book);
@@ -48,6 +54,7 @@ async function loadLocalBibleVersionIndex(version: string) {
       abbrev: verse.abbrev ?? metadataBook.abbrev ?? null,
       reference: `${metadataBook.label} ${verse.chapter}:${verse.verse}`,
     };
+    normalizedVerses.push(normalizedVerse);
     const chapterKey = `${bookSlug}:${verse.chapter}`;
     const chapterVerses = chapters.get(chapterKey);
 
@@ -62,6 +69,7 @@ async function loadLocalBibleVersionIndex(version: string) {
   return {
     books: metadataBooks,
     chapters,
+    verses: normalizedVerses,
   };
 }
 
@@ -95,4 +103,18 @@ export async function getLocalBiblePassage(
 ) {
   const index = await getLocalBibleVersionIndex(version);
   return index.chapters.get(`${bookSlug}:${chapter}`) ?? [];
+}
+
+export async function getLocalBibleVerses(version: string) {
+  const index = await getLocalBibleVersionIndex(version);
+  return index.verses;
+}
+
+export async function getLocalBibleVersesAcrossVersions() {
+  const versions = getBibleVersionsMetadata().map((item) => item.value);
+  const verseGroups = await Promise.all(
+    versions.map((version) => getLocalBibleVerses(version))
+  );
+
+  return verseGroups.flat();
 }

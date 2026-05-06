@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
 import {
   getBibleBookOrder,
   getBibleBookSlug,
   normalizeBibleText,
 } from "@/lib/bible-canon";
 import { getBibleBooksMetadata } from "@/lib/bible-metadata";
+import {
+  getLocalBibleVerses,
+  getLocalBibleVersesAcrossVersions,
+  type FlatBibleVerse,
+} from "@/lib/local-bible-source";
 
-type BibleSearchRow = {
-  version: string;
-  book: string;
-  abbrev: string | null;
-  chapter: number;
-  verse: number;
-  reference: string;
-  text: string;
-};
+type BibleSearchRow = FlatBibleVerse;
 
 type ReferenceMatch = {
   book: string;
@@ -141,7 +137,7 @@ function mapSearchResult(item: BibleSearchRow) {
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q")?.trim() ?? "";
-  const version = request.nextUrl.searchParams.get("version")?.trim() ?? "";
+  const version = request.nextUrl.searchParams.get("version")?.trim().toUpperCase() ?? "";
 
   if (!query || query.length < 2) {
     return NextResponse.json(
@@ -152,99 +148,98 @@ export async function GET(request: NextRequest) {
 
   const referenceMatch = version ? parseReferenceQuery(query, version) : null;
 
-  if (referenceMatch) {
-    let referenceSearch = supabase
-      .from("bible_verses")
-      .select("version, book, abbrev, chapter, verse, reference, text")
-      .eq("book", referenceMatch.book)
-      .eq("chapter", referenceMatch.chapter)
-      .order("verse", { ascending: true });
+  try {
+    const verses = version
+      ? await getLocalBibleVerses(version)
+      : await getLocalBibleVersesAcrossVersions();
 
-    if (version) {
-      referenceSearch = referenceSearch.eq("version", version);
+    if (referenceMatch) {
+      const matchingReferenceResults = verses
+        .filter((item) => {
+          if (
+            item.book !== referenceMatch.book ||
+            item.chapter !== referenceMatch.chapter
+          ) {
+            return false;
+          }
+
+          if (referenceMatch.verse !== null) {
+            return item.verse === referenceMatch.verse;
+          }
+
+          return true;
+        })
+        .sort((left, right) => left.verse - right.verse)
+        .slice(0, referenceMatch.verse !== null ? 1 : 60)
+        .map(mapSearchResult);
+
+      return NextResponse.json({
+        ok: true,
+        results: matchingReferenceResults,
+      });
     }
 
-    if (referenceMatch.verse !== null) {
-      referenceSearch = referenceSearch.eq("verse", referenceMatch.verse);
-    }
+    const normalizedQuery = normalizeSearchText(query);
+    const rankedResults = verses
+      .map((item) => ({
+        item,
+        score: scoreSearchMatch(item.text, normalizedQuery),
+      }))
+      .filter(({ item, score }) => {
+        if (score <= 0) {
+          return false;
+        }
 
-    const { data, error } = await referenceSearch.limit(
-      referenceMatch.verse !== null ? 1 : 60
-    );
+        return normalizeSearchText(item.text).includes(normalizedQuery);
+      })
+      .sort((left, right) => {
+        if (right.score !== left.score) {
+          return right.score - left.score;
+        }
 
-    if (error) {
-      return NextResponse.json(
-        { ok: false, error: error.message, results: [] },
-        { status: 500 }
-      );
-    }
+        const versionDiff = left.item.version.localeCompare(
+          right.item.version,
+          "pt-BR",
+          {
+            sensitivity: "base",
+          }
+        );
+
+        if (versionDiff !== 0) {
+          return versionDiff;
+        }
+
+        const bookDiff =
+          getBibleBookOrder(left.item.book) - getBibleBookOrder(right.item.book);
+
+        if (bookDiff !== 0) {
+          return bookDiff;
+        }
+
+        if (left.item.chapter !== right.item.chapter) {
+          return left.item.chapter - right.item.chapter;
+        }
+
+        return left.item.verse - right.item.verse;
+      })
+      .slice(0, 40)
+      .map(({ item }) => mapSearchResult(item));
 
     return NextResponse.json({
       ok: true,
-      results: ((data ?? []) as BibleSearchRow[]).map(mapSearchResult),
+      results: rankedResults,
     });
-  }
-
-  let search = supabase
-    .from("bible_verses")
-    .select("version, book, abbrev, chapter, verse, reference, text")
-    .ilike("text", `%${query}%`)
-    .limit(120);
-
-  if (version) {
-    search = search.eq("version", version);
-  }
-
-  const { data, error } = await search;
-
-  if (error) {
+  } catch (error) {
     return NextResponse.json(
-      { ok: false, error: error.message, results: [] },
+      {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Nao foi possivel buscar na Biblia.",
+        results: [],
+      },
       { status: 500 }
     );
   }
-
-  const rankedResults = ((data ?? []) as BibleSearchRow[])
-    .map((item) => ({
-      item,
-      score: scoreSearchMatch(item.text, query),
-    }))
-    .filter((item) => item.score > 0)
-    .sort((left, right) => {
-      if (right.score !== left.score) {
-        return right.score - left.score;
-      }
-
-      const versionDiff = left.item.version.localeCompare(
-        right.item.version,
-        "pt-BR",
-        {
-          sensitivity: "base",
-        }
-      );
-
-      if (versionDiff !== 0) {
-        return versionDiff;
-      }
-
-      const bookDiff =
-        getBibleBookOrder(left.item.book) - getBibleBookOrder(right.item.book);
-
-      if (bookDiff !== 0) {
-        return bookDiff;
-      }
-
-      if (left.item.chapter !== right.item.chapter) {
-        return left.item.chapter - right.item.chapter;
-      }
-
-      return left.item.verse - right.item.verse;
-    })
-    .slice(0, 40)
-    .map(({ item }) => mapSearchResult(item));
-
-  return NextResponse.json({
-    ok: true,
-    results: rankedResults,
-  });
 }

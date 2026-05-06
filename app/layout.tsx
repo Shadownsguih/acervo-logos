@@ -9,6 +9,7 @@ import AppHeaderDrawer from "@/app/components/app-header-drawer";
 import PwaRegister from "@/app/components/pwa-register";
 import PwaInstallButton from "@/app/components/pwa-install-button";
 import GlobalRouteLoading from "@/app/components/global-route-loading";
+import MobileAppTutorial from "@/app/components/mobile-app-tutorial";
 
 export const metadata: Metadata = {
   title: "Acervo Logos",
@@ -124,6 +125,7 @@ export default async function RootLayout({
           </main>
         </div>
 
+        <MobileAppTutorial userKey={user?.id ?? null} />
         <PwaInstallButton />
       </body>
     </html>
