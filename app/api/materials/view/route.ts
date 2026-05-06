@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
+import { getAuthenticatedAccessContext } from "@/lib/user-access";
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const access = await getAuthenticatedAccessContext(supabase);
+
+    if (!access.ok) {
+      return NextResponse.json(
+        { error: access.error },
+        { status: access.status }
+      );
+    }
+
     const body = await request.json();
 
     const materialId =
@@ -12,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     if (!materialId && !volumeId) {
       return NextResponse.json(
-        { error: "materialId ou volumeId é obrigatório" },
+        { error: "materialId ou volumeId e obrigatorio." },
         { status: 400 }
       );
     }
@@ -26,7 +37,7 @@ export async function POST(request: NextRequest) {
 
       if (volumeFetchError || !volume) {
         return NextResponse.json(
-          { error: "Volume não encontrado" },
+          { error: "Volume nao encontrado." },
           { status: 404 }
         );
       }
@@ -39,7 +50,7 @@ export async function POST(request: NextRequest) {
 
       if (materialFetchError || !parentMaterial) {
         return NextResponse.json(
-          { error: "Material principal não encontrado" },
+          { error: "Material principal nao encontrado." },
           { status: 404 }
         );
       }
@@ -51,7 +62,7 @@ export async function POST(request: NextRequest) {
 
       if (updateVolumeError) {
         return NextResponse.json(
-          { error: "Erro ao atualizar visualizações do volume" },
+          { error: "Erro ao atualizar visualizacoes do volume." },
           { status: 500 }
         );
       }
@@ -63,7 +74,7 @@ export async function POST(request: NextRequest) {
 
       if (updateMaterialError) {
         return NextResponse.json(
-          { error: "Erro ao atualizar visualizações do material" },
+          { error: "Erro ao atualizar visualizacoes do material." },
           { status: 500 }
         );
       }
@@ -82,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     if (fetchError || !material) {
       return NextResponse.json(
-        { error: "Material não encontrado" },
+        { error: "Material nao encontrado." },
         { status: 404 }
       );
     }
@@ -94,7 +105,7 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       return NextResponse.json(
-        { error: "Erro ao atualizar visualizações do material" },
+        { error: "Erro ao atualizar visualizacoes do material." },
         { status: 500 }
       );
     }
@@ -103,9 +114,11 @@ export async function POST(request: NextRequest) {
       success: true,
       type: "material",
     });
-  } catch {
+  } catch (error) {
+    console.error("Erro ao registrar visualizacao:", error);
+
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: "Erro interno do servidor." },
       { status: 500 }
     );
   }

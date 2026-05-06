@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
+import { getAuthenticatedAccessContext } from "@/lib/user-access";
 
-async function getPdfUrl(kind: string, id: string) {
+async function getPdfUrl(
+  supabaseClient: Awaited<ReturnType<typeof createClient>>,
+  kind: string,
+  id: string
+) {
   if (kind === "material") {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from("materials")
       .select("pdf_url")
       .eq("id", id)
@@ -17,7 +22,7 @@ async function getPdfUrl(kind: string, id: string) {
   }
 
   if (kind === "volume") {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from("material_volumes")
       .select("pdf_url")
       .eq("id", id)
@@ -35,6 +40,13 @@ async function getPdfUrl(kind: string, id: string) {
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const access = await getAuthenticatedAccessContext(supabase);
+
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
+    }
+
     const { searchParams } = new URL(request.url);
     const kind = String(searchParams.get("kind") ?? "").trim();
     const id = String(searchParams.get("id") ?? "").trim();
@@ -46,7 +58,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const pdfUrl = await getPdfUrl(kind, id);
+    const pdfUrl = await getPdfUrl(supabase, kind, id);
 
     if (!pdfUrl) {
       return NextResponse.json(

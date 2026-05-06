@@ -19,7 +19,6 @@ export type ReaderResolvedContext =
       materialId: string;
       materialTitle: string;
       category: ReaderResolvedCategory;
-      pdfUrl: string;
       volumeItems: ReaderResolvedVolumeItem[];
     }
   | {
@@ -29,7 +28,6 @@ export type ReaderResolvedContext =
       materialId: string;
       materialTitle: string;
       category: ReaderResolvedCategory;
-      pdfUrl: string;
       volumeItems: ReaderResolvedVolumeItem[];
     }
   | {
@@ -102,7 +100,6 @@ export async function resolveReaderDocument(
       materialId: volume.material_id,
       materialTitle: parentMaterial?.title ?? volume.title,
       category: parentMaterial?.categories ?? null,
-      pdfUrl: volume.pdf_url,
       volumeItems: (siblingVolumesData ?? []) as ReaderResolvedVolumeItem[],
     };
   }
@@ -145,7 +142,6 @@ export async function resolveReaderDocument(
     materialId: material.id,
     materialTitle: material.title,
     category: material.categories ?? null,
-    pdfUrl: material.pdf_url,
     volumeItems: [
       {
         id: material.id,

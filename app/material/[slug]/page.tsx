@@ -16,7 +16,6 @@ type MaterialComCategoriaRaw = {
   id: string;
   title: string;
   description: string | null;
-  pdf_url: string | null;
   categories: MaterialCategory[] | null;
 };
 
@@ -24,7 +23,6 @@ type MaterialComCategoria = {
   id: string;
   title: string;
   description: string | null;
-  pdf_url: string | null;
   category: MaterialCategory | null;
 };
 
@@ -33,7 +31,6 @@ type MaterialVolume = {
   material_id: string;
   title: string;
   volume_number: number | null;
-  pdf_url: string;
   description: string | null;
 };
 
@@ -111,7 +108,6 @@ export default function MaterialPage() {
           id,
           title,
           description,
-          pdf_url,
           categories (
             name,
             slug
@@ -131,7 +127,6 @@ export default function MaterialPage() {
         id: rawMaterial.id,
         title: rawMaterial.title,
         description: rawMaterial.description,
-        pdf_url: rawMaterial.pdf_url,
         category:
           Array.isArray(rawMaterial.categories) && rawMaterial.categories.length > 0
             ? rawMaterial.categories[0]
@@ -142,7 +137,7 @@ export default function MaterialPage() {
 
       const { data: volumesData, error: volumesError } = await supabase
         .from("material_volumes")
-        .select("id, material_id, title, volume_number, pdf_url, description")
+        .select("id, material_id, title, volume_number, description")
         .eq("material_id", normalizedMaterial.id)
         .order("volume_number", { ascending: true })
         .order("title", { ascending: true });
@@ -166,11 +161,7 @@ export default function MaterialPage() {
       return `/api/files/view?kind=volume&id=${volumes[0].id}`;
     }
 
-    if (material.pdf_url) {
-      return `/api/files/view?kind=material&id=${material.id}`;
-    }
-
-    return null;
+    return `/api/files/view?kind=material&id=${material.id}`;
   }, [material, hasVolumes, volumes]);
 
   const backHref = getCategoryHref(material?.category ?? null);
@@ -310,7 +301,7 @@ export default function MaterialPage() {
                         ? `Ocultar volumes (${volumes.length})`
                         : `Ver volumes (${volumes.length})`}
                     </button>
-                  ) : material.pdf_url ? (
+                  ) : material ? (
                     <Link
                       href={`/ler/${material.id}`}
                       className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-amber-400 px-6 py-3 text-sm font-semibold text-black transition hover:bg-amber-300 sm:text-base"

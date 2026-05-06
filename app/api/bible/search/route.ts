@@ -41,7 +41,15 @@ function scoreSearchMatch(text: string, query: string) {
   }
 
   if (normalizedText.includes(normalizedQuery)) {
-    return normalizedText.startsWith(normalizedQuery) ? 1200 : 900;
+    if (normalizedText.startsWith(normalizedQuery)) {
+      return 1400;
+    }
+
+    if (normalizedText.includes(` ${normalizedQuery}`)) {
+      return 1100;
+    }
+
+    return 900;
   }
 
   const queryTokens = normalizedQuery.split(" ").filter(Boolean);
@@ -75,6 +83,14 @@ function scoreSearchMatch(text: string, query: string) {
   }
 
   return score;
+}
+
+function scoreBookAffinity(book: string, currentBookSlug: string | null) {
+  if (!currentBookSlug) {
+    return 0;
+  }
+
+  return getBibleBookSlug(book) === currentBookSlug ? 180 : 0;
 }
 
 function parseReferenceQuery(
@@ -138,6 +154,8 @@ function mapSearchResult(item: BibleSearchRow) {
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q")?.trim() ?? "";
   const version = request.nextUrl.searchParams.get("version")?.trim().toUpperCase() ?? "";
+  const currentBookSlug =
+    request.nextUrl.searchParams.get("book")?.trim().toLowerCase() ?? "";
 
   if (!query || query.length < 2) {
     return NextResponse.json(
@@ -183,15 +201,11 @@ export async function GET(request: NextRequest) {
     const rankedResults = verses
       .map((item) => ({
         item,
-        score: scoreSearchMatch(item.text, normalizedQuery),
+        score:
+          scoreSearchMatch(item.text, normalizedQuery) +
+          scoreBookAffinity(item.book, currentBookSlug || null),
       }))
-      .filter(({ item, score }) => {
-        if (score <= 0) {
-          return false;
-        }
-
-        return normalizeSearchText(item.text).includes(normalizedQuery);
-      })
+      .filter(({ score }) => score > 0)
       .sort((left, right) => {
         if (right.score !== left.score) {
           return right.score - left.score;

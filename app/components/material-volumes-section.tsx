@@ -9,7 +9,6 @@ type MaterialVolume = {
   material_id: string;
   title: string;
   volume_number: number | null;
-  pdf_url: string;
   description: string | null;
 };
 

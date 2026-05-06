@@ -622,10 +622,17 @@ export default function BibleReaderStageShell() {
       setSearchError("");
 
       try {
+        const searchParams = new URLSearchParams({
+          q: submittedSearchTerm,
+          version: selectedTranslationValue,
+        });
+
+        if (selectedBook) {
+          searchParams.set("book", selectedBook);
+        }
+
         const response = await fetch(
-          `/api/bible/search?q=${encodeURIComponent(
-            submittedSearchTerm
-          )}&version=${encodeURIComponent(selectedTranslationValue)}`,
+          `/api/bible/search?${searchParams.toString()}`,
           { cache: "no-store" }
         );
 
@@ -665,7 +672,7 @@ export default function BibleReaderStageShell() {
     return () => {
       active = false;
     };
-  }, [submittedSearchTerm, selectedTranslationValue]);
+  }, [submittedSearchTerm, selectedTranslationValue, selectedBook]);
 
   useEffect(() => {
     if (!pendingSearchNavigation) {

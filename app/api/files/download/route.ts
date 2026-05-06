@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { getAuthenticatedAccessContext } from "@/lib/user-access";
 
 function sanitizeDownloadName(value: string) {
   const normalized = value
@@ -16,16 +17,12 @@ function sanitizeDownloadName(value: string) {
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const access = await getAuthenticatedAccessContext(supabase);
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
+    if (!access.ok) {
       return NextResponse.json(
-        { error: "Faça login para baixar este PDF." },
-        { status: 401 }
+        { error: access.error },
+        { status: access.status }
       );
     }
 
@@ -35,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     if (!kind || !id) {
       return NextResponse.json(
-        { error: "Parâmetros de download inválidos." },
+        { error: "Parametros de download invalidos." },
         { status: 400 }
       );
     }
@@ -49,7 +46,7 @@ export async function GET(request: NextRequest) {
 
       if (error || !data || !data.pdf_url) {
         return NextResponse.json(
-          { error: "PDF do material não encontrado." },
+          { error: "PDF do material nao encontrado." },
           { status: 404 }
         );
       }
@@ -85,7 +82,7 @@ export async function GET(request: NextRequest) {
 
       if (error || !data || !data.pdf_url) {
         return NextResponse.json(
-          { error: "PDF do volume não encontrado." },
+          { error: "PDF do volume nao encontrado." },
           { status: 404 }
         );
       }
@@ -113,7 +110,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: "Tipo de download inválido." },
+      { error: "Tipo de download invalido." },
       { status: 400 }
     );
   } catch (error) {
