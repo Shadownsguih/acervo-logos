@@ -1,15 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import CategorySearchToggle from "@/app/components/category-search-toggle";
 import BibleDictionaryExplorer from "@/app/components/bible-dictionary-explorer";
 import CategoryScroll from "@/app/components/category-scroll";
 import MaterialFavoriteButton from "@/app/components/material-favorite-button";
 import { isBibleDictionaryCategory } from "@/lib/bible-dictionary";
-import {
-  BIBLE_VIRTUAL_CATEGORY,
-  isBibleReaderCategory,
-  isBibleReaderRoute,
-} from "@/lib/bible-reader";
+import { isBibleReaderCategory, isBibleReaderRoute } from "@/lib/bible-reader";
 
 type Category = {
   id: string;
@@ -87,92 +84,7 @@ export default async function CategoryPage({
   const query = resolvedSearchParams?.q?.trim() || "";
 
   if (isBibleReaderRoute(slug)) {
-    const accent = getCategoryAccent(BIBLE_VIRTUAL_CATEGORY.name);
-
-    return (
-      <main className="min-h-screen bg-[#0a0a0f] px-4 py-5 text-white sm:px-6 sm:py-8">
-        <div className="mx-auto max-w-6xl">
-          <Link
-            href="/categorias"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-200 transition hover:bg-white/10"
-          >
-            <span>{"<"}</span>
-            <span>Voltar para categorias</span>
-          </Link>
-
-          <section className="relative mt-4 overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(160deg,rgba(13,17,28,0.96),rgba(17,24,39,0.94))] px-4 py-5 shadow-[0_24px_70px_-40px_rgba(0,0,0,0.9)] sm:mt-5 sm:rounded-[32px] sm:px-7 sm:py-7">
-            <div
-              className={`pointer-events-none absolute -left-10 top-0 h-24 w-24 rounded-full blur-3xl ${accent.heroGlow}`}
-            />
-            <div className="pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-full bg-amber-300/10 blur-3xl" />
-            <div className="pointer-events-none absolute bottom-0 left-1/3 h-20 w-20 rounded-full bg-sky-400/10 blur-3xl" />
-
-            <div className="relative max-w-4xl">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-300 sm:text-xs">
-                Biblia
-              </p>
-
-              <h1 className="mt-3 text-[1.7rem] font-bold leading-tight text-white sm:text-4xl md:text-5xl">
-                Navegacao biblica em ambiente proprio
-              </h1>
-
-              <p className="mt-4 text-sm leading-7 text-zinc-300 sm:text-base sm:leading-8">
-                Esta nova categoria abre um sistema proprio para leitura por
-                traducao, livro, capitulo e versiculo. O visual conversa com o
-                nosso ambiente de leitura atual, mas a estrutura e separada do
-                reader de PDF para que possamos evoluir Biblia, Notas e
-                Dicionario com liberdade.
-              </p>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-                    Etapa 1
-                  </p>
-                  <p className="mt-2 text-sm font-medium text-white">
-                    Shell visual e navegacao-base
-                  </p>
-                </div>
-
-                <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-                    Proximo
-                  </p>
-                  <p className="mt-2 text-sm font-medium text-white">
-                    Leitura real por capitulo e traducao
-                  </p>
-                </div>
-
-                <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-                    Ferramentas
-                  </p>
-                  <p className="mt-2 text-sm font-medium text-white">
-                    Notas e dicionario integrados
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Link
-                  href="/biblia"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-amber-400 px-6 py-3 text-sm font-semibold text-black transition hover:bg-amber-300 sm:text-base"
-                >
-                  Abrir sistema Biblia
-                </Link>
-
-                <Link
-                  href="/categorias"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10 sm:text-base"
-                >
-                  Voltar para categorias
-                </Link>
-              </div>
-            </div>
-          </section>
-        </div>
-      </main>
-    );
+    redirect("/biblia");
   }
 
   const { data: categoriesData, error: categoriesError } = await supabase
@@ -226,64 +138,11 @@ export default async function CategoryPage({
     );
   }
 
-  const accent = getCategoryAccent(category.name);
-
   if (isBibleReaderCategory(category)) {
-    return (
-      <main className="min-h-screen bg-[#0a0a0f] px-4 py-5 text-white sm:px-6 sm:py-8">
-        <div className="mx-auto max-w-6xl">
-          <Link
-            href="/categorias"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-200 transition hover:bg-white/10"
-          >
-            <span>{"<"}</span>
-            <span>Voltar para categorias</span>
-          </Link>
-
-          <section className="relative mt-4 overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(160deg,rgba(13,17,28,0.96),rgba(17,24,39,0.94))] px-4 py-5 shadow-[0_24px_70px_-40px_rgba(0,0,0,0.9)] sm:mt-5 sm:rounded-[32px] sm:px-7 sm:py-7">
-            <div
-              className={`pointer-events-none absolute -left-10 top-0 h-24 w-24 rounded-full blur-3xl ${accent.heroGlow}`}
-            />
-            <div className="pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-full bg-amber-300/10 blur-3xl" />
-            <div className="pointer-events-none absolute bottom-0 left-1/3 h-20 w-20 rounded-full bg-sky-400/10 blur-3xl" />
-
-            <div className="relative max-w-4xl">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-300 sm:text-xs">
-                Biblia
-              </p>
-
-              <h1 className="mt-3 text-[1.7rem] font-bold leading-tight text-white sm:text-4xl md:text-5xl">
-                {category.name}
-              </h1>
-
-              <p className="mt-4 text-sm leading-7 text-zinc-300 sm:text-base sm:leading-8">
-                Esta categoria agora aponta para um ambiente biblico proprio,
-                pensado para navegacao por traducao, livro, capitulo e
-                versiculo, mantendo a mesma identidade visual do nosso ambiente
-                de leitura.
-              </p>
-
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Link
-                  href="/biblia"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-amber-400 px-6 py-3 text-sm font-semibold text-black transition hover:bg-amber-300 sm:text-base"
-                >
-                  Abrir sistema Biblia
-                </Link>
-
-                <Link
-                  href="/categorias"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10 sm:text-base"
-                >
-                  Voltar para categorias
-                </Link>
-              </div>
-            </div>
-          </section>
-        </div>
-      </main>
-    );
+    redirect("/biblia");
   }
+
+  const accent = getCategoryAccent(category.name);
 
   if (isBibleDictionaryCategory(category)) {
     return (
@@ -487,8 +346,8 @@ export default async function CategoryPage({
                       <span className="text-zinc-500 transition group-hover:translate-x-1">
                         {">"}
                       </span>
-                      </div>
                     </div>
+                  </div>
                 </article>
               ))}
             </CategoryScroll>

@@ -1476,7 +1476,7 @@ export default function BibleReaderStageShell() {
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link
-              href="/categoria/biblia"
+              href="/categorias"
               className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm font-medium text-amber-200 transition hover:bg-white/[0.08]"
             >
               <span aria-hidden="true" className="text-amber-300/80">
@@ -2059,27 +2059,45 @@ export default function BibleReaderStageShell() {
               onClick={() => setVerseComparison(null)}
             />
 
-            <div className="absolute inset-x-3 top-1/2 max-h-[78vh] -translate-y-1/2 overflow-y-auto rounded-[28px] border border-white/10 bg-[#0f1117]/98 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl md:left-1/2 md:right-auto md:w-[min(680px,92vw)] md:-translate-x-1/2 md:p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-sky-200/75">
-                    Consultar outra versao
-                  </p>
-                  <h3 className="mt-1 text-lg font-semibold text-white">
-                    {verseComparison.reference}
-                  </h3>
+            <div className="absolute inset-x-3 top-1/2 max-h-[78vh] -translate-y-1/2 overflow-y-auto rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(17,21,30,0.985),rgba(11,14,21,0.995))] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl md:left-1/2 md:right-auto md:w-[min(720px,92vw)] md:-translate-x-1/2 md:p-5">
+              <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-sky-200/75">
+                      Consulta de versao
+                    </p>
+                    <h3 className="mt-1 text-lg font-semibold text-white">
+                      {verseComparison.reference}
+                    </h3>
+                    <p className="mt-2 text-sm text-zinc-400">
+                      Compare este versiculo com outra traducao sem sair da leitura.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setVerseComparison(null)}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-zinc-200 transition hover:bg-white/10"
+                  >
+                    Fechar
+                  </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setVerseComparison(null)}
-                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-zinc-200 transition hover:bg-white/10"
-                >
-                  Fechar
-                </button>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-amber-300/18 bg-amber-300/[0.08] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-amber-200">
+                    {verseComparison.sourceVersionLabel}
+                  </span>
+                  <span className="text-zinc-600">/</span>
+                  <span className="rounded-full border border-sky-300/18 bg-sky-300/[0.08] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-sky-200">
+                    {selectedComparisonTranslationLabel}
+                  </span>
+                </div>
               </div>
 
-              <div className="mt-4">
+              <div className="mt-4 rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+                  Selecionar traducao
+                </p>
                 <Field label="Outra traducao">
                   <Select
                     value={selectedComparisonTranslation}
@@ -2096,11 +2114,16 @@ export default function BibleReaderStageShell() {
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <div className="rounded-[22px] border border-amber-300/14 bg-amber-300/[0.05] p-4">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-amber-200/75">
-                    {verseComparison.sourceVersionLabel}
-                  </p>
-                  <p className="mt-3 text-[1rem] leading-8 text-zinc-100">
+                <div className="rounded-[24px] border border-amber-300/14 bg-[linear-gradient(180deg,rgba(251,191,36,0.08),rgba(251,191,36,0.03))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-amber-200/75">
+                      Traducao atual
+                    </p>
+                    <span className="rounded-full border border-amber-300/16 bg-amber-300/[0.08] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-amber-100">
+                      {verseComparison.sourceVersionLabel}
+                    </span>
+                  </div>
+                  <p className="mt-4 text-[1rem] leading-8 text-zinc-100">
                     <span className="mr-2 text-sm font-semibold text-amber-300">
                       {verseComparison.verse}
                     </span>
@@ -2108,18 +2131,23 @@ export default function BibleReaderStageShell() {
                   </p>
                 </div>
 
-                <div className="rounded-[22px] border border-sky-300/14 bg-sky-300/[0.04] p-4">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-sky-200/75">
-                    {selectedComparisonTranslationLabel}
-                  </p>
+                <div className="rounded-[24px] border border-sky-300/14 bg-[linear-gradient(180deg,rgba(56,189,248,0.08),rgba(56,189,248,0.03))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-sky-200/75">
+                      Outra traducao
+                    </p>
+                    <span className="rounded-full border border-sky-300/16 bg-sky-300/[0.08] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-sky-100">
+                      {selectedComparisonTranslationLabel}
+                    </span>
+                  </div>
                   {comparisonLoading ? (
-                    <p className="mt-3 text-sm text-zinc-400">
+                    <div className="mt-4 rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-zinc-400">
                       Carregando outra traducao...
-                    </p>
+                    </div>
                   ) : comparisonError ? (
-                    <p className="mt-3 text-sm text-red-200">
+                    <div className="mt-4 rounded-[18px] border border-red-400/16 bg-red-400/10 px-4 py-3 text-sm text-red-200">
                       {comparisonError}
-                    </p>
+                    </div>
                   ) : (() => {
                     const comparisonVerse =
                       comparisonPassage?.verses.find(
@@ -2128,14 +2156,14 @@ export default function BibleReaderStageShell() {
 
                     if (!comparisonVerse) {
                       return (
-                        <p className="mt-3 text-sm text-zinc-400">
+                        <div className="mt-4 rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-zinc-400">
                           Este versiculo nao foi encontrado na traducao selecionada.
-                        </p>
+                        </div>
                       );
                     }
 
                     return (
-                      <p className="mt-3 text-[1rem] leading-8 text-zinc-100">
+                      <p className="mt-4 text-[1rem] leading-8 text-zinc-100">
                         <span className="mr-2 text-sm font-semibold text-sky-200/80">
                           {comparisonVerse.verse}
                         </span>
@@ -2145,6 +2173,7 @@ export default function BibleReaderStageShell() {
                   })()}
                 </div>
               </div>
+
             </div>
           </div>
         ) : null}
