@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import {
   parseRequestedDisplayOrder,
   resolveDisplayOrderForUpdate,
@@ -22,15 +23,16 @@ async function validateAdmin() {
   const isAdmin =
     !!user?.email && !!adminEmail && user.email.toLowerCase() === adminEmail;
 
-  return { supabase, isAdmin };
+  return { isAdmin };
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { supabase, isAdmin } = await validateAdmin();
+    const { isAdmin } = await validateAdmin();
+    const adminSupabase = createAdminClient();
 
     if (!isAdmin) {
-      return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+      return NextResponse.json({ error: "Nao autorizado." }, { status: 401 });
     }
 
     const { id } = await context.params;
@@ -47,26 +49,26 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     if (!id) {
       return NextResponse.json(
-        { error: "ID do material não informado." },
+        { error: "ID do material nao informado." },
         { status: 400 }
       );
     }
 
     if (!title) {
       return NextResponse.json(
-        { error: "O título do material é obrigatório." },
+        { error: "O titulo do material e obrigatorio." },
         { status: 400 }
       );
     }
 
     if (!categoryId) {
       return NextResponse.json(
-        { error: "A categoria do material é obrigatória." },
+        { error: "A categoria do material e obrigatoria." },
         { status: 400 }
       );
     }
 
-    const { data: categoryExists, error: categoryError } = await supabase
+    const { data: categoryExists, error: categoryError } = await adminSupabase
       .from("categories")
       .select("id")
       .eq("id", categoryId)
@@ -81,12 +83,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     if (!categoryExists) {
       return NextResponse.json(
-        { error: "Categoria informada não foi encontrada." },
+        { error: "Categoria informada nao foi encontrada." },
         { status: 400 }
       );
     }
 
-    const { data: existingMaterial, error: existingError } = await supabase
+    const { data: existingMaterial, error: existingError } = await adminSupabase
       .from("materials")
       .select("id, category_id, display_order")
       .eq("id", id)
@@ -101,12 +103,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     if (!existingMaterial) {
       return NextResponse.json(
-        { error: "Material não encontrado." },
+        { error: "Material nao encontrado." },
         { status: 404 }
       );
     }
 
-    const finalDisplayOrder = await resolveDisplayOrderForUpdate(supabase, {
+    const finalDisplayOrder = await resolveDisplayOrderForUpdate(adminSupabase, {
       materialId: id,
       currentCategoryId: String(existingMaterial.category_id ?? ""),
       currentDisplayOrder:
@@ -124,7 +126,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       display_order: finalDisplayOrder,
     };
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await adminSupabase
       .from("materials")
       .update(payload)
       .eq("id", id);
@@ -158,10 +160,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const { supabase, isAdmin } = await validateAdmin();
+    const { isAdmin } = await validateAdmin();
+    const adminSupabase = createAdminClient();
 
     if (!isAdmin) {
-      return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+      return NextResponse.json({ error: "Nao autorizado." }, { status: 401 });
     }
 
     const { id } = await context.params;
@@ -169,12 +172,12 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     if (!id) {
       return NextResponse.json(
-        { error: "ID do material não informado." },
+        { error: "ID do material nao informado." },
         { status: 400 }
       );
     }
 
-    const { data: existingMaterial, error: existingError } = await supabase
+    const { data: existingMaterial, error: existingError } = await adminSupabase
       .from("materials")
       .select("id, title, category_id, display_order")
       .eq("id", id)
@@ -189,12 +192,12 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     if (!existingMaterial) {
       return NextResponse.json(
-        { error: "Material não encontrado." },
+        { error: "Material nao encontrado." },
         { status: 404 }
       );
     }
 
-    const { data: relatedVolumes, error: volumesError } = await supabase
+    const { data: relatedVolumes, error: volumesError } = await adminSupabase
       .from("material_volumes")
       .select("id")
       .eq("material_id", id);
@@ -212,7 +215,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           error:
-            "Este material possui volumes cadastrados. Para excluir a obra inteira, confirme a exclusão completa.",
+            "Este material possui volumes cadastrados. Para excluir a obra inteira, confirme a exclusao completa.",
           requiresCascade: true,
           volumeCount,
         },
@@ -221,7 +224,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     }
 
     if (volumeCount > 0) {
-      const { error: deleteVolumesError } = await supabase
+      const { error: deleteVolumesError } = await adminSupabase
         .from("material_volumes")
         .delete()
         .eq("material_id", id);
@@ -234,7 +237,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       }
     }
 
-    const { error: deleteMaterialError } = await supabase
+    const { error: deleteMaterialError } = await adminSupabase
       .from("materials")
       .delete()
       .eq("id", id);
@@ -251,7 +254,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       typeof existingMaterial.display_order === "number" &&
       existingMaterial.display_order > 0
     ) {
-      const { data: rowsToCompact, error: compactQueryError } = await supabase
+      const { data: rowsToCompact, error: compactQueryError } = await adminSupabase
         .from("materials")
         .select("id, display_order")
         .eq("category_id", existingMaterial.category_id)
@@ -266,7 +269,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
             continue;
           }
 
-          await supabase
+          await adminSupabase
             .from("materials")
             .update({ display_order: currentOrder - 1 })
             .eq("id", row.id);
@@ -278,8 +281,8 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       success: true,
       message:
         volumeCount > 0
-          ? `Obra excluída com sucesso, juntamente com ${volumeCount} volume(s).`
-          : "Material excluído com sucesso.",
+          ? `Obra excluida com sucesso, juntamente com ${volumeCount} volume(s).`
+          : "Material excluido com sucesso.",
     });
   } catch (error) {
     console.error("Erro ao excluir material:", error);

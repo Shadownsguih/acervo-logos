@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 
 type RouteContext = {
   params: Promise<{
@@ -18,15 +19,16 @@ async function validateAdmin() {
   const isAdmin =
     !!user?.email && !!adminEmail && user.email.toLowerCase() === adminEmail;
 
-  return { supabase, isAdmin };
+  return { isAdmin };
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { supabase, isAdmin } = await validateAdmin();
+    const { isAdmin } = await validateAdmin();
+    const adminSupabase = createAdminClient();
 
     if (!isAdmin) {
-      return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+      return NextResponse.json({ error: "Nao autorizado." }, { status: 401 });
     }
 
     const { id } = await context.params;
@@ -39,26 +41,26 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     if (!id) {
       return NextResponse.json(
-        { error: "ID do volume não informado." },
+        { error: "ID do volume nao informado." },
         { status: 400 }
       );
     }
 
     if (!title) {
       return NextResponse.json(
-        { error: "O título do volume é obrigatório." },
+        { error: "O titulo do volume e obrigatorio." },
         { status: 400 }
       );
     }
 
     if (!Number.isInteger(parsedVolumeNumber) || parsedVolumeNumber <= 0) {
       return NextResponse.json(
-        { error: "O número do volume deve ser um inteiro maior que zero." },
+        { error: "O numero do volume deve ser um inteiro maior que zero." },
         { status: 400 }
       );
     }
 
-    const { data: existingVolume, error: existingError } = await supabase
+    const { data: existingVolume, error: existingError } = await adminSupabase
       .from("material_volumes")
       .select("id, material_id")
       .eq("id", id)
@@ -73,12 +75,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     if (!existingVolume) {
       return NextResponse.json(
-        { error: "Volume não encontrado." },
+        { error: "Volume nao encontrado." },
         { status: 404 }
       );
     }
 
-    const { data: conflictingVolume, error: conflictError } = await supabase
+    const { data: conflictingVolume, error: conflictError } = await adminSupabase
       .from("material_volumes")
       .select("id")
       .eq("material_id", existingVolume.material_id)
@@ -88,7 +90,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     if (conflictError) {
       return NextResponse.json(
-        { error: "Erro ao validar número do volume." },
+        { error: "Erro ao validar numero do volume." },
         { status: 500 }
       );
     }
@@ -97,7 +99,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           error:
-            "Já existe outro volume desta obra com esse número. Escolha outro número de volume.",
+            "Ja existe outro volume desta obra com esse numero. Escolha outro numero de volume.",
         },
         { status: 400 }
       );
@@ -109,7 +111,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       volume_number: parsedVolumeNumber,
     };
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await adminSupabase
       .from("material_volumes")
       .update(payload)
       .eq("id", id);
@@ -137,22 +139,23 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
-    const { supabase, isAdmin } = await validateAdmin();
+    const { isAdmin } = await validateAdmin();
+    const adminSupabase = createAdminClient();
 
     if (!isAdmin) {
-      return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+      return NextResponse.json({ error: "Nao autorizado." }, { status: 401 });
     }
 
     const { id } = await context.params;
 
     if (!id) {
       return NextResponse.json(
-        { error: "ID do volume não informado." },
+        { error: "ID do volume nao informado." },
         { status: 400 }
       );
     }
 
-    const { data: existingVolume, error: existingError } = await supabase
+    const { data: existingVolume, error: existingError } = await adminSupabase
       .from("material_volumes")
       .select("id, material_id, title, volume_number")
       .eq("id", id)
@@ -167,12 +170,12 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
 
     if (!existingVolume) {
       return NextResponse.json(
-        { error: "Volume não encontrado." },
+        { error: "Volume nao encontrado." },
         { status: 404 }
       );
     }
 
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await adminSupabase
       .from("material_volumes")
       .delete()
       .eq("id", id);
@@ -186,7 +189,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       success: true,
-      message: `Volume ${existingVolume.volume_number} excluído com sucesso.`,
+      message: `Volume ${existingVolume.volume_number} excluido com sucesso.`,
     });
   } catch (error) {
     console.error("Erro ao excluir volume:", error);

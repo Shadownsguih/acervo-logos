@@ -35,3 +35,5 @@ create index if not exists daily_bible_verse_library_active_order_idx
 
 create index if not exists daily_bible_verse_library_theme_idx
   on public.daily_bible_verse_library (theme, is_active, display_order);
+
+alter table public.daily_bible_verse_library enable row level security;

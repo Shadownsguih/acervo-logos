@@ -22,3 +22,23 @@ create index if not exists material_favorites_user_created_idx
 
 create index if not exists material_favorites_material_idx
   on public.material_favorites (material_id);
+
+alter table public.material_favorites enable row level security;
+
+drop policy if exists "Users can view their own favorites" on public.material_favorites;
+create policy "Users can view their own favorites"
+on public.material_favorites
+for select
+using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own favorites" on public.material_favorites;
+create policy "Users can insert their own favorites"
+on public.material_favorites
+for insert
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own favorites" on public.material_favorites;
+create policy "Users can delete their own favorites"
+on public.material_favorites
+for delete
+using (auth.uid() = user_id);

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { sanitizeFileName, uploadPdfToR2 } from "@/lib/r2";
 
 function isAdminEmail(email?: string | null) {
@@ -22,7 +23,8 @@ async function validateAdmin() {
 
 export async function POST(request: Request) {
   try {
-    const { supabase, isAdmin } = await validateAdmin();
+    const { isAdmin } = await validateAdmin();
+    const adminSupabase = createAdminClient();
 
     if (!isAdmin) {
       return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
@@ -46,7 +48,7 @@ export async function POST(request: Request) {
         );
       }
 
-      const { data: conflictingVolume, error: conflictError } = await supabase
+      const { data: conflictingVolume, error: conflictError } = await adminSupabase
         .from("material_volumes")
         .select("id")
         .eq("material_id", materialId)
@@ -72,7 +74,7 @@ export async function POST(request: Request) {
 
       const volumeId = crypto.randomUUID();
 
-      const { error } = await supabase.from("material_volumes").insert({
+      const { error } = await adminSupabase.from("material_volumes").insert({
         id: volumeId,
         material_id: materialId,
         title,
@@ -116,7 +118,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: conflictingVolume, error: conflictError } = await supabase
+    const { data: conflictingVolume, error: conflictError } = await adminSupabase
       .from("material_volumes")
       .select("id")
       .eq("material_id", materialId)
@@ -150,7 +152,7 @@ export async function POST(request: Request) {
       body: bytes,
     });
 
-    const { error } = await supabase.from("material_volumes").insert({
+    const { error } = await adminSupabase.from("material_volumes").insert({
       id: volumeId,
       material_id: materialId,
       title,

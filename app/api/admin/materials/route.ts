@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import {
   parseRequestedDisplayOrder,
   resolveDisplayOrderForCreate,
@@ -13,6 +14,7 @@ function isAdminEmail(email?: string | null) {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
+    const adminSupabase = createAdminClient();
 
     const {
       data: { user },
@@ -43,12 +45,12 @@ export async function POST(request: Request) {
     }
 
     const finalDisplayOrder = await resolveDisplayOrderForCreate(
-      supabase,
+      adminSupabase,
       categoryId,
       requestedDisplayOrder
     );
 
-    const { error } = await supabase.from("materials").insert({
+    const { error } = await adminSupabase.from("materials").insert({
       id,
       title,
       description: description || null,

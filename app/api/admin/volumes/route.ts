@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import {
   parseRequestedDisplayOrder,
   resolveDisplayOrderForCreate,
@@ -21,6 +22,7 @@ type VolumePayload = {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
+    const adminSupabase = createAdminClient();
 
     const {
       data: { user },
@@ -53,12 +55,12 @@ export async function POST(request: Request) {
     }
 
     const finalDisplayOrder = await resolveDisplayOrderForCreate(
-      supabase,
+      adminSupabase,
       categoryId,
       requestedDisplayOrder
     );
 
-    const { error: materialError } = await supabase.from("materials").insert({
+    const { error: materialError } = await adminSupabase.from("materials").insert({
       id: materialId,
       title,
       description: description || null,
@@ -87,14 +89,14 @@ export async function POST(request: Request) {
       views: 0,
     }));
 
-    const { error: volumesError } = await supabase
+    const { error: volumesError } = await adminSupabase
       .from("material_volumes")
       .insert(volumesToInsert);
 
     if (volumesError) {
       console.error("Erro ao salvar volumes:", volumesError);
 
-      await supabase.from("materials").delete().eq("id", materialId);
+      await adminSupabase.from("materials").delete().eq("id", materialId);
 
       return NextResponse.json(
         { error: "Não foi possível salvar os volumes." },
