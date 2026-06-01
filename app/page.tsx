@@ -44,6 +44,24 @@ type FavoriteMaterial = {
   } | null;
 };
 
+function splitDailyDevotionalInsight(insight: string) {
+  const normalized = String(insight ?? "").trim();
+
+  if (!normalized) {
+    return { title: "", body: "" };
+  }
+
+  const [titlePart, ...bodyParts] = normalized.split(/\n\s*\n/);
+  const title = titlePart.trim();
+  const body = bodyParts.join("\n\n").trim();
+
+  if (!body) {
+    return { title: "", body: normalized };
+  }
+
+  return { title, body };
+}
+
 function getMaterialPreview(description: string | null) {
   const normalized = String(description ?? "").replace(/\s+/g, " ").trim();
 
@@ -123,6 +141,9 @@ export default async function HomePage() {
   const ctaButtonLabel = isLoggedIn ? "Acessar categorias" : "Fazer login";
 
   const dailyVerse = isLoggedIn ? await getOrCreateDailyBibleVerse() : null;
+  const dailyDevotional = dailyVerse
+    ? splitDailyDevotionalInsight(dailyVerse.insight)
+    : null;
   const adminSupabase = isLoggedIn ? createAdminClient() : null;
 
   const [{ data: materiais, error: materiaisError }, favoriteResult] =
@@ -251,8 +272,14 @@ export default async function HomePage() {
                                 </summary>
 
                                 <div className="border-t border-white/10 px-4 py-4">
-                                  <p className="text-sm leading-7 text-zinc-200">
-                                    {dailyVerse.insight}
+                                  {dailyDevotional?.title ? (
+                                    <h3 className="text-center text-xl font-bold leading-tight text-white sm:text-2xl">
+                                      {dailyDevotional.title}
+                                    </h3>
+                                  ) : null}
+
+                                  <p className="mt-4 text-sm leading-7 text-zinc-200">
+                                    {dailyDevotional?.body || dailyVerse.insight}
                                   </p>
 
                                   <DailyVerseShareButton
