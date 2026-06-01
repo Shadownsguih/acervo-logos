@@ -18,17 +18,8 @@ create table if not exists public.daily_bible_verse_library (
 alter table public.daily_bible_verse_library
   add column if not exists theme text not null default 'geral';
 
-do $$
-begin
-  if not exists (
-    select 1
-    from pg_constraint
-    where conname = 'daily_bible_verse_library_reference_key'
-  ) then
-    alter table public.daily_bible_verse_library
-      add constraint daily_bible_verse_library_reference_key unique (reference);
-  end if;
-end $$;
+alter table public.daily_bible_verse_library
+  drop constraint if exists daily_bible_verse_library_reference_key;
 
 create index if not exists daily_bible_verse_library_active_order_idx
   on public.daily_bible_verse_library (is_active, display_order, reference);

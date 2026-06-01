@@ -52,7 +52,7 @@ async function main() {
   }
 
   console.log(
-    `Biblioteca de versiculo diario enviada com ${payload.length} registro(s).`
+    `Biblioteca de devocional diario enviada com ${payload.length} registro(s).`
   );
 }
 
@@ -69,6 +69,20 @@ main().catch((error) => {
         "Erro ao semear daily_bible_verse_library: a coluna 'theme' ainda nao existe no banco.",
         "Rode primeiro o SQL atualizado em scripts/create-daily-bible-verse-library.sql no Supabase.",
         "Depois execute novamente: node scripts/seed-daily-bible-verse-library.js",
+      ].join("\n")
+    );
+    process.exit(1);
+  }
+
+  if (
+    message.includes("daily_bible_verse_library_reference_key") &&
+    message.includes("duplicate key value")
+  ) {
+    console.error(
+      [
+        "Erro ao semear daily_bible_verse_library: a restricao antiga de referencia unica ainda esta ativa no banco.",
+        "Rode novamente o SQL atualizado em scripts/create-daily-bible-verse-library.sql no Supabase.",
+        "Depois execute: node scripts/seed-daily-bible-verse-library.js",
       ].join("\n")
     );
     process.exit(1);

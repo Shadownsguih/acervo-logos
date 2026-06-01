@@ -174,7 +174,7 @@ export default function DailyBibleVerseLibraryManager({
     }
 
     if (!form.insight.trim()) {
-      throw new Error("O texto reflexivo e obrigatorio.");
+      throw new Error("O texto do devocional e obrigatorio.");
     }
 
     if (
@@ -217,13 +217,13 @@ export default function DailyBibleVerseLibraryManager({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result?.error || "Nao foi possivel criar o versiculo.");
+        throw new Error(result?.error || "Nao foi possivel criar o devocional.");
       }
 
       setCreateForm(emptyForm);
       setFeedback({
         type: "success",
-        message: "Versiculo curado criado com sucesso.",
+        message: "Devocional criado com sucesso.",
         targetId: "create",
       });
       router.refresh();
@@ -233,7 +233,7 @@ export default function DailyBibleVerseLibraryManager({
         message:
           error instanceof Error
             ? error.message
-            : "Erro inesperado ao criar o versiculo.",
+            : "Erro inesperado ao criar o devocional.",
         targetId: "create",
       });
     } finally {
@@ -275,14 +275,14 @@ export default function DailyBibleVerseLibraryManager({
 
       if (!response.ok) {
         throw new Error(
-          result?.error || "Nao foi possivel atualizar o versiculo."
+          result?.error || "Nao foi possivel atualizar o devocional."
         );
       }
 
       setEditingId(null);
       setFeedback({
         type: "success",
-        message: "Versiculo curado atualizado com sucesso.",
+        message: "Devocional atualizado com sucesso.",
         targetId: itemId,
       });
       router.refresh();
@@ -292,7 +292,7 @@ export default function DailyBibleVerseLibraryManager({
         message:
           error instanceof Error
             ? error.message
-            : "Erro inesperado ao atualizar o versiculo.",
+            : "Erro inesperado ao atualizar o devocional.",
         targetId: itemId,
       });
     } finally {
@@ -316,12 +316,12 @@ export default function DailyBibleVerseLibraryManager({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result?.error || "Nao foi possivel excluir o versiculo.");
+        throw new Error(result?.error || "Nao foi possivel excluir o devocional.");
       }
 
       setFeedback({
         type: "success",
-        message: "Versiculo curado removido com sucesso.",
+        message: "Devocional removido com sucesso.",
         targetId: itemId,
       });
       router.refresh();
@@ -331,7 +331,7 @@ export default function DailyBibleVerseLibraryManager({
         message:
           error instanceof Error
             ? error.message
-            : "Erro inesperado ao excluir o versiculo.",
+            : "Erro inesperado ao excluir o devocional.",
         targetId: itemId,
       });
     } finally {
@@ -347,24 +347,24 @@ export default function DailyBibleVerseLibraryManager({
             Curadoria
           </p>
           <h2 className="mt-3 text-2xl font-bold text-white md:text-3xl">
-            Versiculos diarios
+            Devocionais diarios
           </h2>
           <p className="mt-4 text-zinc-400">
-            Cadastre, edite, ative e agrupe a biblioteca de versiculos diarios
+            Cadastre, edite, ative e agrupe a biblioteca de devocionais diarios
             por tema para facilitar a curadoria da home.
           </p>
         </div>
 
         <div className="w-full md:max-w-md">
           <label htmlFor="daily-verse-search" className="sr-only">
-            Buscar versiculo curado
+            Buscar devocional
           </label>
           <input
             id="daily-verse-search"
             type="text"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar por tema, referencia, livro, texto ou reflexao"
+            placeholder="Buscar por tema, referencia, livro, texto ou devocional"
             className={fieldClassName}
           />
         </div>
@@ -372,7 +372,7 @@ export default function DailyBibleVerseLibraryManager({
 
       <div className="mt-8 rounded-[28px] border border-white/10 bg-[#0b0f16]/80 p-5">
         <p className="text-[11px] uppercase tracking-[0.28em] text-amber-300">
-          Novo versiculo curado
+          Novo devocional
         </p>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -513,7 +513,7 @@ export default function DailyBibleVerseLibraryManager({
           }
           rows={5}
           className={`${fieldClassName} mt-4`}
-          placeholder="Texto unico da explicacao/reflexao"
+          placeholder="Texto do devocional"
         />
 
         {feedback?.targetId === "create" ? (
@@ -535,7 +535,7 @@ export default function DailyBibleVerseLibraryManager({
             disabled={savingCreate}
             className="rounded-2xl bg-amber-400 px-5 py-3 text-sm font-semibold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {savingCreate ? "Salvando..." : "Criar versiculo curado"}
+            {savingCreate ? "Salvando..." : "Criar devocional"}
           </button>
         </div>
       </div>
@@ -558,7 +558,7 @@ export default function DailyBibleVerseLibraryManager({
                       {prettifyTheme(theme)}
                     </h3>
                     <span className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-300">
-                      {themeItems.length} versiculo(s)
+                      {themeItems.length} devocional(is)
                     </span>
                   </div>
                 </div>
@@ -823,7 +823,7 @@ export default function DailyBibleVerseLibraryManager({
             ))
         ) : (
           <div className="rounded-[28px] border border-white/10 bg-[#0b0f16]/82 p-8 text-center text-zinc-400">
-            Nenhum versiculo curado encontrado para a busca informada.
+            Nenhum devocional encontrado para a busca informada.
           </div>
         )}
       </div>

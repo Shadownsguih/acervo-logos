@@ -65,7 +65,7 @@ async function getDailyVerseLibrary() {
 
   if (error) {
     console.error(
-      "Erro ao buscar a biblioteca curada do versiculo diario:",
+      "Erro ao buscar a biblioteca curada do devocional diario:",
       error.message
     );
     return getFallbackLibrary();
@@ -84,7 +84,7 @@ export async function getOrCreateDailyBibleVerse() {
 
   if (library.length === 0) {
     throw new Error(
-      "Nenhum versiculo curado foi encontrado para o versiculo diario."
+      "Nenhum devocional foi encontrado para o devocional diario."
     );
   }
 

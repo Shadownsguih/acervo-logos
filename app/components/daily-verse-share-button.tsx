@@ -87,7 +87,7 @@ ${insight}
         onClick={() => void handleShare()}
         className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-100 transition hover:bg-white/[0.1] sm:text-[11px]"
       >
-        Compartilhar versiculo do dia
+        Compartilhar devocional do dia
       </button>
 
       {feedback ? (

@@ -30,7 +30,7 @@ function normalizePayload(body: Record<string, unknown>) {
   const isActive = Boolean(body.isActive);
 
   if (!version || !theme || !book || !reference || !text || !insight) {
-    throw new Error("Preencha todos os campos obrigatorios do versiculo.");
+    throw new Error("Preencha todos os campos obrigatorios do devocional.");
   }
 
   if (!Number.isInteger(chapter) || chapter <= 0) {
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
 
     if (error) {
       return NextResponse.json(
-        { error: error.message || "Nao foi possivel criar o versiculo." },
+        { error: error.message || "Nao foi possivel criar o devocional." },
         { status: 500 }
       );
     }
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : "Falha ao criar versiculo.",
+          error instanceof Error ? error.message : "Falha ao criar devocional.",
       },
       { status: 500 }
     );

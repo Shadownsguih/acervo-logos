@@ -510,8 +510,8 @@ export default async function AdminPage() {
 
           <AdminSectionShell
             eyebrow="Home"
-            title="Versiculo diario curado"
-            description="Gerencie a biblioteca de versiculos diarios com reflexoes curtas, ordem de exibicao e ativacao individual para a home."
+            title="Devocional diario"
+            description="Gerencie a biblioteca de devocionais diarios com versiculo, texto devocional, ordem de exibicao e ativacao individual para a home."
           >
             <DailyBibleVerseLibraryManager items={managedDailyVerseLibrary} />
           </AdminSectionShell>

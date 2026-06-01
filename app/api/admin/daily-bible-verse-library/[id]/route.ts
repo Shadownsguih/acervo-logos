@@ -36,7 +36,7 @@ function normalizePayload(body: Record<string, unknown>) {
   const isActive = Boolean(body.isActive);
 
   if (!version || !theme || !book || !reference || !text || !insight) {
-    throw new Error("Preencha todos os campos obrigatorios do versiculo.");
+    throw new Error("Preencha todos os campos obrigatorios do devocional.");
   }
 
   if (!Number.isInteger(chapter) || chapter <= 0) {
@@ -98,7 +98,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     if (error) {
       return NextResponse.json(
-        { error: error.message || "Nao foi possivel atualizar o versiculo." },
+        { error: error.message || "Nao foi possivel atualizar o devocional." },
         { status: 500 }
       );
     }
@@ -110,7 +110,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         error:
           error instanceof Error
             ? error.message
-            : "Erro interno ao atualizar versiculo.",
+            : "Erro interno ao atualizar devocional.",
       },
       { status: 500 }
     );
@@ -135,7 +135,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
 
     if (error) {
       return NextResponse.json(
-        { error: error.message || "Nao foi possivel excluir o versiculo." },
+        { error: error.message || "Nao foi possivel excluir o devocional." },
         { status: 500 }
       );
     }
@@ -143,7 +143,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
-      { error: "Erro interno ao excluir versiculo." },
+      { error: "Erro interno ao excluir devocional." },
       { status: 500 }
     );
   }

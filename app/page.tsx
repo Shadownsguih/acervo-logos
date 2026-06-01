@@ -217,7 +217,7 @@ export default async function HomePage() {
                             <div className="min-w-0 flex-1 text-left">
                               <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/15 bg-amber-300/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200 sm:text-[11px]">
                                 <span className="inline-block h-2 w-2 rounded-full bg-amber-300" />
-                                <span>Versiculo do dia</span>
+                                <span>Devocional do dia</span>
                               </div>
 
                               <p className="mt-4 text-[15px] leading-7 text-white sm:text-[1.35rem] sm:leading-9">
@@ -243,7 +243,7 @@ export default async function HomePage() {
                               <details className="group mt-5 rounded-[22px] border border-white/10 bg-white/[0.04]">
                                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-left">
                                   <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200/90">
-                                    Mostrar explicacao
+                                    Mostrar devocional
                                   </span>
                                   <span className="text-lg text-amber-200/80 transition group-open:rotate-45">
                                     +
