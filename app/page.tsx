@@ -62,6 +62,14 @@ function splitDailyDevotionalInsight(insight: string) {
   return { title, body };
 }
 
+function normalizeDailyPrayer(value: string | null | undefined) {
+  return String(value ?? "").trim();
+}
+
+function normalizeDailyClosingThought(value: string | null | undefined) {
+  return String(value ?? "").trim();
+}
+
 function getMaterialPreview(description: string | null) {
   const normalized = String(description ?? "").replace(/\s+/g, " ").trim();
 
@@ -144,6 +152,10 @@ export default async function HomePage() {
   const dailyDevotional = dailyVerse
     ? splitDailyDevotionalInsight(dailyVerse.insight)
     : null;
+  const dailyPrayer = normalizeDailyPrayer(dailyVerse?.prayer);
+  const dailyClosingThought = normalizeDailyClosingThought(
+    dailyVerse?.closing_thought
+  );
   const adminSupabase = isLoggedIn ? createAdminClient() : null;
 
   const [{ data: materiais, error: materiaisError }, favoriteResult] =
@@ -282,12 +294,33 @@ export default async function HomePage() {
                                     {dailyDevotional?.body || dailyVerse.insight}
                                   </p>
 
+                                  {dailyPrayer ? (
+                                    <div className="mt-5 rounded-[20px] border border-amber-300/10 bg-amber-300/5 px-4 py-4">
+                                      <p className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">
+                                        Oracao
+                                      </p>
+                                      <p className="mt-2 text-center text-sm italic leading-7 text-amber-50/95">
+                                        {dailyPrayer}
+                                      </p>
+                                    </div>
+                                  ) : null}
+
+                                  {dailyClosingThought ? (
+                                    <div className="mt-5 border-t border-white/10 pt-5">
+                                      <p className="mx-auto max-w-xl text-center text-lg font-bold leading-8 text-white sm:text-xl">
+                                        {dailyClosingThought}
+                                      </p>
+                                    </div>
+                                  ) : null}
+
                                   <DailyVerseShareButton
                                     reference={dailyVerse.reference}
                                     version={dailyVerse.version}
                                     verse={dailyVerse.verse}
                                     text={dailyVerse.text}
                                     insight={dailyVerse.insight}
+                                    prayer={dailyVerse.prayer}
+                                    closingThought={dailyVerse.closing_thought}
                                   />
                                 </div>
                               </details>

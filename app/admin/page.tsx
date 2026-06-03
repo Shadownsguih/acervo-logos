@@ -66,6 +66,8 @@ type DailyBibleVerseLibraryRow = {
   reference: string;
   text: string;
   insight: string;
+  prayer: string | null;
+  closing_thought: string | null;
   display_order: number | null;
   is_active: boolean | null;
 };
@@ -212,7 +214,7 @@ export default async function AdminPage() {
     adminSupabase
       .from("daily_bible_verse_library")
       .select(
-        "id, version, theme, book, abbrev, chapter, verse, reference, text, insight, display_order, is_active"
+        "id, version, theme, book, abbrev, chapter, verse, reference, text, insight, prayer, closing_thought, display_order, is_active"
       )
       .order("display_order", { ascending: true, nullsFirst: false })
       .order("reference", { ascending: true }),

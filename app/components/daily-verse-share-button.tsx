@@ -33,23 +33,34 @@ export default function DailyVerseShareButton({
   verse,
   text,
   insight,
+  prayer,
+  closingThought,
 }: {
   reference: string;
   version: string;
   verse: number;
   text: string;
   insight: string;
+  prayer?: string | null;
+  closingThought?: string | null;
 }) {
   const [feedback, setFeedback] = useState("");
 
   const referenceVerseLabel = reference.match(/:(\d+(?:-\d+)?)$/)?.[1] ?? String(verse);
 
   async function handleShare() {
+    const optionalPrayerBlock = prayer ? `\n\n${prayer}` : "";
+    const optionalClosingThoughtBlock = closingThought
+      ? `\n\n${closingThought}`
+      : "";
+
     const shareText = `${reference} | ${version}
 
 ${referenceVerseLabel}. ${text}
 
 ${insight}
+${optionalPrayerBlock}
+${optionalClosingThoughtBlock}
 
 @acervo-logos | Estude mais no Acervo Logos: ${ACERVO_LOGOS_PUBLIC_URL}`;
 

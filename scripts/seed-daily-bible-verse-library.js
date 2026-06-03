@@ -75,6 +75,24 @@ main().catch((error) => {
   }
 
   if (
+    message.includes(
+      "Could not find the 'closing_thought' column of 'daily_bible_verse_library'"
+    ) ||
+    message.includes(
+      "Could not find the 'prayer' column of 'daily_bible_verse_library'"
+    )
+  ) {
+    console.error(
+      [
+        "Erro ao semear daily_bible_verse_library: as colunas novas do devocional ainda nao existem no banco.",
+        "Rode primeiro o SQL atualizado em scripts/create-daily-bible-verse-library.sql no Supabase.",
+        "Depois execute novamente: node scripts/seed-daily-bible-verse-library.js",
+      ].join("\n")
+    );
+    process.exit(1);
+  }
+
+  if (
     message.includes("daily_bible_verse_library_reference_key") &&
     message.includes("duplicate key value")
   ) {

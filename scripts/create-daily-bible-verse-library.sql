@@ -19,6 +19,12 @@ alter table public.daily_bible_verse_library
   add column if not exists theme text not null default 'geral';
 
 alter table public.daily_bible_verse_library
+  add column if not exists prayer text;
+
+alter table public.daily_bible_verse_library
+  add column if not exists closing_thought text;
+
+alter table public.daily_bible_verse_library
   drop constraint if exists daily_bible_verse_library_reference_key;
 
 create index if not exists daily_bible_verse_library_active_order_idx

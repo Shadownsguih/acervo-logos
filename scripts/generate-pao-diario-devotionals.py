@@ -292,6 +292,32 @@ def extract_body(lines: list[str], start_index: int) -> str:
     return normalize_spaces(" ".join(body_lines))
 
 
+def extract_prayer_and_closing_thought(lines: list[str], start_index: int) -> tuple[str | None, str | None]:
+    initials_index = next((idx for idx in range(start_index, len(lines)) if INITIALS.match(lines[idx])), None)
+    if initials_index is None:
+        return None, None
+
+    tail_lines = [line.strip() for line in lines[initials_index + 1 :] if line.strip()]
+    if not tail_lines:
+        return None, None
+
+    closing_lines = 1
+    if len(tail_lines) >= 2 and not re.search(r"[.!?…]$", tail_lines[-2]):
+        closing_lines = 2
+
+    prayer_lines = tail_lines[:-closing_lines]
+    closing_thought_lines = tail_lines[-closing_lines:]
+
+    prayer = normalize_spaces(" ".join(prayer_lines)) if prayer_lines else None
+    closing_thought = (
+        normalize_spaces(" ".join(closing_thought_lines))
+        if closing_thought_lines
+        else None
+    )
+
+    return prayer, closing_thought
+
+
 def find_reference_by_quote(
     quote_text: str,
     verse_lookup: dict[str, list[tuple[str, int, int, str]]],
@@ -353,10 +379,19 @@ def build_entries() -> list[dict[str, object]]:
             verse_text_parts = [verse_index[(canonical_override_book, override_chapter, override_verse)]]
 
         body = extract_body(lines, body_start)
+        prayer, closing_thought = extract_prayer_and_closing_thought(
+            lines,
+            body_start,
+        )
         insight = polish_insight_text(f"{title}\n\n{body}")
 
         for source, target in DAY_INSIGHT_REPLACEMENTS.get(day, []):
             insight = insight.replace(source, target)
+
+        prayer = polish_insight_text(prayer) if prayer else None
+        closing_thought = (
+            polish_insight_text(closing_thought) if closing_thought else None
+        )
 
         if day == 26:
             insight = insight.replace(
@@ -375,6 +410,8 @@ def build_entries() -> list[dict[str, object]]:
                 "reference": f"{display_book} {chapter}:{verse_spec}",
                 "text": " ".join(verse_text_parts),
                 "insight": insight,
+                "prayer": prayer,
+                "closing_thought": closing_thought,
                 "display_order": day,
                 "is_active": True,
             }
