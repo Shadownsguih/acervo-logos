@@ -37,6 +37,53 @@ INSIGHT_REPLACEMENTS = {
     "2 SAM UEL": "2 SAMUEL",
     "SALM O": "SALMO",
     "EDW ARD NOTE": "EDWARD MOTE",
+    "aproveitam a trabalhar com": "trabalham com",
+    "de certo modo": "de certa forma",
+    "tão antigo quando a humanidade": "tão antigo quanto a humanidade",
+    "como o Davi": "como Davi",
+    "\" pregos\"": "\"pregos\"",
+    "chegávamos a casa": "chegávamos em casa",
+    "me surpreendeu Era": "me surpreendeu. Era",
+    "remete-nos as perguntas": "remete-nos às perguntas",
+    "século 17 a.C.": "século 7 a.C.",
+    "exilio": "exílio",
+}
+DAY_INSIGHT_REPLACEMENTS = {
+    10: [
+        (
+            "Médicos Rio Acima\": são profissionais que aproveitam a trabalhar com os pacientes e suas comunidades",
+            "Médicos Rio Acima\": são profissionais que trabalham com os pacientes e suas comunidades",
+        )
+    ],
+    26: [
+        ("tão antigo quando a humanidade", "tão antigo quanto a humanidade"),
+        (
+            "É mencionado no Antigo Testamento, na história de Josué, que enfrentou a oposição dos israelitas (9:18) e terreno difícil (3:15-17) durante mais de 14 anos, enquanto o povo lentamente conquistava e se estabelecia na terra que lhes fora prometida.",
+            "Ele aparece, em sentido figurado, no Antigo Testamento, na história de Josué, que enfrentou oposição de inimigos e desafios no caminho enquanto o povo, aos poucos, conquistava e se estabelecia na terra prometida.",
+        ),
+    ],
+    31: [
+        ("como o Davi", "como Davi"),
+        ("\" pregos\"", "\"pregos\""),
+    ],
+    40: [("segue?, eu pensava.", "segue?, pensava eu.")],
+    50: [
+        ("chegávamos a casa", "chegávamos em casa"),
+        ("me surpreendeu Era", "me surpreendeu. Era"),
+    ],
+    55: [
+        ("remete-nos as perguntas", "remete-nos às perguntas"),
+        ("século 17 a.C.", "século 7 a.C."),
+    ],
+    70: [
+        ("58.9", "58,9"),
+        ("Você está de brincadeira?!", "Você está brincando?"),
+    ],
+    79: [("exilio por quase 70 anos", "exílio por quase 70 anos")],
+}
+DAY_REFERENCE_OVERRIDES = {
+    68: ("Lucas", "Lc", 11, 28),
+    79: ("Romanos", "Rm", 8, 31),
 }
 
 
@@ -48,6 +95,14 @@ def canonicalize(value: str) -> str:
 
 def normalize_spaces(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip()
+
+
+def normalize_lookup_text(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value)
+    stripped = "".join(char for char in normalized if not unicodedata.combining(char))
+    lowered = stripped.lower()
+    lowered = re.sub(r"[^a-z0-9]+", " ", lowered)
+    return normalize_spaces(lowered)
 
 
 def to_display_title(value: str) -> str:
@@ -94,19 +149,31 @@ def polish_insight_text(value: str) -> str:
     return value
 
 
-def load_nvi_index() -> tuple[dict[tuple[str, int, int], str], dict[str, tuple[str, str | None]]]:
+def load_nvi_index() -> tuple[
+    dict[tuple[str, int, int], str],
+    dict[str, tuple[str, str | None]],
+    dict[str, list[tuple[str, int, int, str]]],
+]:
     raw = json.loads(NVI_PATH.read_text(encoding="utf-8"))
     verse_index: dict[tuple[str, int, int], str] = {}
     book_index: dict[str, tuple[str, str | None]] = {}
+    verse_lookup: dict[str, list[tuple[str, int, int, str]]] = {}
 
     for entry in raw:
         book = entry["book"]
         canonical_book = canonicalize(book)
-        verse_index[(canonical_book, int(entry["chapter"]), int(entry["verse"]))] = entry["text"].strip()
+        verse_text = entry["text"].strip()
+        verse_key = (canonical_book, int(entry["chapter"]), int(entry["verse"]))
+        verse_index[verse_key] = verse_text
         if canonical_book not in book_index:
             book_index[canonical_book] = (book, entry.get("abbrev"))
 
-    return verse_index, book_index
+        lookup_key = normalize_lookup_text(verse_text)
+        verse_lookup.setdefault(lookup_key, []).append(
+            (canonical_book, int(entry["chapter"]), int(entry["verse"]), verse_text)
+        )
+
+    return verse_index, book_index, verse_lookup
 
 
 def resolve_book_key(book_raw: str, book_index: dict[str, tuple[str, str | None]]) -> str:
@@ -180,6 +247,15 @@ def extract_quote_and_reference(lines: list[str], reading_idx: int) -> tuple[str
     for index in range(reading_idx + 1, len(lines)):
         line = lines[index]
 
+        if re.fullmatch(r"[A-Za-zÀ-ÿ ]+", line) and index + 1 < len(lines):
+            next_line = lines[index + 1]
+            if CHAPTER_REF_ONLY.match(next_line):
+                return (
+                    normalize_spaces(" ".join(quote_parts)),
+                    f"{line} {next_line}",
+                    index + 2,
+                )
+
         if LETTER_REF_ONLY.match(line) and quote_parts:
             trailing_number_match = TRAILING_REF_NUMBER.match(quote_parts[-1])
             if trailing_number_match:
@@ -216,8 +292,18 @@ def extract_body(lines: list[str], start_index: int) -> str:
     return normalize_spaces(" ".join(body_lines))
 
 
+def find_reference_by_quote(
+    quote_text: str,
+    verse_lookup: dict[str, list[tuple[str, int, int, str]]],
+) -> tuple[str, int, int, str] | None:
+    matches = verse_lookup.get(normalize_lookup_text(quote_text), [])
+    if len(matches) == 1:
+        return matches[0]
+    return None
+
+
 def build_entries() -> list[dict[str, object]]:
-    verse_index, book_index = load_nvi_index()
+    verse_index, book_index, verse_lookup = load_nvi_index()
     pdf_path = next(PDF_DIR.glob(PDF_GLOB))
     raw_text = normalize_pdf_text("\n".join((page.extract_text() or "") for page in PdfReader(str(pdf_path)).pages))
 
@@ -238,7 +324,6 @@ def build_entries() -> list[dict[str, object]]:
         quote_text, ref_token, body_start = extract_quote_and_reference(lines, reading_idx)
         book_raw, chapter, verse_spec = resolve_reference(reading, ref_token)
         canonical_book = resolve_book_key(book_raw, book_index)
-
         display_book, abbrev = book_index[canonical_book]
         verse_numbers = expand_verse_spec(verse_spec)
         verse_text_parts = [
@@ -248,10 +333,36 @@ def build_entries() -> list[dict[str, object]]:
         ]
 
         if not verse_text_parts:
-            verse_text_parts = [quote_text]
+            quote_match = find_reference_by_quote(quote_text, verse_lookup)
+            if quote_match:
+                canonical_book, chapter, matched_verse, matched_text = quote_match
+                display_book, abbrev = book_index[canonical_book]
+                verse_spec = str(matched_verse)
+                verse_numbers = [matched_verse]
+                verse_text_parts = [matched_text]
+            else:
+                verse_text_parts = [quote_text]
+
+        if day in DAY_REFERENCE_OVERRIDES:
+            override_book, override_abbrev, override_chapter, override_verse = DAY_REFERENCE_OVERRIDES[day]
+            canonical_override_book = resolve_book_key(override_book, book_index)
+            display_book, abbrev = override_book, override_abbrev
+            chapter = override_chapter
+            verse_spec = str(override_verse)
+            verse_numbers = [override_verse]
+            verse_text_parts = [verse_index[(canonical_override_book, override_chapter, override_verse)]]
 
         body = extract_body(lines, body_start)
         insight = polish_insight_text(f"{title}\n\n{body}")
+
+        for source, target in DAY_INSIGHT_REPLACEMENTS.get(day, []):
+            insight = insight.replace(source, target)
+
+        if day == 26:
+            insight = insight.replace(
+                "É mencionado no Antigo Testamento, na história de Josué, que enfrentou a oposição dos israelitas (9:18) e terreno difícil (3:15-17) durante mais de 14 anos, enquanto o povo lentamente conquistava e se estabelecia na terra que lhes fora prometida.",
+                "Ele aparece, em sentido figurado, no Antigo Testamento, na história de Josué, que enfrentou oposição de inimigos e desafios no caminho enquanto o povo, aos poucos, conquistava e se estabelecia na terra prometida.",
+            )
 
         entries.append(
             {
