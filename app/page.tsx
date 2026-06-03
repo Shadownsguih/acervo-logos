@@ -295,21 +295,35 @@ export default async function HomePage() {
                                   </p>
 
                                   {dailyPrayer ? (
-                                    <div className="mt-5 rounded-[20px] border border-amber-300/10 bg-amber-300/5 px-4 py-4">
-                                      <p className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">
-                                        Oracao
-                                      </p>
-                                      <p className="mt-2 text-center text-sm italic leading-7 text-amber-50/95">
-                                        {dailyPrayer}
-                                      </p>
+                                    <div className="relative mt-6 overflow-hidden rounded-[24px] border border-amber-300/12 bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(255,255,255,0.02))] px-5 py-5">
+                                      <div className="pointer-events-none absolute left-1/2 top-0 h-16 w-24 -translate-x-1/2 rounded-full bg-amber-300/10 blur-2xl" />
+                                      <div className="relative">
+                                        <div className="mx-auto flex max-w-fit items-center gap-3">
+                                          <span className="h-px w-8 bg-amber-300/35" />
+                                          <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-200/80">
+                                            Oracao
+                                          </p>
+                                          <span className="h-px w-8 bg-amber-300/35" />
+                                        </div>
+                                        <p className="mt-3 text-center text-[15px] italic leading-8 text-amber-50/95 sm:text-base">
+                                          {dailyPrayer}
+                                        </p>
+                                      </div>
                                     </div>
                                   ) : null}
 
                                   {dailyClosingThought ? (
-                                    <div className="mt-5 border-t border-white/10 pt-5">
-                                      <p className="mx-auto max-w-xl text-center text-lg font-bold leading-8 text-white sm:text-xl">
-                                        {dailyClosingThought}
-                                      </p>
+                                    <div className="mt-6 border-t border-white/10 pt-6">
+                                      <div className="mx-auto max-w-xl">
+                                        <div className="mx-auto mb-3 flex max-w-fit items-center gap-3">
+                                          <span className="h-px w-10 bg-white/10" />
+                                          <span className="h-1.5 w-1.5 rounded-full bg-amber-300/70" />
+                                          <span className="h-px w-10 bg-white/10" />
+                                        </div>
+                                        <p className="text-center text-lg font-bold leading-8 text-white sm:text-[1.45rem] sm:leading-9">
+                                          {dailyClosingThought}
+                                        </p>
+                                      </div>
                                     </div>
                                   ) : null}
 
