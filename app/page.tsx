@@ -290,40 +290,42 @@ export default async function HomePage() {
                                     </h3>
                                   ) : null}
 
-                                  <p className="mt-4 text-sm leading-7 text-zinc-200">
-                                    {dailyDevotional?.body || dailyVerse.insight}
-                                  </p>
+                                  <div className="mx-auto max-w-2xl">
+                                    <p className="mt-4 text-left text-sm leading-7 text-zinc-200 [text-wrap:pretty] sm:text-[15px] sm:leading-8">
+                                      {dailyDevotional?.body || dailyVerse.insight}
+                                    </p>
+                                  </div>
 
                                   {dailyPrayer ? (
-                                    <div className="relative mt-6 overflow-hidden rounded-[24px] border border-amber-300/12 bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(255,255,255,0.02))] px-5 py-5">
-                                      <div className="pointer-events-none absolute left-1/2 top-0 h-16 w-24 -translate-x-1/2 rounded-full bg-amber-300/10 blur-2xl" />
-                                      <div className="relative">
-                                        <div className="mx-auto flex max-w-fit items-center gap-3">
-                                          <span className="h-px w-8 bg-amber-300/35" />
-                                          <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-200/80">
-                                            Oracao
+                                    <div className="mx-auto mt-6 max-w-2xl">
+                                      <div className="relative overflow-hidden rounded-[24px] border border-amber-300/12 bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(255,255,255,0.02))] px-5 py-5">
+                                        <div className="pointer-events-none absolute left-1/2 top-0 h-16 w-24 -translate-x-1/2 rounded-full bg-amber-300/10 blur-2xl" />
+                                        <div className="relative">
+                                          <div className="mx-auto flex max-w-fit items-center gap-3">
+                                            <span className="h-px w-8 bg-amber-300/35" />
+                                            <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-200/80">
+                                              Oracao
+                                            </p>
+                                            <span className="h-px w-8 bg-amber-300/35" />
+                                          </div>
+                                          <p className="mt-3 text-left text-[15px] italic leading-8 text-amber-50/95 sm:text-base">
+                                            {dailyPrayer}
                                           </p>
-                                          <span className="h-px w-8 bg-amber-300/35" />
                                         </div>
-                                        <p className="mt-3 text-center text-[15px] italic leading-8 text-amber-50/95 sm:text-base">
-                                          {dailyPrayer}
-                                        </p>
                                       </div>
                                     </div>
                                   ) : null}
 
                                   {dailyClosingThought ? (
-                                    <div className="mt-6 border-t border-white/10 pt-6">
-                                      <div className="mx-auto max-w-xl">
-                                        <div className="mx-auto mb-3 flex max-w-fit items-center gap-3">
-                                          <span className="h-px w-10 bg-white/10" />
-                                          <span className="h-1.5 w-1.5 rounded-full bg-amber-300/70" />
-                                          <span className="h-px w-10 bg-white/10" />
-                                        </div>
-                                        <p className="text-center text-lg font-bold leading-8 text-white sm:text-[1.45rem] sm:leading-9">
-                                          {dailyClosingThought}
-                                        </p>
+                                    <div className="mx-auto mt-6 max-w-2xl border-t border-white/10 pt-6">
+                                      <div className="mb-3 flex max-w-fit items-center gap-3">
+                                        <span className="h-px w-10 bg-white/10" />
+                                        <span className="h-1.5 w-1.5 rounded-full bg-amber-300/70" />
+                                        <span className="h-px w-10 bg-white/10" />
                                       </div>
+                                      <blockquote className="border-l-2 border-amber-300/55 pl-4 text-left text-lg font-bold leading-8 text-white sm:text-[1.35rem] sm:leading-9">
+                                        {dailyClosingThought}
+                                      </blockquote>
                                     </div>
                                   ) : null}
 
