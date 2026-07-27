@@ -4,6 +4,24 @@ import { useState } from "react";
 
 const ACERVO_LOGOS_PUBLIC_URL = "https://acervo-logos.vercel.app/";
 
+function splitDailyDevotionalInsight(insight: string) {
+  const normalized = String(insight ?? "").trim();
+
+  if (!normalized) {
+    return { title: "", body: "" };
+  }
+
+  const [titlePart, ...bodyParts] = normalized.split(/\n\s*\n/);
+  const title = titlePart.trim();
+  const body = bodyParts.join("\n\n").trim();
+
+  if (!body) {
+    return { title: "", body: normalized };
+  }
+
+  return { title, body };
+}
+
 async function copyText(payload: string) {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(payload);
@@ -47,18 +65,22 @@ export default function DailyVerseShareButton({
   const [feedback, setFeedback] = useState("");
 
   const referenceVerseLabel = reference.match(/:(\d+(?:-\d+)?)$/)?.[1] ?? String(verse);
+  const devotional = splitDailyDevotionalInsight(insight);
 
   async function handleShare() {
-    const optionalPrayerBlock = prayer ? `\n\n${prayer}` : "";
+    const devotionalBlock = devotional.title
+      ? `\n\nDevocional: ${devotional.title}\n\n${devotional.body}`
+      : `\n\nDevocional:\n\n${insight}`;
+    const optionalPrayerBlock = prayer ? `\n\nOracao: ${prayer}` : "";
     const optionalClosingThoughtBlock = closingThought
-      ? `\n\n${closingThought}`
+      ? `\n\nCitacao: ${closingThought}`
       : "";
 
     const shareText = `${reference} | ${version}
 
+Versiculo:
 ${referenceVerseLabel}. ${text}
-
-${insight}
+${devotionalBlock}
 ${optionalPrayerBlock}
 ${optionalClosingThoughtBlock}
 
