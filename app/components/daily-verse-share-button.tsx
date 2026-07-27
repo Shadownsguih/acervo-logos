@@ -69,16 +69,16 @@ export default function DailyVerseShareButton({
 
   async function handleShare() {
     const devotionalBlock = devotional.title
-      ? `\n\nDevocional: ${devotional.title}\n\n${devotional.body}`
-      : `\n\nDevocional:\n\n${insight}`;
-    const optionalPrayerBlock = prayer ? `\n\nOracao: ${prayer}` : "";
+      ? `\n\n*Devocional:* ${devotional.title}\n\n${devotional.body}`
+      : `\n\n*Devocional:*\n\n${insight}`;
+    const optionalPrayerBlock = prayer ? `\n\n*Oracao:* ${prayer}` : "";
     const optionalClosingThoughtBlock = closingThought
-      ? `\n\nCitacao: ${closingThought}`
+      ? `\n\n*Citacao:* ${closingThought}`
       : "";
 
     const shareText = `${reference} | ${version}
 
-Versiculo:
+*Versiculo:*
 ${referenceVerseLabel}. ${text}
 ${devotionalBlock}
 ${optionalPrayerBlock}
