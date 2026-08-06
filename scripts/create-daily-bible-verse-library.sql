@@ -1,5 +1,6 @@
 create table if not exists public.daily_bible_verse_library (
   id uuid primary key default gen_random_uuid(),
+  source text,
   version text not null,
   theme text not null default 'geral',
   book text not null,
@@ -14,6 +15,9 @@ create table if not exists public.daily_bible_verse_library (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.daily_bible_verse_library
+  add column if not exists source text;
 
 alter table public.daily_bible_verse_library
   add column if not exists theme text not null default 'geral';

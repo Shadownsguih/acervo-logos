@@ -14,6 +14,7 @@ function isAdminEmail(email?: string | null) {
 }
 
 function normalizePayload(body: Record<string, unknown>) {
+  const source = typeof body.source === "string" ? body.source.trim() : "";
   const version = typeof body.version === "string" ? body.version.trim() : "";
   const theme = typeof body.theme === "string" ? body.theme.trim() : "";
   const book = typeof body.book === "string" ? body.book.trim() : "";
@@ -35,7 +36,7 @@ function normalizePayload(body: Record<string, unknown>) {
       : Number(body.displayOrder);
   const isActive = Boolean(body.isActive);
 
-  if (!version || !theme || !book || !reference || !text || !insight) {
+  if (!source || !version || !theme || !book || !reference || !text || !insight) {
     throw new Error("Preencha todos os campos obrigatorios do devocional.");
   }
 
@@ -55,6 +56,7 @@ function normalizePayload(body: Record<string, unknown>) {
   }
 
   return {
+    source,
     version,
     theme,
     book,

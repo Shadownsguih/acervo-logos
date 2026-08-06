@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 type DailyVerseLibraryItem = {
   id: string;
+  source: string;
   version: string;
   theme: string;
   book: string;
@@ -23,6 +24,7 @@ type DailyVerseLibraryManagerProps = {
 };
 
 type DailyVerseFormState = {
+  source: string;
   version: string;
   theme: string;
   book: string;
@@ -43,6 +45,7 @@ type FeedbackState = {
 };
 
 const emptyForm: DailyVerseFormState = {
+  source: "",
   version: "NVI",
   theme: "confianca",
   book: "",
@@ -92,6 +95,7 @@ export default function DailyBibleVerseLibraryManager({
         item.reference,
         item.book,
         item.theme,
+        item.source,
         item.version,
         item.text,
         item.insight,
@@ -122,6 +126,7 @@ export default function DailyBibleVerseLibraryManager({
   function fillFormFromItem(item: DailyVerseLibraryItem): DailyVerseFormState {
     return {
       version: item.version,
+      source: item.source,
       theme: item.theme,
       book: item.book,
       abbrev: item.abbrev ?? "",
@@ -144,6 +149,10 @@ export default function DailyBibleVerseLibraryManager({
     const displayOrder = form.displayOrder.trim()
       ? Number(form.displayOrder.trim())
       : null;
+
+    if (!form.source.trim()) {
+      throw new Error("A fonte do devocional e obrigatoria.");
+    }
 
     if (!form.version.trim()) {
       throw new Error("A traducao e obrigatoria.");
@@ -185,6 +194,7 @@ export default function DailyBibleVerseLibraryManager({
     }
 
     return {
+      source: form.source.trim(),
       version: form.version.trim(),
       theme: form.theme.trim().toLowerCase(),
       book: form.book.trim(),
@@ -390,6 +400,18 @@ export default function DailyBibleVerseLibraryManager({
           />
           <input
             type="text"
+            value={createForm.source}
+            onChange={(event) =>
+              setCreateForm((current) => ({
+                ...current,
+                source: event.target.value,
+              }))
+            }
+            className={fieldClassName}
+            placeholder="Fonte do devocional"
+          />
+          <input
+            type="text"
             value={createForm.theme}
             onChange={(event) =>
               setCreateForm((current) => ({
@@ -583,6 +605,9 @@ export default function DailyBibleVerseLibraryManager({
                               <span className="inline-flex rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
                                 {item.version}
                               </span>
+                              <span className="inline-flex rounded-full border border-violet-400/20 bg-violet-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-200">
+                                {item.source}
+                              </span>
                               <span className="inline-flex rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-200">
                                 {prettifyTheme(item.theme)}
                               </span>
@@ -610,7 +635,8 @@ export default function DailyBibleVerseLibraryManager({
 
                           <div className="grid gap-3 lg:w-64">
                             <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4 text-sm text-zinc-300">
-                              <p>Tema: {prettifyTheme(item.theme)}</p>
+                              <p>Fonte: {item.source}</p>
+                              <p className="mt-2">Tema: {prettifyTheme(item.theme)}</p>
                               <p className="mt-2">Livro: {item.book}</p>
                               <p className="mt-2">
                                 Capitulo {item.chapter} | Versiculo {item.verse}
@@ -667,6 +693,18 @@ export default function DailyBibleVerseLibraryManager({
                                 }
                                 className={fieldClassName}
                                 placeholder="Traducao"
+                              />
+                              <input
+                                type="text"
+                                value={editForm.source}
+                                onChange={(event) =>
+                                  setEditForm((current) => ({
+                                    ...current,
+                                    source: event.target.value,
+                                  }))
+                                }
+                                className={fieldClassName}
+                                placeholder="Fonte do devocional"
                               />
                               <input
                                 type="text"

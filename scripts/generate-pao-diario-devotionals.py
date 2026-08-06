@@ -401,6 +401,7 @@ def build_entries() -> list[dict[str, object]]:
 
         entries.append(
             {
+                "source": "Pao Diario",
                 "version": "NVI",
                 "theme": "devocional",
                 "book": display_book,

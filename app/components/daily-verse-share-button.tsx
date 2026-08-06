@@ -4,6 +4,11 @@ import { useState } from "react";
 
 const ACERVO_LOGOS_PUBLIC_URL = "https://acervo-logos.vercel.app/";
 
+function getDevotionalLabel(source?: string | null) {
+  const normalized = String(source ?? "").trim();
+  return normalized ? `Devocional ${normalized}` : "Devocional";
+}
+
 function splitDailyDevotionalInsight(insight: string) {
   const normalized = String(insight ?? "").trim();
 
@@ -46,6 +51,7 @@ async function copyText(payload: string) {
 }
 
 export default function DailyVerseShareButton({
+  source,
   reference,
   version,
   verse,
@@ -54,6 +60,7 @@ export default function DailyVerseShareButton({
   prayer,
   closingThought,
 }: {
+  source?: string | null;
   reference: string;
   version: string;
   verse: number;
@@ -66,11 +73,12 @@ export default function DailyVerseShareButton({
 
   const referenceVerseLabel = reference.match(/:(\d+(?:-\d+)?)$/)?.[1] ?? String(verse);
   const devotional = splitDailyDevotionalInsight(insight);
+  const devotionalLabel = getDevotionalLabel(source);
 
   async function handleShare() {
     const devotionalBlock = devotional.title
-      ? `\n\n*Devocional:* ${devotional.title}\n\n${devotional.body}`
-      : `\n\n*Devocional:*\n\n${insight}`;
+      ? `\n\n*${devotionalLabel}:* ${devotional.title}\n\n${devotional.body}`
+      : `\n\n*${devotionalLabel}:*\n\n${insight}`;
     const optionalPrayerBlock = prayer ? `\n\n*Oracao:* ${prayer}` : "";
     const optionalClosingThoughtBlock = closingThought
       ? `\n\n*Citacao:* ${closingThought}`
@@ -120,7 +128,7 @@ ${optionalClosingThoughtBlock}
         onClick={() => void handleShare()}
         className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-100 transition hover:bg-white/[0.1] sm:text-[11px]"
       >
-        Compartilhar devocional do dia
+        Compartilhar {devotionalLabel}
       </button>
 
       {feedback ? (

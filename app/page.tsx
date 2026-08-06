@@ -70,6 +70,11 @@ function normalizeDailyClosingThought(value: string | null | undefined) {
   return String(value ?? "").trim();
 }
 
+function getDevotionalLabel(source?: string | null) {
+  const normalized = String(source ?? "").trim();
+  return normalized ? `Devocional ${normalized}` : "Devocional do dia";
+}
+
 function getMaterialPreview(description: string | null) {
   const normalized = String(description ?? "").replace(/\s+/g, " ").trim();
 
@@ -156,6 +161,7 @@ export default async function HomePage() {
   const dailyClosingThought = normalizeDailyClosingThought(
     dailyVerse?.closing_thought
   );
+  const devotionalLabel = getDevotionalLabel(dailyVerse?.source);
   const adminSupabase = isLoggedIn ? createAdminClient() : null;
 
   const [{ data: materiais, error: materiaisError }, favoriteResult] =
@@ -250,7 +256,7 @@ export default async function HomePage() {
                             <div className="min-w-0 flex-1 text-left">
                               <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/15 bg-amber-300/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200 sm:text-[11px]">
                                 <span className="inline-block h-2 w-2 rounded-full bg-amber-300" />
-                                <span>Devocional do dia</span>
+                                <span>{devotionalLabel}</span>
                               </div>
 
                               <p className="mt-4 text-[15px] leading-7 text-white sm:text-[1.35rem] sm:leading-9">
@@ -276,7 +282,7 @@ export default async function HomePage() {
                               <details className="group mt-5 rounded-[22px] border border-white/10 bg-white/[0.04]">
                                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-left">
                                   <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200/90">
-                                    Mostrar devocional
+                                    Mostrar {devotionalLabel}
                                   </span>
                                   <span className="text-lg text-amber-200/80 transition group-open:rotate-45">
                                     +
@@ -330,6 +336,7 @@ export default async function HomePage() {
                                   ) : null}
 
                                   <DailyVerseShareButton
+                                    source={dailyVerse.source}
                                     reference={dailyVerse.reference}
                                     version={dailyVerse.version}
                                     verse={dailyVerse.verse}
