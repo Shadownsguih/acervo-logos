@@ -5,8 +5,17 @@ import { useState } from "react";
 const ACERVO_LOGOS_PUBLIC_URL = "https://acervo-logos.vercel.app/";
 
 function getDevotionalLabel(source?: string | null) {
-  const normalized = String(source ?? "").trim();
-  return normalized ? `Devocional ${normalized}` : "Devocional";
+  const normalized = String(source ?? "").trim().toLowerCase();
+
+  if (normalized === "pao diario") {
+    return "Devocional Pao Diario";
+  }
+
+  if (normalized === "spurgeon") {
+    return "Devocional Dia e Noite";
+  }
+
+  return normalized ? `Devocional ${String(source).trim()}` : "Devocional";
 }
 
 function splitDailyDevotionalInsight(insight: string) {

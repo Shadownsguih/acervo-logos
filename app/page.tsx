@@ -71,8 +71,17 @@ function normalizeDailyClosingThought(value: string | null | undefined) {
 }
 
 function getDevotionalLabel(source?: string | null) {
-  const normalized = String(source ?? "").trim();
-  return normalized ? `Devocional ${normalized}` : "Devocional do dia";
+  const normalized = String(source ?? "").trim().toLowerCase();
+
+  if (normalized === "pao diario") {
+    return "Devocional Pao Diario";
+  }
+
+  if (normalized === "spurgeon") {
+    return "Devocional Dia e Noite";
+  }
+
+  return normalized ? `Devocional ${String(source).trim()}` : "Devocional do dia";
 }
 
 function getMaterialPreview(description: string | null) {
