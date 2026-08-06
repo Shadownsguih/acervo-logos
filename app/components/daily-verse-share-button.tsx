@@ -12,7 +12,7 @@ function getDevotionalLabel(source?: string | null) {
   }
 
   if (normalized === "spurgeon") {
-    return "Devocional Dia e Noite";
+    return "Devocional Dia e Noite com Spurgeon";
   }
 
   return normalized ? `Devocional ${String(source).trim()}` : "Devocional";
