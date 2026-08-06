@@ -48,11 +48,6 @@ function getBrazilDateKey() {
   }).format(new Date());
 }
 
-function getDailyVerseIndex(dateKey: string, total: number) {
-  const numericKey = Number(dateKey.replaceAll("-", ""));
-  return numericKey % total;
-}
-
 function normalizeSourceName(source?: string | null) {
   return String(source ?? "").trim().toLowerCase();
 }
@@ -60,6 +55,90 @@ function normalizeSourceName(source?: string | null) {
 function getDailySourceRotation(dateKey: string) {
   const numericKey = Number(dateKey.replaceAll("-", ""));
   return numericKey % 2 === 0 ? "pao diario" : "spurgeon";
+}
+
+function getDateFromKey(dateKey: string) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(Date.UTC(year, (month ?? 1) - 1, day ?? 1));
+}
+
+function formatDateKey(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "UTC",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+function subtractDays(dateKey: string, days: number) {
+  const date = getDateFromKey(dateKey);
+  date.setUTCDate(date.getUTCDate() - days);
+  return formatDateKey(date);
+}
+
+function getSeededSourceIndex(
+  dateKey: string,
+  total: number,
+  sourceName: string
+) {
+  const numericKey = Number(dateKey.replaceAll("-", ""));
+  const sourceSeed = Array.from(sourceName).reduce(
+    (accumulator, character) => accumulator + character.charCodeAt(0),
+    0
+  );
+
+  return (numericKey + sourceSeed) % total;
+}
+
+function getRecentSourceIndexes(
+  dateKey: string,
+  total: number,
+  sourceName: string,
+  daysToInspect: number
+) {
+  const recentIndexes = new Set<number>();
+
+  for (let offset = 1; offset <= daysToInspect; offset += 1) {
+    const previousDateKey = subtractDays(dateKey, offset);
+
+    if (getDailySourceRotation(previousDateKey) !== sourceName) {
+      continue;
+    }
+
+    recentIndexes.add(
+      getSeededSourceIndex(previousDateKey, total, sourceName)
+    );
+  }
+
+  return recentIndexes;
+}
+
+function getSmartDailySelectionIndex(
+  dateKey: string,
+  total: number,
+  sourceName: string
+) {
+  if (total <= 1) {
+    return 0;
+  }
+
+  const initialIndex = getSeededSourceIndex(dateKey, total, sourceName);
+  const recentIndexes = getRecentSourceIndexes(dateKey, total, sourceName, 14);
+
+  if (recentIndexes.size >= total) {
+    return initialIndex;
+  }
+
+  for (let step = 0; step < total; step += 1) {
+    const candidateIndex = (initialIndex + step) % total;
+
+    if (!recentIndexes.has(candidateIndex)) {
+      return candidateIndex;
+    }
+  }
+
+  return initialIndex;
 }
 
 function getLibraryForSource(
@@ -118,8 +197,16 @@ export async function getOrCreateDailyBibleVerse() {
   const sourceRotation = getDailySourceRotation(dateKey);
   const rotatedLibrary = getLibraryForSource(library, sourceRotation);
   const activeLibrary = rotatedLibrary.length > 0 ? rotatedLibrary : library;
+  const selectionSource =
+    rotatedLibrary.length > 0 ? sourceRotation : "biblioteca-geral";
   const selectedVerse =
-    activeLibrary[getDailyVerseIndex(dateKey, activeLibrary.length)];
+    activeLibrary[
+      getSmartDailySelectionIndex(
+        dateKey,
+        activeLibrary.length,
+        selectionSource
+      )
+    ];
 
   return {
     id: selectedVerse.id ?? `daily-${dateKey}`,
