@@ -44,6 +44,11 @@ type DailyBibleVerseRefreshState = {
   refresh_count: number | null;
 };
 
+type DailyBibleVerseSourceOverride = {
+  date_key: string;
+  forced_source: string | null;
+};
+
 function getBrazilDateKey() {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Sao_Paulo",
@@ -189,6 +194,30 @@ async function getDailyDevotionalRefreshCount(dateKey: string) {
   );
 }
 
+async function getDailyDevotionalSourceOverride(dateKey: string) {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("daily_bible_verse_source_override")
+    .select("date_key, forced_source")
+    .eq("date_key", dateKey)
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "Erro ao buscar a fonte forçada do devocional diario:",
+      error.message
+    );
+    return null;
+  }
+
+  const forcedSource = normalizeSourceName(
+    (data as DailyBibleVerseSourceOverride | null)?.forced_source
+  );
+
+  return forcedSource || null;
+}
+
 async function getDailyVerseLibrary() {
   const supabase = createAdminClient();
 
@@ -218,9 +247,10 @@ async function getDailyVerseLibrary() {
 
 export async function getOrCreateDailyBibleVerse() {
   const dateKey = getBrazilDateKey();
-  const [library, refreshCount] = await Promise.all([
+  const [library, refreshCount, forcedSource] = await Promise.all([
     getDailyVerseLibrary(),
     getDailyDevotionalRefreshCount(dateKey),
+    getDailyDevotionalSourceOverride(dateKey),
   ]);
 
   if (library.length === 0) {
@@ -229,7 +259,7 @@ export async function getOrCreateDailyBibleVerse() {
     );
   }
 
-  const sourceRotation = getDailySourceRotation(dateKey);
+  const sourceRotation = forcedSource ?? getDailySourceRotation(dateKey);
   const rotatedLibrary = getLibraryForSource(library, sourceRotation);
   const activeLibrary = rotatedLibrary.length > 0 ? rotatedLibrary : library;
   const selectionSource =

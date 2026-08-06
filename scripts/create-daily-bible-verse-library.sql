@@ -47,6 +47,14 @@ create table if not exists public.daily_bible_verse_refresh_state (
 
 alter table public.daily_bible_verse_refresh_state enable row level security;
 
+create table if not exists public.daily_bible_verse_source_override (
+  date_key text primary key,
+  forced_source text not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.daily_bible_verse_source_override enable row level security;
+
 create or replace function public.refresh_daily_devotional(
   target_date text default to_char(timezone('America/Sao_Paulo', now()), 'YYYY-MM-DD')
 )
@@ -105,4 +113,54 @@ as $$
     refresh_state.date_key,
     refresh_state.refresh_count,
     refresh_state.updated_at;
+$$;
+
+create or replace function public.force_daily_devotional_source(
+  target_date text,
+  target_source text
+)
+returns table (
+  date_key text,
+  forced_source text,
+  updated_at timestamptz
+)
+language sql
+security definer
+as $$
+  insert into public.daily_bible_verse_source_override as source_override (
+    date_key,
+    forced_source,
+    updated_at
+  )
+  values (
+    target_date,
+    target_source,
+    now()
+  )
+  on conflict (date_key) do update
+    set forced_source = excluded.forced_source,
+        updated_at = now()
+  returning
+    source_override.date_key,
+    source_override.forced_source,
+    source_override.updated_at;
+$$;
+
+create or replace function public.clear_daily_devotional_source_override(
+  target_date text
+)
+returns table (
+  date_key text,
+  forced_source text,
+  updated_at timestamptz
+)
+language sql
+security definer
+as $$
+  delete from public.daily_bible_verse_source_override as source_override
+  where source_override.date_key = target_date
+  returning
+    source_override.date_key,
+    source_override.forced_source,
+    source_override.updated_at;
 $$;
