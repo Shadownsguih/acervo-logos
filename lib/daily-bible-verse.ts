@@ -39,6 +39,11 @@ type DailyBibleVerseLibraryEntry = {
   created_at?: string | null;
 };
 
+type DailyBibleVerseRefreshState = {
+  date_key: string;
+  refresh_count: number | null;
+};
+
 function getBrazilDateKey() {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Sao_Paulo",
@@ -117,28 +122,32 @@ function getRecentSourceIndexes(
 function getSmartDailySelectionIndex(
   dateKey: string,
   total: number,
-  sourceName: string
+  sourceName: string,
+  refreshCount = 0
 ) {
   if (total <= 1) {
     return 0;
   }
 
-  const initialIndex = getSeededSourceIndex(dateKey, total, sourceName);
   const recentIndexes = getRecentSourceIndexes(dateKey, total, sourceName, 14);
-
-  if (recentIndexes.size >= total) {
-    return initialIndex;
-  }
+  const baseIndex = getSeededSourceIndex(dateKey, total, sourceName);
+  const availableIndexes: number[] = [];
 
   for (let step = 0; step < total; step += 1) {
-    const candidateIndex = (initialIndex + step) % total;
+    const candidateIndex = (baseIndex + step) % total;
 
-    if (!recentIndexes.has(candidateIndex)) {
-      return candidateIndex;
+    if (recentIndexes.size < total && recentIndexes.has(candidateIndex)) {
+      continue;
     }
+
+    availableIndexes.push(candidateIndex);
   }
 
-  return initialIndex;
+  if (availableIndexes.length === 0) {
+    return baseIndex;
+  }
+
+  return availableIndexes[Math.max(0, refreshCount) % availableIndexes.length];
 }
 
 function getLibraryForSource(
@@ -155,6 +164,29 @@ function getLibraryForSource(
 
 function getFallbackLibrary() {
   return curatedDailyBibleVerseLibrary as DailyBibleVerseLibraryEntry[];
+}
+
+async function getDailyDevotionalRefreshCount(dateKey: string) {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("daily_bible_verse_refresh_state")
+    .select("date_key, refresh_count")
+    .eq("date_key", dateKey)
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "Erro ao buscar o estado de refresh do devocional diario:",
+      error.message
+    );
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    Number((data as DailyBibleVerseRefreshState | null)?.refresh_count ?? 0)
+  );
 }
 
 async function getDailyVerseLibrary() {
@@ -186,7 +218,10 @@ async function getDailyVerseLibrary() {
 
 export async function getOrCreateDailyBibleVerse() {
   const dateKey = getBrazilDateKey();
-  const library = await getDailyVerseLibrary();
+  const [library, refreshCount] = await Promise.all([
+    getDailyVerseLibrary(),
+    getDailyDevotionalRefreshCount(dateKey),
+  ]);
 
   if (library.length === 0) {
     throw new Error(
@@ -204,7 +239,8 @@ export async function getOrCreateDailyBibleVerse() {
       getSmartDailySelectionIndex(
         dateKey,
         activeLibrary.length,
-        selectionSource
+        selectionSource,
+        refreshCount
       )
     ];
 
