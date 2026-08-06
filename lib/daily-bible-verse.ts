@@ -53,6 +53,27 @@ function getDailyVerseIndex(dateKey: string, total: number) {
   return numericKey % total;
 }
 
+function normalizeSourceName(source?: string | null) {
+  return String(source ?? "").trim().toLowerCase();
+}
+
+function getDailySourceRotation(dateKey: string) {
+  const numericKey = Number(dateKey.replaceAll("-", ""));
+  return numericKey % 2 === 0 ? "pao diario" : "spurgeon";
+}
+
+function getLibraryForSource(
+  library: DailyBibleVerseLibraryEntry[],
+  sourceName: string
+) {
+  const normalizedSource = normalizeSourceName(sourceName);
+
+  return library.filter((entry) => {
+    const entrySource = normalizeSourceName(entry.source);
+    return entrySource === normalizedSource;
+  });
+}
+
 function getFallbackLibrary() {
   return curatedDailyBibleVerseLibrary as DailyBibleVerseLibraryEntry[];
 }
@@ -94,7 +115,11 @@ export async function getOrCreateDailyBibleVerse() {
     );
   }
 
-  const selectedVerse = library[getDailyVerseIndex(dateKey, library.length)];
+  const sourceRotation = getDailySourceRotation(dateKey);
+  const rotatedLibrary = getLibraryForSource(library, sourceRotation);
+  const activeLibrary = rotatedLibrary.length > 0 ? rotatedLibrary : library;
+  const selectedVerse =
+    activeLibrary[getDailyVerseIndex(dateKey, activeLibrary.length)];
 
   return {
     id: selectedVerse.id ?? `daily-${dateKey}`,
