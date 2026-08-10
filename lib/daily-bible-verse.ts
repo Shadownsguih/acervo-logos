@@ -62,9 +62,21 @@ function normalizeSourceName(source?: string | null) {
   return String(source ?? "").trim().toLowerCase();
 }
 
+const DAILY_DEVOTIONAL_SOURCE_ANCHOR_DATE = "2026-08-10";
+const DAILY_DEVOTIONAL_SOURCE_ANCHOR = "pao diario";
+
 function getDailySourceRotation(dateKey: string) {
-  const numericKey = Number(dateKey.replaceAll("-", ""));
-  return numericKey % 2 === 0 ? "pao diario" : "spurgeon";
+  const currentDay = getDateFromKey(dateKey);
+  const anchorDay = getDateFromKey(DAILY_DEVOTIONAL_SOURCE_ANCHOR_DATE);
+  const dayOffset = Math.round(
+    (currentDay.getTime() - anchorDay.getTime()) / 86_400_000
+  );
+
+  if (DAILY_DEVOTIONAL_SOURCE_ANCHOR === "spurgeon") {
+    return Math.abs(dayOffset) % 2 === 0 ? "spurgeon" : "pao diario";
+  }
+
+  return Math.abs(dayOffset) % 2 === 0 ? "pao diario" : "spurgeon";
 }
 
 function getDateFromKey(dateKey: string) {
