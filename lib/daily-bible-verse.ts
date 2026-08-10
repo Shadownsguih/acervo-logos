@@ -62,8 +62,11 @@ function normalizeSourceName(source?: string | null) {
   return String(source ?? "").trim().toLowerCase();
 }
 
+type DailyDevotionalSourceName = "pao diario" | "spurgeon";
+
 const DAILY_DEVOTIONAL_SOURCE_ANCHOR_DATE = "2026-08-10";
-const DAILY_DEVOTIONAL_SOURCE_ANCHOR = "pao diario";
+const DAILY_DEVOTIONAL_SOURCE_ANCHOR: DailyDevotionalSourceName =
+  "pao diario";
 
 function getDailySourceRotation(dateKey: string) {
   const currentDay = getDateFromKey(dateKey);
