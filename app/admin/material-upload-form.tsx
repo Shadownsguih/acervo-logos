@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { suggestPdfMetadata } from "./pdf-auto-metadata";
+import {
+  buildEditorialDescription,
+  suggestPdfMetadata,
+} from "./pdf-auto-metadata";
 
 type Category = {
   id: string;
@@ -238,6 +241,28 @@ export default function MaterialUploadForm({
 
       setStatusMessage("");
     } catch (error) {
+      if (file) {
+        try {
+          setStatusMessage("Nao encontramos resumo online. Gerando descricao automatica pelo PDF...");
+          const suggestion = await suggestPdfMetadata(file);
+
+          if (suggestion.title && !title.trim()) {
+            setTitle(suggestion.title);
+          }
+
+          setDescription(
+            buildEditorialDescription(
+              title.trim() || suggestion.title,
+              suggestion.description
+            )
+          );
+          setStatusMessage("");
+          return;
+        } catch {
+          // falls through to the message below
+        }
+      }
+
       setStatusMessage("");
       setErrorMessage(
         error instanceof Error

@@ -125,6 +125,28 @@ function buildDescription(title: string, text: string) {
     : description;
 }
 
+export function buildEditorialDescription(
+  title: string,
+  extractedDescription?: string
+) {
+  const normalizedTitle = normalizeSpaces(title);
+  const normalizedDescription = normalizeSpaces(extractedDescription ?? "");
+
+  if (normalizedDescription) {
+    const polished = normalizedDescription.length > 320
+      ? `${normalizedDescription.slice(0, 317).trim()}...`
+      : normalizedDescription;
+
+    return `${polished} Material em PDF indicado para leitura, consulta e aprofundamento no Acervo Logos.`;
+  }
+
+  if (!normalizedTitle) {
+    return "Material em PDF indicado para leitura, consulta e aprofundamento no Acervo Logos.";
+  }
+
+  return `Obra em PDF relacionada a ${normalizedTitle}, indicada para leitura, consulta e aprofundamento no Acervo Logos. Ideal para estudo continuo e pesquisa do conteudo apresentado.`;
+}
+
 async function extractPdfText(file: File, maxPages = 3) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const loadingTask = pdfjs.getDocument({
@@ -162,7 +184,10 @@ export async function suggestPdfMetadata(
 ): Promise<SuggestedPdfMetadata> {
   const extractedText = await extractPdfText(file);
   const title = pickSuggestedTitle(file.name, extractedText);
-  const description = buildDescription(title, extractedText);
+  const description = buildEditorialDescription(
+    title,
+    buildDescription(title, extractedText)
+  );
 
   return {
     title,
