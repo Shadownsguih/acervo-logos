@@ -124,12 +124,18 @@ async function searchGoogleBooks(query: string) {
     maxResults: "5",
   });
 
-  const response = await fetch(
-    `https://www.googleapis.com/books/v1/volumes?${params.toString()}`,
-    {
-      cache: "no-store",
-    }
-  );
+  let response: Response;
+
+  try {
+    response = await fetch(
+      `https://www.googleapis.com/books/v1/volumes?${params.toString()}`,
+      {
+        cache: "no-store",
+      }
+    );
+  } catch {
+    throw new Error("GOOGLE_BOOKS_FETCH_FAILED");
+  }
 
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as
@@ -172,16 +178,21 @@ function extractOpenLibraryDescription(value: OpenLibraryWork["description"]) {
 async function searchOpenLibrary(query: string) {
   const searchParams = new URLSearchParams({
     q: query,
-    language: "por",
     limit: "5",
   });
 
-  const searchResponse = await fetch(
-    `https://openlibrary.org/search.json?${searchParams.toString()}`,
-    {
-      cache: "no-store",
-    }
-  );
+  let searchResponse: Response;
+
+  try {
+    searchResponse = await fetch(
+      `https://openlibrary.org/search.json?${searchParams.toString()}`,
+      {
+        cache: "no-store",
+      }
+    );
+  } catch {
+    throw new Error("OPEN_LIBRARY_FETCH_FAILED");
+  }
 
   if (!searchResponse.ok) {
     throw new Error("Nao foi possivel consultar a Open Library.");
@@ -198,9 +209,15 @@ async function searchOpenLibrary(query: string) {
       continue;
     }
 
-    const workResponse = await fetch(`https://openlibrary.org${doc.key}.json`, {
-      cache: "no-store",
-    });
+    let workResponse: Response;
+
+    try {
+      workResponse = await fetch(`https://openlibrary.org${doc.key}.json`, {
+        cache: "no-store",
+      });
+    } catch {
+      continue;
+    }
 
     if (!workResponse.ok) {
       continue;
@@ -256,6 +273,10 @@ export async function POST(request: Request) {
       );
     }
 
+    let googleQuotaExceeded = false;
+    let googleFetchFailed = false;
+    let openLibraryFetchFailed = false;
+
     try {
       const items = await searchGoogleBooks(title);
       const rankedItems = items
@@ -282,21 +303,56 @@ export async function POST(request: Request) {
         });
       }
     } catch (error) {
-      if (
-        !(error instanceof Error) ||
-        error.message !== "GOOGLE_BOOKS_QUOTA_EXCEEDED"
-      ) {
+      if (!(error instanceof Error)) {
+        throw error;
+      }
+
+      if (error.message === "GOOGLE_BOOKS_QUOTA_EXCEEDED") {
+        googleQuotaExceeded = true;
+      } else if (error.message === "GOOGLE_BOOKS_FETCH_FAILED") {
+        googleFetchFailed = true;
+      } else {
         throw error;
       }
     }
 
-    const openLibraryMatch = await searchOpenLibrary(title);
+    let openLibraryMatch = null;
+
+    try {
+      openLibraryMatch = await searchOpenLibrary(title);
+    } catch (error) {
+      if (error instanceof Error && error.message === "OPEN_LIBRARY_FETCH_FAILED") {
+        openLibraryFetchFailed = true;
+      } else {
+        throw error;
+      }
+    }
 
     if (openLibraryMatch) {
       return NextResponse.json({
         success: true,
         ...openLibraryMatch,
       });
+    }
+
+    if (googleFetchFailed && openLibraryFetchFailed) {
+      return NextResponse.json(
+        {
+          error:
+            "As fontes online de catalogo estao indisponiveis no momento. Use o preenchimento automatico pelo PDF e tente novamente mais tarde.",
+        },
+        { status: 503 }
+      );
+    }
+
+    if (googleQuotaExceeded && openLibraryFetchFailed) {
+      return NextResponse.json(
+        {
+          error:
+            "A cota do Google Books acabou e a Open Library nao respondeu agora. Use o preenchimento automatico pelo PDF e tente novamente mais tarde.",
+        },
+        { status: 503 }
+      );
     }
 
     return NextResponse.json(
