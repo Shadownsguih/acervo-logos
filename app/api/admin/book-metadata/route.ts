@@ -115,6 +115,42 @@ function extractResponseOutputText(payload: unknown) {
     );
   }
 
+  if (payload && typeof payload === "object" && "output" in payload) {
+    const output = (payload as { output?: unknown }).output;
+
+    if (Array.isArray(output)) {
+      const text = output
+        .flatMap((item) => {
+          if (!item || typeof item !== "object" || !("content" in item)) {
+            return [];
+          }
+
+          const content = (item as { content?: unknown }).content;
+
+          if (!Array.isArray(content)) {
+            return [];
+          }
+
+          return content
+            .map((entry) => {
+              if (!entry || typeof entry !== "object") {
+                return "";
+              }
+
+              if ("text" in entry && typeof entry.text === "string") {
+                return entry.text;
+              }
+
+              return "";
+            })
+            .filter(Boolean);
+        })
+        .join(" ");
+
+      return normalizeSpaces(text);
+    }
+  }
+
   return "";
 }
 
@@ -143,8 +179,14 @@ async function generateAiSummary(params: {
       body: JSON.stringify({
         model,
         input: prompt,
-        max_output_tokens: 260,
+        max_output_tokens: 420,
         store: false,
+        reasoning: {
+          effort: "minimal",
+        },
+        text: {
+          verbosity: "low",
+        },
       }),
     });
   } catch {
