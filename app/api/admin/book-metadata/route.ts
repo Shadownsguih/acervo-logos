@@ -47,6 +47,35 @@ function normalizeText(value: string) {
     .trim();
 }
 
+function uniqueValues(values: string[]) {
+  return [...new Set(values.map((value) => normalizeSpaces(value)).filter(Boolean))];
+}
+
+function buildTitleCandidates(title: string) {
+  const normalizedTitle = normalizeSpaces(title);
+  const candidates = [
+    normalizedTitle,
+    normalizedTitle.replace(/\s*[:\-|]\s*.+$/g, "").trim(),
+    normalizedTitle
+      .replace(/\b(?:volume|vol\.?|tomo|parte|livro)\s*[ivxlcdm\d]+\b/gi, "")
+      .trim(),
+    normalizedTitle
+      .replace(/\b(?:comentario|comentário)\b/gi, "comentario")
+      .trim(),
+    normalizedTitle
+      .replace(/\b(?:bíblico|biblico)\b/gi, "biblico")
+      .trim(),
+  ];
+
+  const compoundCandidates = candidates.flatMap((candidate) => [
+    candidate,
+    candidate.replace(/\s{2,}/g, " ").trim(),
+    candidate.split(":")[0]?.trim() ?? "",
+  ]);
+
+  return uniqueValues(compoundCandidates).filter((candidate) => candidate.length >= 3);
+}
+
 function buildSearchScore(query: string, item: GoogleBooksVolume) {
   const queryNormalized = normalizeText(query);
   const title = String(item.volumeInfo?.title ?? "");
@@ -163,6 +192,67 @@ async function searchGoogleBooks(query: string) {
   return payload.items ?? [];
 }
 
+async function findGoogleBooksMatch(title: string) {
+  const candidates = buildTitleCandidates(title);
+  let googleQuotaExceeded = false;
+  let googleFetchFailed = false;
+
+  for (const candidate of candidates) {
+    try {
+      const items = await searchGoogleBooks(candidate);
+      const rankedItems = items
+        .map((item) => ({
+          item,
+          score: buildSearchScore(candidate, item),
+        }))
+        .sort((left, right) => right.score - left.score);
+
+      const bestMatch = rankedItems.find(
+        ({ item }) =>
+          normalizeSpaces(String(item.volumeInfo?.description ?? "")).length > 0
+      )?.item;
+
+      if (bestMatch?.volumeInfo?.description) {
+        return {
+          match: {
+            success: true,
+            title: buildDisplayTitle(bestMatch),
+            description: shortenDescription(bestMatch.volumeInfo.description),
+            authors: bestMatch.volumeInfo.authors ?? [],
+            categories: bestMatch.volumeInfo.categories ?? [],
+            publishedDate: bestMatch.volumeInfo.publishedDate ?? null,
+            source: "Google Books",
+          },
+          googleQuotaExceeded,
+          googleFetchFailed,
+        };
+      }
+    } catch (error) {
+      if (!(error instanceof Error)) {
+        throw error;
+      }
+
+      if (error.message === "GOOGLE_BOOKS_QUOTA_EXCEEDED") {
+        googleQuotaExceeded = true;
+        break;
+      }
+
+      if (error.message === "GOOGLE_BOOKS_FETCH_FAILED") {
+        googleFetchFailed = true;
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  return {
+    match: null,
+    googleQuotaExceeded,
+    googleFetchFailed,
+  };
+}
+
 function extractOpenLibraryDescription(value: OpenLibraryWork["description"]) {
   if (typeof value === "string") {
     return normalizeSpaces(value);
@@ -247,6 +337,36 @@ async function searchOpenLibrary(query: string) {
   return null;
 }
 
+async function findOpenLibraryMatch(title: string) {
+  const candidates = buildTitleCandidates(title);
+  let openLibraryFetchFailed = false;
+
+  for (const candidate of candidates) {
+    try {
+      const match = await searchOpenLibrary(candidate);
+
+      if (match) {
+        return {
+          match,
+          openLibraryFetchFailed,
+        };
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message === "OPEN_LIBRARY_FETCH_FAILED") {
+        openLibraryFetchFailed = true;
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  return {
+    match: null,
+    openLibraryFetchFailed,
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -273,69 +393,25 @@ export async function POST(request: Request) {
       );
     }
 
-    let googleQuotaExceeded = false;
-    let googleFetchFailed = false;
-    let openLibraryFetchFailed = false;
+    const googleResult = await findGoogleBooksMatch(title);
 
-    try {
-      const items = await searchGoogleBooks(title);
-      const rankedItems = items
-        .map((item) => ({
-          item,
-          score: buildSearchScore(title, item),
-        }))
-        .sort((left, right) => right.score - left.score);
-
-      const bestMatch = rankedItems.find(
-        ({ item }) =>
-          normalizeSpaces(String(item.volumeInfo?.description ?? "")).length > 0
-      )?.item;
-
-      if (bestMatch?.volumeInfo?.description) {
-        return NextResponse.json({
-          success: true,
-          title: buildDisplayTitle(bestMatch),
-          description: shortenDescription(bestMatch.volumeInfo.description),
-          authors: bestMatch.volumeInfo.authors ?? [],
-          categories: bestMatch.volumeInfo.categories ?? [],
-          publishedDate: bestMatch.volumeInfo.publishedDate ?? null,
-          source: "Google Books",
-        });
-      }
-    } catch (error) {
-      if (!(error instanceof Error)) {
-        throw error;
-      }
-
-      if (error.message === "GOOGLE_BOOKS_QUOTA_EXCEEDED") {
-        googleQuotaExceeded = true;
-      } else if (error.message === "GOOGLE_BOOKS_FETCH_FAILED") {
-        googleFetchFailed = true;
-      } else {
-        throw error;
-      }
+    if (googleResult.match) {
+      return NextResponse.json(googleResult.match);
     }
 
-    let openLibraryMatch = null;
+    const openLibraryResult = await findOpenLibraryMatch(title);
 
-    try {
-      openLibraryMatch = await searchOpenLibrary(title);
-    } catch (error) {
-      if (error instanceof Error && error.message === "OPEN_LIBRARY_FETCH_FAILED") {
-        openLibraryFetchFailed = true;
-      } else {
-        throw error;
-      }
-    }
-
-    if (openLibraryMatch) {
+    if (openLibraryResult.match) {
       return NextResponse.json({
         success: true,
-        ...openLibraryMatch,
+        ...openLibraryResult.match,
       });
     }
 
-    if (googleFetchFailed && openLibraryFetchFailed) {
+    if (
+      googleResult.googleFetchFailed &&
+      openLibraryResult.openLibraryFetchFailed
+    ) {
       return NextResponse.json(
         {
           error:
@@ -345,7 +421,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (googleQuotaExceeded && openLibraryFetchFailed) {
+    if (
+      googleResult.googleQuotaExceeded &&
+      openLibraryResult.openLibraryFetchFailed
+    ) {
       return NextResponse.json(
         {
           error:
@@ -358,7 +437,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Nenhum resumo confiavel foi encontrado para este titulo nas fontes online disponiveis.",
+          "Nenhum resumo confiavel foi encontrado para este titulo nas fontes online disponiveis. Tente buscar com um titulo mais limpo, sem volume, subtitulo ou complemento.",
       },
       { status: 404 }
     );
