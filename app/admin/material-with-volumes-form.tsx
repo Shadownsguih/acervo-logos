@@ -28,6 +28,8 @@ type ApiResult = {
   uploadUrl?: string;
   publicUrl?: string;
   key?: string;
+  title?: string;
+  description?: string;
 };
 
 function createEmptyVolume(index: number): VolumeFormItem {
@@ -106,6 +108,26 @@ async function uploadPdfDirectly(params: {
   }
 }
 
+async function searchOnlineBookMetadata(title: string) {
+  const response = await fetch("/api/admin/book-metadata", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      title,
+    }),
+  });
+
+  const result = await readResponseSafely(response);
+
+  if (!response.ok) {
+    throw new Error(result.error || "Falha ao buscar resumo online.");
+  }
+
+  return result;
+}
+
 function StatusCard({
   tone,
   children,
@@ -147,6 +169,7 @@ export default function MaterialWithVolumesForm({
   const [autoFillingVolumeId, setAutoFillingVolumeId] = useState<string | null>(
     null
   );
+  const [isSearchingOnline, setIsSearchingOnline] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -275,6 +298,42 @@ export default function MaterialWithVolumesForm({
       );
     } finally {
       setAutoFillingVolumeId(null);
+    }
+  }
+
+  async function handleOnlineSummary() {
+    setSuccessMessage("");
+    setErrorMessage("");
+
+    if (!title.trim()) {
+      setErrorMessage("Informe ou gere primeiro o titulo da obra.");
+      return;
+    }
+
+    setIsSearchingOnline(true);
+    setStatusMessage("Buscando resumo online da obra...");
+
+    try {
+      const result = await searchOnlineBookMetadata(title.trim());
+
+      if (result.title) {
+        setTitle(result.title);
+      }
+
+      if (result.description) {
+        setDescription(result.description);
+      }
+
+      setStatusMessage("");
+    } catch (error) {
+      setStatusMessage("");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel buscar resumo online."
+      );
+    } finally {
+      setIsSearchingOnline(false);
     }
   }
 
@@ -487,6 +546,16 @@ export default function MaterialWithVolumesForm({
               placeholder="Ex.: Comentario Biblico Champlin"
             />
             <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => void handleOnlineSummary()}
+                disabled={isSearchingOnline}
+                className="mr-3 inline-flex items-center justify-center rounded-full border border-sky-300/30 bg-sky-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-sky-100 transition hover:bg-sky-300/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSearchingOnline
+                  ? "Buscando resumo..."
+                  : "Buscar resumo online"}
+              </button>
               <button
                 type="button"
                 onClick={() => void handleAutoFillMaterial()}
