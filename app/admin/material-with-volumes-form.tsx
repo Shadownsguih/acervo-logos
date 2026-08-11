@@ -111,7 +111,10 @@ async function uploadPdfDirectly(params: {
   }
 }
 
-async function searchOnlineBookMetadata(title: string) {
+async function searchOnlineBookMetadata(
+  title: string,
+  contextText?: string
+) {
   const response = await fetch("/api/admin/book-metadata", {
     method: "POST",
     headers: {
@@ -119,6 +122,7 @@ async function searchOnlineBookMetadata(title: string) {
     },
     body: JSON.stringify({
       title,
+      contextText,
     }),
   });
 
@@ -308,7 +312,25 @@ export default function MaterialWithVolumesForm({
     setSuccessMessage("");
     setErrorMessage("");
 
-    if (!title.trim()) {
+    let resolvedTitle = title.trim();
+    let contextText = description.trim();
+    const fallbackFile = volumes[0]?.file ?? null;
+
+    if (fallbackFile) {
+      try {
+        const suggestion = await suggestPdfMetadata(fallbackFile);
+        resolvedTitle = resolvedTitle || suggestion.title;
+        contextText = contextText || suggestion.description;
+
+        if (!title.trim() && suggestion.title) {
+          setTitle(suggestion.title);
+        }
+      } catch {
+        // keep current values if PDF analysis fails here
+      }
+    }
+
+    if (!resolvedTitle) {
       setErrorMessage("Informe ou gere primeiro o titulo da obra.");
       return;
     }
@@ -317,7 +339,7 @@ export default function MaterialWithVolumesForm({
     setStatusMessage("Buscando resumo online da obra...");
 
     try {
-      const result = await searchOnlineBookMetadata(title.trim());
+      const result = await searchOnlineBookMetadata(resolvedTitle, contextText);
 
       if (result.title) {
         setTitle(result.title);

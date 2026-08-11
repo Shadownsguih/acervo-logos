@@ -37,6 +37,26 @@ type OpenLibraryWork = {
   first_publish_date?: string;
 };
 
+type AiGeneratedBookMetadata = {
+  success: boolean;
+  title: string;
+  description: string;
+  authors: string[];
+  categories: string[];
+  publishedDate: string | null;
+  source: string;
+};
+
+type GeminiGenerateContentResponse = {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{
+        text?: string;
+      }>;
+    };
+  }>;
+};
+
 function normalizeText(value: string) {
   return value
     .normalize("NFD")
@@ -143,6 +163,184 @@ function buildDisplayTitle(item: GoogleBooksVolume) {
   }
 
   return `${title}: ${subtitle}`;
+}
+
+function extractResponseOutputText(payload: unknown) {
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "output_text" in payload &&
+    typeof (payload as { output_text?: unknown }).output_text === "string"
+  ) {
+    return normalizeSpaces(
+      String((payload as { output_text: string }).output_text)
+    );
+  }
+
+  return "";
+}
+
+async function generateAiSummary(params: {
+  title: string;
+  contextText?: string;
+}): Promise<AiGeneratedBookMetadata | null> {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+
+  if (!apiKey) {
+    return null;
+  }
+
+  const model = process.env.OPENAI_MODEL?.trim() || "gpt-5-nano";
+  const contextText = normalizeSpaces(params.contextText ?? "");
+  const prompt = [
+    "Voce escreve descricoes editoriais curtas para um acervo teologico digital.",
+    "Gere uma descricao em portugues do Brasil com 2 ou 3 frases, tom claro, elegante e comercial.",
+    "Nao use markdown, nao invente detalhes especificos que nao estejam sustentados pelo contexto.",
+    "Se o contexto estiver incompleto, use uma descricao geral e neutra baseada no titulo da obra.",
+    `Titulo: ${params.title}`,
+    contextText ? `Contexto extraido do PDF: ${contextText}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  let response: Response;
+
+  try {
+    response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        input: prompt,
+        max_output_tokens: 220,
+        store: false,
+      }),
+    });
+  } catch {
+    return null;
+  }
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json().catch(() => null)) as unknown;
+  const outputText = extractResponseOutputText(payload);
+
+  if (!outputText) {
+    return null;
+  }
+
+  return {
+    success: true,
+    title: params.title,
+    description: shortenDescription(outputText, 420),
+    authors: [],
+    categories: [],
+    publishedDate: null,
+    source: "OpenAI",
+  };
+}
+
+function extractGeminiText(payload: GeminiGenerateContentResponse) {
+  const parts = payload.candidates?.[0]?.content?.parts ?? [];
+  const text = parts
+    .map((part) => String(part.text ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+
+  return normalizeSpaces(text);
+}
+
+async function generateGeminiSummary(params: {
+  title: string;
+  contextText?: string;
+}): Promise<AiGeneratedBookMetadata | null> {
+  const apiKey =
+    process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim();
+
+  if (!apiKey) {
+    return null;
+  }
+
+  const model = process.env.GEMINI_MODEL?.trim() || "gemini-3.5-flash-lite";
+  const contextText = normalizeSpaces(params.contextText ?? "");
+  const prompt = [
+    "Escreva uma descricao editorial curta para um acervo teologico digital.",
+    "Responda em portugues do Brasil, com 2 ou 3 frases, tom claro, elegante e comercial.",
+    "Nao use markdown.",
+    "Nao invente detalhes especificos que nao estejam sustentados pelo contexto fornecido.",
+    "Se o contexto for limitado, produza uma descricao geral e neutra baseada no titulo.",
+    `Titulo: ${params.title}`,
+    contextText ? `Contexto inicial extraido do PDF: ${contextText}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  let response: Response;
+
+  try {
+    response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "x-goog-api-key": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [
+              {
+                text: "Voce produz descricoes editoriais curtas e confiaveis para livros e materiais de estudo.",
+              },
+            ],
+          },
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 220,
+          },
+        }),
+        cache: "no-store",
+      }
+    );
+  } catch {
+    return null;
+  }
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload =
+    (await response.json().catch(() => null)) as GeminiGenerateContentResponse | null;
+  const outputText = payload ? extractGeminiText(payload) : "";
+
+  if (!outputText) {
+    return null;
+  }
+
+  return {
+    success: true,
+    title: params.title,
+    description: shortenDescription(outputText, 420),
+    authors: [],
+    categories: [],
+    publishedDate: null,
+    source: "Gemini",
+  };
 }
 
 async function searchGoogleBooks(query: string) {
@@ -424,8 +622,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = (await request.json()) as { title?: string };
+    const body = (await request.json()) as {
+      title?: string;
+      contextText?: string;
+    };
     const title = String(body.title ?? "").trim();
+    const contextText = String(body.contextText ?? "").trim();
 
     if (!title) {
       return NextResponse.json(
@@ -447,6 +649,24 @@ export async function POST(request: Request) {
         success: true,
         ...openLibraryResult.match,
       });
+    }
+
+    const geminiResult = await generateGeminiSummary({
+      title,
+      contextText,
+    });
+
+    if (geminiResult) {
+      return NextResponse.json(geminiResult);
+    }
+
+    const aiResult = await generateAiSummary({
+      title,
+      contextText,
+    });
+
+    if (aiResult) {
+      return NextResponse.json(aiResult);
     }
 
     if (
@@ -478,7 +698,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Nenhum resumo foi encontrado nas fontes online disponiveis para este titulo no momento.",
+          "Nenhum resumo foi encontrado nas fontes online e a geracao por IA nao ficou disponivel para este titulo no momento.",
       },
       { status: 404 }
     );

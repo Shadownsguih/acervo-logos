@@ -88,7 +88,10 @@ async function uploadPdfDirectly(params: {
   }
 }
 
-async function searchOnlineBookMetadata(title: string) {
+async function searchOnlineBookMetadata(
+  title: string,
+  contextText?: string
+) {
   const response = await fetch("/api/admin/book-metadata", {
     method: "POST",
     headers: {
@@ -96,6 +99,7 @@ async function searchOnlineBookMetadata(title: string) {
     },
     body: JSON.stringify({
       title,
+      contextText,
     }),
   });
 
@@ -175,7 +179,24 @@ export default function AddVolumeExistingForm({
   async function handleOnlineSummary() {
     setMsg("");
 
-    if (!title.trim()) {
+    let resolvedTitle = title.trim();
+    let contextText = description.trim();
+
+    if (file) {
+      try {
+        const suggestion = await suggestPdfMetadata(file);
+        resolvedTitle = resolvedTitle || suggestion.title;
+        contextText = contextText || suggestion.description;
+
+        if (!title.trim() && suggestion.title) {
+          setTitle(suggestion.title);
+        }
+      } catch {
+        // keep current values if PDF analysis fails here
+      }
+    }
+
+    if (!resolvedTitle) {
       setMsg("Informe ou gere primeiro o titulo do volume.");
       return;
     }
@@ -184,7 +205,7 @@ export default function AddVolumeExistingForm({
     setStatusMessage("Buscando resumo online do volume...");
 
     try {
-      const result = await searchOnlineBookMetadata(title.trim());
+      const result = await searchOnlineBookMetadata(resolvedTitle, contextText);
 
       if (result.title) {
         setTitle(result.title);
