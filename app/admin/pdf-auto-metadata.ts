@@ -5,6 +5,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs?v=${pdfjs.version}`;
 export type SuggestedPdfMetadata = {
   title: string;
   description: string;
+  contextText: string;
 };
 
 function normalizeSpaces(value: string) {
@@ -184,13 +185,12 @@ export async function suggestPdfMetadata(
 ): Promise<SuggestedPdfMetadata> {
   const extractedText = await extractPdfText(file);
   const title = pickSuggestedTitle(file.name, extractedText);
-  const description = buildEditorialDescription(
-    title,
-    buildDescription(title, extractedText)
-  );
+  const contextText = buildDescription(title, extractedText);
+  const description = buildEditorialDescription(title, contextText);
 
   return {
     title,
     description,
+    contextText,
   };
 }

@@ -225,13 +225,13 @@ export default function MaterialUploadForm({
     setErrorMessage("");
 
     let resolvedTitle = title.trim();
-    let contextText = description.trim();
+    let contextText = "";
 
     if (file) {
       try {
         const suggestion = await suggestPdfMetadata(file);
         resolvedTitle = resolvedTitle || suggestion.title;
-        contextText = contextText || suggestion.description;
+        contextText = suggestion.contextText || suggestion.description;
 
         if (!title.trim() && suggestion.title) {
           setTitle(suggestion.title);
@@ -241,13 +241,13 @@ export default function MaterialUploadForm({
       }
     }
 
-    if (!resolvedTitle) {
-      setErrorMessage("Informe ou gere primeiro o titulo do material.");
+    if (!resolvedTitle && !contextText) {
+      setErrorMessage("Selecione um PDF para a IA gerar titulo e descricao.");
       return;
     }
 
     setIsSearchingOnline(true);
-    setStatusMessage("Buscando resumo online do livro...");
+    setStatusMessage("Gerando titulo e descricao com IA...");
 
     try {
       const result = await searchOnlineBookMetadata(resolvedTitle, contextText);
@@ -264,7 +264,7 @@ export default function MaterialUploadForm({
     } catch (error) {
       if (file) {
         try {
-          setStatusMessage("Nao encontramos resumo online. Gerando descricao automatica pelo PDF...");
+          setStatusMessage("A IA nao respondeu. Gerando descricao automatica pelo PDF...");
           const suggestion = await suggestPdfMetadata(file);
 
           if (suggestion.title && !title.trim()) {
@@ -473,8 +473,8 @@ export default function MaterialUploadForm({
                 className="inline-flex items-center justify-center rounded-full border border-sky-300/30 bg-sky-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-sky-100 transition hover:bg-sky-300/20 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSearchingOnline
-                  ? "Buscando resumo..."
-                  : "Buscar resumo online"}
+                  ? "Gerando com IA..."
+                  : "Gerar com IA"}
               </button>
             </div>
           </div>

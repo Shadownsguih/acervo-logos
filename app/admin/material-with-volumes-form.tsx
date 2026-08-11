@@ -313,14 +313,14 @@ export default function MaterialWithVolumesForm({
     setErrorMessage("");
 
     let resolvedTitle = title.trim();
-    let contextText = description.trim();
+    let contextText = "";
     const fallbackFile = volumes[0]?.file ?? null;
 
     if (fallbackFile) {
       try {
         const suggestion = await suggestPdfMetadata(fallbackFile);
         resolvedTitle = resolvedTitle || suggestion.title;
-        contextText = contextText || suggestion.description;
+        contextText = suggestion.contextText || suggestion.description;
 
         if (!title.trim() && suggestion.title) {
           setTitle(suggestion.title);
@@ -330,13 +330,13 @@ export default function MaterialWithVolumesForm({
       }
     }
 
-    if (!resolvedTitle) {
-      setErrorMessage("Informe ou gere primeiro o titulo da obra.");
+    if (!resolvedTitle && !contextText) {
+      setErrorMessage("Selecione o PDF de um volume para a IA gerar titulo e descricao.");
       return;
     }
 
     setIsSearchingOnline(true);
-    setStatusMessage("Buscando resumo online da obra...");
+    setStatusMessage("Gerando titulo e descricao da obra com IA...");
 
     try {
       const result = await searchOnlineBookMetadata(resolvedTitle, contextText);
@@ -355,7 +355,7 @@ export default function MaterialWithVolumesForm({
 
       if (fallbackFile) {
         try {
-          setStatusMessage("Nao encontramos resumo online. Gerando descricao automatica pelo PDF...");
+          setStatusMessage("A IA nao respondeu. Gerando descricao automatica pelo PDF...");
           const suggestion = await suggestPdfMetadata(fallbackFile);
 
           if (suggestion.title && !title.trim()) {
@@ -602,8 +602,8 @@ export default function MaterialWithVolumesForm({
                 className="mr-3 inline-flex items-center justify-center rounded-full border border-sky-300/30 bg-sky-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-sky-100 transition hover:bg-sky-300/20 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSearchingOnline
-                  ? "Buscando resumo..."
-                  : "Buscar resumo online"}
+                  ? "Gerando com IA..."
+                  : "Gerar com IA"}
               </button>
               <button
                 type="button"
