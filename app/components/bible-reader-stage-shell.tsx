@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import ReaderDictionaryPanel from "@/app/components/reader-dictionary-panel";
+import StudyAssistantPanel from "@/app/components/study-assistant-panel";
 import StudyNotesPanel from "@/app/components/study-notes-panel";
 
 type TranslationOption = {
@@ -1195,6 +1196,20 @@ export default function BibleReaderStageShell() {
       label: referenceLabel,
     };
   }, [passage, referenceLabel, selectedVerse]);
+  const chapterText = useMemo(() => {
+    if (!passage?.verses?.length) {
+      return "";
+    }
+
+    return passage.verses.map((item) => `${item.verse}. ${item.text}`).join(" ");
+  }, [passage]);
+  const selectedVerseText = useMemo(() => {
+    if (!passage?.verses?.length || !selectedVerse) {
+      return "";
+    }
+
+    return passage.verses.find((item) => item.verse === selectedVerse)?.text ?? "";
+  }, [passage, selectedVerse]);
 
   const canGoToPreviousChapter = selectedChapter > 1;
   const canGoToNextChapter = selectedChapter < maxChapter;
@@ -2058,6 +2073,13 @@ export default function BibleReaderStageShell() {
             noteContext={noteContext}
           />
         </div>
+
+        <StudyAssistantPanel
+          reference={referenceLabel}
+          translationLabel={selectedTranslationLabel}
+          chapterText={chapterText}
+          selectedVerseText={selectedVerseText}
+        />
 
         {verseComparison ? (
           <div className="fixed inset-0 z-[58]">

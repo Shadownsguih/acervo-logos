@@ -15,6 +15,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import ReaderDictionaryPanel from "@/app/components/reader-dictionary-panel";
 import ReaderQuickSwitcher from "@/app/components/reader-quick-switcher";
 import ReaderVolumeSwitcher from "@/app/components/reader-volume-switcher";
+import StudyAssistantPanel from "@/app/components/study-assistant-panel";
 import StudyNotesPanel from "@/app/components/study-notes-panel";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -172,6 +173,18 @@ export default function ReaderV2Client({
   );
 
   const resolvedMaterialTitle = materialTitle ?? title;
+  const pdfAssistantContext = useMemo(() => {
+    const parts = [
+      `Documento atual: ${title}.`,
+      resolvedMaterialTitle && resolvedMaterialTitle !== title
+        ? `Obra principal: ${resolvedMaterialTitle}.`
+        : "",
+      `Pagina atual: ${pageNumber}${numPages ? ` de ${numPages}` : ""}.`,
+      "O aluno esta lendo um PDF do acervo e precisa de ajuda para entender o conteudo, organizar o estudo e receber recomendacoes relacionadas.",
+    ];
+
+    return parts.filter(Boolean).join(" ");
+  }, [numPages, pageNumber, resolvedMaterialTitle, title]);
   const resolvedCurrentReaderHref =
     currentReaderHref ?? volumeItems[0]?.href ?? `/ler`;
   const hasMultipleVolumes = volumeItems.length > 1;
@@ -1768,6 +1781,13 @@ export default function ReaderV2Client({
           box-shadow: none;
         }
       `}</style>
+
+      <StudyAssistantPanel
+        mode="pdf"
+        reference={`Pagina ${pageNumber}${numPages ? ` de ${numPages}` : ""}`}
+        contextLabel={resolvedMaterialTitle}
+        chapterText={pdfAssistantContext}
+      />
     </div>
   );
 }
