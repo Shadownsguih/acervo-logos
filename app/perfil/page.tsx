@@ -22,6 +22,16 @@ type StudyNote = {
   updated_at: string;
 };
 
+type StudyAssistantHistoryItem = {
+  id: string;
+  context_type: string | null;
+  context_label: string | null;
+  question: string | null;
+  answer: string | null;
+  source: string | null;
+  created_at: string;
+};
+
 type FavoriteMaterialCategory = {
   name: string;
   slug: string | null;
@@ -118,6 +128,20 @@ function getMaterialPreview(description: string | null) {
   return `${normalized.slice(0, 180).trim()}...`;
 }
 
+function getAssistantPreview(content: string | null) {
+  const normalized = String(content ?? "").replace(/\s+/g, " ").trim();
+
+  if (!normalized) {
+    return "Sem resposta registrada ainda.";
+  }
+
+  if (normalized.length <= 220) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, 220).trim()}...`;
+}
+
 function normalizeCategoryPath(value: string) {
   return value
     .normalize("NFD")
@@ -203,7 +227,12 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
 
   const adminSupabase = createAdminClient();
 
-  const [{ data: profile }, { data: notesData }, { data: favoritesData }] =
+  const [
+    { data: profile },
+    { data: notesData },
+    { data: favoritesData },
+    { data: assistantHistoryData, error: assistantHistoryError },
+  ] =
     await Promise.all([
       supabase
         .from("user_profiles")
@@ -235,12 +264,24 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("study_assistant_history")
+        .select(
+          "id, context_type, context_label, question, answer, source, created_at"
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(20),
     ]);
 
   const notes = (notesData ?? []) as StudyNote[];
   const favorites = ((favoritesData ?? []) as FavoriteMaterialRaw[])
     .map(normalizeFavoriteMaterial)
     .filter((item): item is FavoriteMaterial => item !== null);
+  const assistantHistory =
+    assistantHistoryError && assistantHistoryError.code
+      ? []
+      : ((assistantHistoryData ?? []) as StudyAssistantHistoryItem[]);
 
   const resolvedSearchParams = await searchParams;
   const statusMessage = getStatusMessage(resolvedSearchParams.status);
@@ -614,6 +655,127 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
     </ProfileSectionAnchor>
   );
 
+  const assistantHistorySection = (
+    <ProfileSectionAnchor
+      id="historico-assistente"
+      openDetailsSelector="details"
+      className="text-white md:rounded-[32px] md:border md:border-white/10 md:bg-white/[0.03] md:p-8 md:shadow-none"
+    >
+      <div className="md:hidden">
+        {assistantHistory.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-white/10 bg-[#131722] p-5 text-sm leading-7 text-zinc-400">
+            Suas conversas com o assistente de estudo aparecerao aqui conforme voce usar a IA na Biblia e nos PDFs.
+          </div>
+        ) : (
+          <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {assistantHistory.map((item) => (
+              <article
+                key={`${item.id}:mobile`}
+                className="w-[286px] shrink-0 snap-start rounded-[22px] border border-white/8 bg-[#131722] p-4"
+              >
+                <p className="text-[11px] uppercase tracking-[0.24em] text-amber-300">
+                  {item.context_label || "Assistente de estudo"}
+                </p>
+                <h3 className="mt-2 text-base font-semibold text-white">
+                  {item.question?.trim() || "Pergunta sem titulo"}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  {getAssistantPreview(item.answer)}
+                </p>
+                <p className="mt-3 text-[11px] text-zinc-500">
+                  {formatDate(item.created_at)}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="hidden flex-col gap-4 md:flex md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-amber-400">
+            Assistente de estudo
+          </p>
+          <h2 className="mt-2 text-xl font-bold md:text-2xl">
+            Historico das conversas com IA
+          </h2>
+        </div>
+
+        <div className="hidden w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 md:block md:w-auto">
+          <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+            Conversas salvas
+          </p>
+          <p className="mt-2 text-2xl font-bold text-white">
+            {assistantHistory.length}
+          </p>
+        </div>
+      </div>
+
+      <details className="group mt-5 hidden md:block md:mt-6 md:rounded-3xl md:border md:border-white/10 md:bg-black/20">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-medium text-white marker:hidden">
+          <span>Mostrar historico do assistente</span>
+          <span aria-hidden="true" className="transition group-open:rotate-180">
+            â–¼
+          </span>
+        </summary>
+
+        <div className="border-t border-white/10 px-5 py-5">
+          {assistantHistory.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-white/10 bg-[#131722] p-6 text-sm text-zinc-400 md:bg-[#12151d]">
+              Suas conversas com o assistente de estudo aparecerao aqui conforme voce usar a IA na Biblia e nos PDFs.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {assistantHistory.map((item) => (
+                <article
+                  key={item.id}
+                  className="rounded-3xl bg-[#131722] p-5 transition hover:bg-white/[0.04] md:border md:border-white/10 md:bg-[#12151d]"
+                >
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
+                          {item.context_type === "pdf" ? "PDF" : "Biblia"}
+                        </span>
+
+                        {item.source ? (
+                          <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-400">
+                            {item.source}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <p className="mt-4 text-[11px] uppercase tracking-[0.24em] text-zinc-500">
+                        {item.context_label || "Assistente de estudo"}
+                      </p>
+
+                      <h3 className="mt-2 text-base font-semibold text-white md:text-lg">
+                        {item.question?.trim() || "Pergunta sem titulo"}
+                      </h3>
+
+                      <p className="mt-3 text-sm leading-7 text-zinc-400">
+                        {getAssistantPreview(item.answer)}
+                      </p>
+                    </div>
+
+                    <div className="hidden shrink-0 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 md:block">
+                      <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">
+                        Registrada em
+                      </p>
+                      <p className="mt-2 text-xs text-zinc-300">
+                        {formatDate(item.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      </details>
+    </ProfileSectionAnchor>
+  );
+
   const accountInfoSection = (
     <section className="border-t border-white/10 px-1 pt-5 text-white md:rounded-[32px] md:border md:border-white/10 md:bg-white/[0.03] md:p-6 md:text-white md:shadow-none">
       <p className="text-xs uppercase tracking-[0.3em] text-amber-400/80 md:text-amber-400">
@@ -729,6 +891,16 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
               </div>
             </details>
 
+            <details className="group border-b border-white/8">
+              <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between px-5 py-4 text-[15px] font-medium text-white marker:hidden">
+                <span>Assistente</span>
+                <ProfileDisclosureChevron />
+              </summary>
+              <div className="border-t border-white/8 bg-[#0f1117] p-5">
+                {assistantHistorySection}
+              </div>
+            </details>
+
             <details className="group">
               <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between px-5 py-4 text-[15px] font-medium text-white marker:hidden">
                 <span>Seguranca</span>
@@ -752,6 +924,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
             </ProfileSectionAnchor>
             {favoritesSection}
             {notesSection}
+            {assistantHistorySection}
           </div>
 
           <aside className="space-y-6">

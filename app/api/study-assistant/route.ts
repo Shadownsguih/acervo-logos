@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
-import {
-  getMyBibleDictionaryEntry,
-  searchMyBibleDictionary,
-  type DictionaryEntry,
-} from "@/lib/mybible-dictionary";
 
 export const runtime = "nodejs";
 
@@ -30,8 +25,22 @@ type StudyAssistantRequest = {
 
 type StudyAssistantPayload = {
   answer?: string;
+  themes?: string[];
+  doctrine?: string[];
+  application?: string[];
   keyPoints?: string[];
   recommendedMaterialIds?: string[];
+};
+
+type HistoryInsertRow = {
+  user_id: string;
+  context_type: string;
+  context_label: string | null;
+  question: string;
+  answer: string;
+  key_points: string[];
+  recommended_material_ids: string[];
+  source: string | null;
 };
 
 type GeminiGenerateContentResponse = {
@@ -53,6 +62,23 @@ function normalizeText(value: string) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+}
+
+function extractJsonCandidate(rawText: string) {
+  const fencedMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/i);
+
+  if (fencedMatch?.[1]) {
+    return fencedMatch[1].trim();
+  }
+
+  const firstBrace = rawText.indexOf("{");
+  const lastBrace = rawText.lastIndexOf("}");
+
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    return rawText.slice(firstBrace, lastBrace + 1).trim();
+  }
+
+  return rawText.trim();
 }
 
 function extractKeywords(...values: string[]) {
@@ -107,7 +133,7 @@ function extractKeywords(...values: string[]) {
 }
 
 function parseAssistantPayload(rawText: string) {
-  const normalized = normalizeSpaces(rawText);
+  const normalized = normalizeSpaces(extractJsonCandidate(rawText));
 
   if (!normalized) {
     return null;
@@ -118,6 +144,24 @@ function parseAssistantPayload(rawText: string) {
     const answer = normalizeSpaces(String(parsed.answer ?? ""));
     const keyPoints = Array.isArray(parsed.keyPoints)
       ? parsed.keyPoints
+          .map((item) => normalizeSpaces(String(item ?? "")))
+          .filter(Boolean)
+          .slice(0, 4)
+      : [];
+    const themes = Array.isArray(parsed.themes)
+      ? parsed.themes
+          .map((item) => normalizeSpaces(String(item ?? "")))
+          .filter(Boolean)
+          .slice(0, 4)
+      : [];
+    const doctrine = Array.isArray(parsed.doctrine)
+      ? parsed.doctrine
+          .map((item) => normalizeSpaces(String(item ?? "")))
+          .filter(Boolean)
+          .slice(0, 4)
+      : [];
+    const application = Array.isArray(parsed.application)
+      ? parsed.application
           .map((item) => normalizeSpaces(String(item ?? "")))
           .filter(Boolean)
           .slice(0, 4)
@@ -135,11 +179,21 @@ function parseAssistantPayload(rawText: string) {
 
     return {
       answer,
+      themes,
+      doctrine,
+      application,
       keyPoints,
       recommendedMaterialIds,
     };
   } catch {
-    return null;
+    return {
+      answer: normalized,
+      themes: [],
+      doctrine: [],
+      application: [],
+      keyPoints: [],
+      recommendedMaterialIds: [],
+    };
   }
 }
 
@@ -213,31 +267,12 @@ function buildPrompt(params: {
   chapterText: string;
   mode: "bible" | "pdf";
   contextLabel: string;
-  dictionaryEntries: DictionaryEntry[];
   materials: MaterialCandidate[];
   history: Array<{
     role: "user" | "assistant";
     content: string;
   }>;
 }) {
-  const dictionaryBlock = params.dictionaryEntries.length
-    ? params.dictionaryEntries
-        .map((entry, index) => {
-          return [
-            `${index + 1}. ${entry.displayTerm}`,
-            entry.shortDefinition
-              ? `Definicao curta: ${entry.shortDefinition}`
-              : "",
-            entry.fullDefinition
-              ? `Definicao completa: ${normalizeSpaces(entry.fullDefinition).slice(0, 700)}`
-              : "",
-          ]
-            .filter(Boolean)
-            .join("\n");
-        })
-        .join("\n\n")
-    : "Nenhuma entrada de dicionario relevante foi localizada.";
-
   const materialsBlock = params.materials.length
     ? params.materials
         .map((material) =>
@@ -264,14 +299,25 @@ function buildPrompt(params: {
 
   return [
     "Voce e um assistente de estudo biblico do Acervo Logos.",
-    "Responda em portugues do Brasil, com tom pastoral, reverente, claro e teologicamente cuidadoso.",
+    "Responda em portugues do Brasil, com tom pastoral, reverente, claro e natural.",
+    "Explique como um bom professor: didatico, humano, paciente e facil de entender.",
+    "Priorize o significado do texto no seu contexto imediato e, quando ajudar, considere tambem o contexto do livro biblico.",
+    "Evite respostas superficiais, mas tambem nao use linguagem pesada, artificial ou academica demais.",
+    "Traga profundidade quando necessario, sem perder clareza, calor humano e sensibilidade devocional.",
     params.mode === "pdf"
-      ? "Baseie sua resposta primeiro no contexto do documento em leitura, depois nos verbetes do dicionario quando forem uteis, e por fim nos materiais do acervo."
-      : "Baseie sua resposta primeiro no trecho biblico fornecido, depois nos verbetes do dicionario e por fim nos materiais do acervo.",
+      ? "Baseie sua resposta primeiro no contexto do documento em leitura e, quando fizer sentido, recomende materiais do acervo."
+      : "Baseie sua resposta primeiro no trecho biblico fornecido e, quando fizer sentido, recomende materiais do acervo.",
     "Nao invente citacoes biblicas, nao afirme polemicas doutrinarias como se fossem consenso e nao mencione informacoes nao fornecidas.",
     "Quando houver limite de certeza, use formulacoes como 'o texto enfatiza', 'o contexto sugere' ou 'neste trecho vemos'.",
+    "Ao responder perguntas sobre aplicacao, explique primeiro o sentido do texto e depois mostre uma aplicacao pessoal e pratica para os dias de hoje.",
+    "A aplicacao deve soar humana, concreta, devocional e proxima da vida real do leitor.",
+    "Em perguntas doutrinarias, responda com fidelidade biblica, humildade e equilibrio.",
     "Considere o historico recente da conversa para manter continuidade, mas priorize sempre o trecho biblico atual.",
-    "Responda somente em JSON valido, sem markdown, neste formato exato: {\"answer\":\"...\",\"keyPoints\":[\"...\"],\"recommendedMaterialIds\":[\"...\"]}.",
+    "Gere tambem tres grupos curtos para organizar a resposta: temas, doutrina e aplicacao.",
+    "Responda somente em JSON valido, sem markdown, neste formato exato: {\"answer\":\"...\",\"themes\":[\"...\"],\"doctrine\":[\"...\"],\"application\":[\"...\"],\"keyPoints\":[\"...\"],\"recommendedMaterialIds\":[\"...\"]}.",
+    "themes deve resumir os assuntos centrais do trecho, com no maximo 4 itens curtos.",
+    "doctrine deve resumir enfases biblicas e teologicas do trecho, com no maximo 4 itens curtos.",
+    "application deve resumir implicacoes praticas para a vida crista que nascem do proprio texto, com no maximo 4 itens curtos.",
     "recommendedMaterialIds deve conter somente IDs da lista de materiais fornecida, com no maximo 3 itens.",
     `Historico recente:\n${historyBlock}`,
     `Pergunta do aluno: ${params.question}`,
@@ -286,7 +332,6 @@ function buildPrompt(params: {
         ? `Contexto de leitura atual:\n${params.chapterText}`
         : `Trecho biblico atual:\n${params.chapterText}`
       : "",
-    `Verbetes do dicionario relevantes:\n${dictionaryBlock}`,
     `Materiais candidatos do acervo:\n${materialsBlock}`,
   ]
     .filter(Boolean)
@@ -330,29 +375,6 @@ async function findMaterialCandidates(params: {
   return data as MaterialCandidate[];
 }
 
-async function findDictionaryEntries(question: string, selectedVerseText: string) {
-  const keywords = extractKeywords(question, selectedVerseText).slice(0, 4);
-  const collected = new Map<string, DictionaryEntry>();
-
-  for (const keyword of keywords) {
-    const results = await searchMyBibleDictionary(keyword, 3);
-
-    for (const result of results) {
-      const entry = await getMyBibleDictionaryEntry(result.id);
-
-      if (entry && !collected.has(entry.id)) {
-        collected.set(entry.id, entry);
-      }
-
-      if (collected.size >= 3) {
-        return [...collected.values()];
-      }
-    }
-  }
-
-  return [...collected.values()];
-}
-
 async function generateWithGemini(prompt: string) {
   const apiKey =
     process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim();
@@ -378,7 +400,7 @@ async function generateWithGemini(prompt: string) {
           systemInstruction: {
             parts: [
               {
-                text: "Voce produz respostas de estudo biblico fiéis ao contexto, claras e pastoralmente responsáveis.",
+                text: "Voce produz respostas de estudo biblico fieis ao contexto, claras e pastoralmente responsaveis.",
               },
             ],
           },
@@ -390,6 +412,7 @@ async function generateWithGemini(prompt: string) {
           generationConfig: {
             temperature: 0.3,
             maxOutputTokens: 700,
+            responseMimeType: "application/json",
           },
         }),
         cache: "no-store",
@@ -471,6 +494,28 @@ async function generateWithOpenAi(prompt: string) {
   };
 }
 
+async function persistStudyAssistantHistory(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  row: HistoryInsertRow
+) {
+  const { error } = await supabase.from("study_assistant_history").insert(row);
+
+  if (error) {
+    const message = String(error.message || "");
+
+    if (
+      message.includes("study_assistant_history") ||
+      message.includes("schema cache") ||
+      message.includes("relation") ||
+      message.includes("does not exist")
+    ) {
+      return;
+    }
+
+    throw error;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -530,8 +575,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [dictionaryEntries, materialCandidates] = await Promise.all([
-      findDictionaryEntries(question, selectedVerseText),
+    const [materialCandidates] = await Promise.all([
       findMaterialCandidates({
         question,
         reference,
@@ -547,7 +591,6 @@ export async function POST(request: NextRequest) {
       chapterText,
       mode,
       contextLabel,
-      dictionaryEntries,
       materials: materialCandidates,
       history,
     });
@@ -570,17 +613,25 @@ export async function POST(request: NextRequest) {
       .map((id) => materialCandidates.find((material) => material.id === id) ?? null)
       .filter((material): material is MaterialCandidate => material !== null);
 
+    await persistStudyAssistantHistory(supabase, {
+      user_id: user.id,
+      context_type: mode,
+      context_label: contextLabel || reference || null,
+      question,
+      answer: generated.answer,
+      key_points: generated.keyPoints,
+      recommended_material_ids: generated.recommendedMaterialIds,
+      source: generated.source,
+    });
+
     return NextResponse.json({
       ok: true,
       source: generated.source,
       answer: generated.answer,
+      themes: generated.themes,
+      doctrine: generated.doctrine,
+      application: generated.application,
       keyPoints: generated.keyPoints,
-      dictionaryEntries: dictionaryEntries.map((entry) => ({
-        id: entry.id,
-        displayTerm: entry.displayTerm,
-        shortDefinition: entry.shortDefinition,
-        language: entry.language,
-      })),
       recommendedMaterials,
     });
   } catch (error) {
