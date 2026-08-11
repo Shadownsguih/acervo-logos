@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { suggestPdfMetadata } from "./pdf-auto-metadata";
 
 type Category = {
   id: string;
@@ -142,6 +143,10 @@ export default function MaterialWithVolumesForm({
   ]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAutoFillingMaterial, setIsAutoFillingMaterial] = useState(false);
+  const [autoFillingVolumeId, setAutoFillingVolumeId] = useState<string | null>(
+    null
+  );
   const [statusMessage, setStatusMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -181,6 +186,96 @@ export default function MaterialWithVolumesForm({
 
       return current.filter((item) => item.localId !== localId);
     });
+  }
+
+  async function handleAutoFillMaterial(selectedFile?: File | null) {
+    const fileToUse = selectedFile ?? volumes[0]?.file ?? null;
+
+    setSuccessMessage("");
+    setErrorMessage("");
+
+    if (!fileToUse) {
+      setErrorMessage(
+        "Selecione o PDF de um volume para sugerir titulo e descricao da obra."
+      );
+      return;
+    }
+
+    if (fileToUse.type !== "application/pdf") {
+      setErrorMessage("Envie apenas arquivos PDF.");
+      return;
+    }
+
+    setIsAutoFillingMaterial(true);
+    setStatusMessage("Lendo o PDF para sugerir titulo e descricao da obra...");
+
+    try {
+      const suggestion = await suggestPdfMetadata(fileToUse);
+
+      if (suggestion.title) {
+        setTitle(suggestion.title);
+      }
+
+      if (suggestion.description) {
+        setDescription(suggestion.description);
+      }
+
+      setStatusMessage("");
+    } catch (error) {
+      setStatusMessage("");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel analisar o PDF da obra agora."
+      );
+    } finally {
+      setIsAutoFillingMaterial(false);
+    }
+  }
+
+  async function handleAutoFillVolume(
+    localId: string,
+    selectedFile?: File | null
+  ) {
+    const volume = volumes.find((item) => item.localId === localId);
+    const fileToUse = selectedFile ?? volume?.file ?? null;
+
+    setSuccessMessage("");
+    setErrorMessage("");
+
+    if (!fileToUse) {
+      setErrorMessage("Selecione o PDF do volume para preencher automaticamente.");
+      return;
+    }
+
+    if (fileToUse.type !== "application/pdf") {
+      setErrorMessage("Envie apenas arquivos PDF.");
+      return;
+    }
+
+    setAutoFillingVolumeId(localId);
+    setStatusMessage("Lendo o PDF para sugerir titulo e descricao do volume...");
+
+    try {
+      const suggestion = await suggestPdfMetadata(fileToUse);
+
+      updateVolume(localId, (current) => ({
+        ...current,
+        title: suggestion.title || current.title,
+        description: suggestion.description || current.description,
+      }));
+
+      setStatusMessage("");
+    } catch (error) {
+      setStatusMessage("");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel analisar o PDF do volume agora."
+      );
+    } finally {
+      setAutoFillingVolumeId(null);
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -391,6 +486,18 @@ export default function MaterialWithVolumesForm({
               className={fieldClassName}
               placeholder="Ex.: Comentario Biblico Champlin"
             />
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => void handleAutoFillMaterial()}
+                disabled={isAutoFillingMaterial}
+                className="inline-flex items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200 transition hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isAutoFillingMaterial
+                  ? "Analisando obra..."
+                  : "Sugerir titulo da obra"}
+              </button>
+            </div>
           </div>
 
           <div>
@@ -546,13 +653,34 @@ export default function MaterialWithVolumesForm({
                           ...current,
                           file: selectedFile,
                         }));
+
+                        if (selectedFile) {
+                          void handleAutoFillVolume(volume.localId, selectedFile);
+
+                          if (index === 0 && !title.trim() && !description.trim()) {
+                            void handleAutoFillMaterial(selectedFile);
+                          }
+                        }
                       }}
                       className="block w-full rounded-[20px] border border-white/10 bg-[#11151d] px-4 py-3 text-sm text-zinc-300 file:mr-4 file:rounded-full file:border-0 file:bg-amber-300 file:px-4 file:py-2 file:font-semibold file:text-black hover:file:bg-amber-200"
                     />
 
                     {volume.file ? (
-                      <div className="mt-3 rounded-[18px] border border-white/10 bg-black/20 px-3 py-2 text-xs text-zinc-400">
-                        Tamanho: {(volume.file.size / 1024 / 1024).toFixed(2)} MB
+                      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="rounded-[18px] border border-white/10 bg-black/20 px-3 py-2 text-xs text-zinc-400">
+                          Tamanho: {(volume.file.size / 1024 / 1024).toFixed(2)} MB
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => void handleAutoFillVolume(volume.localId)}
+                          disabled={autoFillingVolumeId === volume.localId}
+                          className="inline-flex items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200 transition hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {autoFillingVolumeId === volume.localId
+                            ? "Analisando volume..."
+                            : "Preencher volume"}
+                        </button>
                       </div>
                     ) : null}
                   </div>

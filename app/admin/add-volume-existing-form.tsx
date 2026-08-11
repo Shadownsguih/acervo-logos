@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { suggestPdfMetadata } from "./pdf-auto-metadata";
 
 type Material = {
   id: string;
@@ -99,8 +100,51 @@ export default function AddVolumeExistingForm({
   const [file, setFile] = useState<File | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [msg, setMsg] = useState("");
+
+  async function handleAutoFill(selectedFile?: File | null) {
+    const fileToUse = selectedFile ?? file;
+
+    setMsg("");
+
+    if (!fileToUse) {
+      setMsg("Selecione o PDF do volume para preencher automaticamente.");
+      return;
+    }
+
+    if (fileToUse.type !== "application/pdf") {
+      setMsg("Envie apenas arquivos PDF.");
+      return;
+    }
+
+    setIsAutoFilling(true);
+    setStatusMessage("Lendo o PDF para sugerir titulo e descricao...");
+
+    try {
+      const suggestion = await suggestPdfMetadata(fileToUse);
+
+      if (suggestion.title) {
+        setTitle(suggestion.title);
+      }
+
+      if (suggestion.description) {
+        setDescription(suggestion.description);
+      }
+
+      setStatusMessage("");
+    } catch (error) {
+      setStatusMessage("");
+      setMsg(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel analisar o PDF agora."
+      );
+    } finally {
+      setIsAutoFilling(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -298,13 +342,33 @@ export default function AddVolumeExistingForm({
               id="existing-volume-pdf"
               type="file"
               accept="application/pdf"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              onChange={(e) => {
+                const selectedFile = e.target.files?.[0] ?? null;
+                setFile(selectedFile);
+
+                if (selectedFile) {
+                  void handleAutoFill(selectedFile);
+                }
+              }}
               className="block w-full rounded-[20px] border border-white/10 bg-[#11151d] px-4 py-3 text-sm text-zinc-300 file:mr-4 file:rounded-full file:border-0 file:bg-amber-300 file:px-4 file:py-2 file:font-semibold file:text-black hover:file:bg-amber-200"
             />
 
             {file ? (
-              <div className="mt-3 rounded-[18px] border border-white/10 bg-black/20 px-3 py-2 text-xs text-zinc-400">
-                Tamanho selecionado: {(file.size / 1024 / 1024).toFixed(2)} MB
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="rounded-[18px] border border-white/10 bg-black/20 px-3 py-2 text-xs text-zinc-400">
+                  Tamanho selecionado: {(file.size / 1024 / 1024).toFixed(2)} MB
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void handleAutoFill()}
+                  disabled={isAutoFilling}
+                  className="inline-flex items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200 transition hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isAutoFilling
+                    ? "Analisando PDF..."
+                    : "Preencher automaticamente"}
+                </button>
               </div>
             ) : null}
           </div>

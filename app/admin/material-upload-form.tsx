@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { suggestPdfMetadata } from "./pdf-auto-metadata";
 
 type Category = {
   id: string;
@@ -137,6 +138,7 @@ export default function MaterialUploadForm({
   const [file, setFile] = useState<File | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -144,6 +146,49 @@ export default function MaterialUploadForm({
   const canSubmit = useMemo(() => {
     return !!title.trim() && !!categoryId && !!file && !isSubmitting;
   }, [title, categoryId, file, isSubmitting]);
+
+  async function handleAutoFill(selectedFile?: File | null) {
+    const fileToUse = selectedFile ?? file;
+
+    setSuccessMessage("");
+    setErrorMessage("");
+
+    if (!fileToUse) {
+      setErrorMessage("Selecione um PDF para gerar titulo e descricao.");
+      return;
+    }
+
+    if (fileToUse.type !== "application/pdf") {
+      setErrorMessage("Envie apenas arquivos PDF.");
+      return;
+    }
+
+    setIsAutoFilling(true);
+    setStatusMessage("Lendo o PDF para sugerir titulo e descricao...");
+
+    try {
+      const suggestion = await suggestPdfMetadata(fileToUse);
+
+      if (suggestion.title) {
+        setTitle(suggestion.title);
+      }
+
+      if (suggestion.description) {
+        setDescription(suggestion.description);
+      }
+
+      setStatusMessage("");
+    } catch (error) {
+      setStatusMessage("");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel analisar o PDF agora."
+      );
+    } finally {
+      setIsAutoFilling(false);
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -370,13 +415,29 @@ export default function MaterialUploadForm({
               onChange={(event) => {
                 const selectedFile = event.target.files?.[0] ?? null;
                 setFile(selectedFile);
+                if (selectedFile) {
+                  void handleAutoFill(selectedFile);
+                }
               }}
               className="block w-full rounded-[20px] border border-white/10 bg-[#11151d] px-4 py-3 text-sm text-zinc-300 file:mr-4 file:rounded-full file:border-0 file:bg-amber-300 file:px-4 file:py-2 file:font-semibold file:text-black hover:file:bg-amber-200"
             />
 
             {file ? (
-              <div className="mt-3 rounded-[18px] border border-white/10 bg-black/20 px-3 py-2 text-xs text-zinc-400">
-                Tamanho selecionado: {(file.size / 1024 / 1024).toFixed(2)} MB
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="rounded-[18px] border border-white/10 bg-black/20 px-3 py-2 text-xs text-zinc-400">
+                  Tamanho selecionado: {(file.size / 1024 / 1024).toFixed(2)} MB
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void handleAutoFill()}
+                  disabled={isAutoFilling}
+                  className="inline-flex items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200 transition hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isAutoFilling
+                    ? "Analisando PDF..."
+                    : "Preencher automaticamente"}
+                </button>
               </div>
             ) : null}
           </div>
