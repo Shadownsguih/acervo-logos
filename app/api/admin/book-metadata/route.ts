@@ -196,6 +196,15 @@ async function findGoogleBooksMatch(title: string) {
   const candidates = buildTitleCandidates(title);
   let googleQuotaExceeded = false;
   let googleFetchFailed = false;
+  let fallbackMatch: {
+    success: boolean;
+    title: string;
+    description: string;
+    authors: string[];
+    categories: string[];
+    publishedDate: string | null;
+    source: string;
+  } | null = null;
 
   for (const candidate of candidates) {
     try {
@@ -227,6 +236,29 @@ async function findGoogleBooksMatch(title: string) {
           googleFetchFailed,
         };
       }
+
+      const firstAvailableDescription = rankedItems.find(
+        ({ item }) =>
+          normalizeSpaces(String(item.volumeInfo?.description ?? "")).length > 0
+      )?.item;
+
+      if (
+        firstAvailableDescription?.volumeInfo?.description &&
+        !fallbackMatch
+      ) {
+        fallbackMatch = {
+          success: true,
+          title: buildDisplayTitle(firstAvailableDescription),
+          description: shortenDescription(
+            firstAvailableDescription.volumeInfo.description
+          ),
+          authors: firstAvailableDescription.volumeInfo.authors ?? [],
+          categories: firstAvailableDescription.volumeInfo.categories ?? [],
+          publishedDate:
+            firstAvailableDescription.volumeInfo.publishedDate ?? null,
+          source: "Google Books",
+        };
+      }
     } catch (error) {
       if (!(error instanceof Error)) {
         throw error;
@@ -247,7 +279,7 @@ async function findGoogleBooksMatch(title: string) {
   }
 
   return {
-    match: null,
+    match: fallbackMatch,
     googleQuotaExceeded,
     googleFetchFailed,
   };
@@ -340,12 +372,21 @@ async function searchOpenLibrary(query: string) {
 async function findOpenLibraryMatch(title: string) {
   const candidates = buildTitleCandidates(title);
   let openLibraryFetchFailed = false;
+  let fallbackMatch: {
+    title: string;
+    description: string;
+    authors: string[];
+    categories: string[];
+    publishedDate: string | null;
+    source: string;
+  } | null = null;
 
   for (const candidate of candidates) {
     try {
       const match = await searchOpenLibrary(candidate);
 
       if (match) {
+        fallbackMatch = match;
         return {
           match,
           openLibraryFetchFailed,
@@ -362,7 +403,7 @@ async function findOpenLibraryMatch(title: string) {
   }
 
   return {
-    match: null,
+    match: fallbackMatch,
     openLibraryFetchFailed,
   };
 }
@@ -437,7 +478,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Nenhum resumo confiavel foi encontrado para este titulo nas fontes online disponiveis. Tente buscar com um titulo mais limpo, sem volume, subtitulo ou complemento.",
+          "Nenhum resumo foi encontrado nas fontes online disponiveis para este titulo no momento.",
       },
       { status: 404 }
     );
