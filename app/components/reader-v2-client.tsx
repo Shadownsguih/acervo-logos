@@ -33,6 +33,7 @@ const ZOOM_STEP = 0.15;
 const DOUBLE_TAP_DELAY = 300;
 const MOBILE_CONTROLS_HIDE_DELAY = 1800;
 const DESKTOP_CONTROLS_HIDE_DELAY = 2200;
+const LOGOS_IA_PROMPT_EVENT = "logos-ia:prompt";
 
 type FitMode = "width" | "page";
 type DeviceKind =
@@ -40,6 +41,12 @@ type DeviceKind =
   | "mobile-standard"
   | "tablet"
   | "desktop";
+
+type PdfSelectionMenuState = {
+  text: string;
+  x: number;
+  y: number;
+};
 
 export type ReaderV2VolumeItem = {
   id: string;
@@ -100,6 +107,10 @@ function resolveDeviceKind(width: number): DeviceKind {
   }
 
   return "desktop";
+}
+
+function normalizeSelectedText(value: string) {
+  return value.replace(/\s+/g, " ").trim();
 }
 
 export default function ReaderV2Client({
@@ -168,6 +179,8 @@ export default function ReaderV2Client({
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [isStudyToolsOpen, setIsStudyToolsOpen] = useState(false);
   const [hasPageLinks, setHasPageLinks] = useState(false);
+  const [pdfSelectionMenu, setPdfSelectionMenu] =
+    useState<PdfSelectionMenuState | null>(null);
   const [statusHint, setStatusHint] = useState(
     "Ambiente de leitura ativo. Toque no centro para recolher os controles."
   );
@@ -206,11 +219,58 @@ export default function ReaderV2Client({
     isDictionaryOpen ||
     isNotesOpen ||
     (isMobile && isStudyToolsOpen);
+  const isFloatingSelectionMenuOpen = Boolean(pdfSelectionMenu);
 
   function closeStudyPanels() {
     setIsVolumesOpen(false);
     setIsDictionaryOpen(false);
     setIsNotesOpen(false);
+  }
+
+  async function handleCopySelectedPdfText() {
+    if (!pdfSelectionMenu?.text) {
+      return;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(pdfSelectionMenu.text);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = pdfSelectionMenu.text;
+        textarea.setAttribute("readonly", "true");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+
+      revealChromeTemporarily("Trecho copiado para a area de transferencia.");
+    } catch {
+      revealChromeTemporarily("Nao foi possivel copiar o trecho selecionado.");
+    } finally {
+      closePdfSelectionMenu();
+    }
+  }
+
+  function handleAskLogosIaAboutSelection() {
+    if (!pdfSelectionMenu?.text) {
+      return;
+    }
+
+    window.dispatchEvent(
+      new CustomEvent(LOGOS_IA_PROMPT_EVENT, {
+        detail: {
+          prompt: `Explique o contexto historico e cultural do seguinte trecho do PDF:\n\n"${pdfSelectionMenu.text}"`,
+          selectedText: pdfSelectionMenu.text,
+        },
+      })
+    );
+
+    closePdfSelectionMenu();
+    revealChromeTemporarily("Trecho enviado ao Logos IA.");
   }
 
   function toggleVolumesPanel() {
@@ -266,6 +326,54 @@ export default function ReaderV2Client({
     },
     [scheduleChromeAutoHide]
   );
+
+  const clearPdfSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      selection.removeAllRanges();
+    }
+  }, []);
+
+  const closePdfSelectionMenu = useCallback(() => {
+    setPdfSelectionMenu(null);
+  }, []);
+
+  const getPdfSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      return null;
+    }
+
+    const range = selection.getRangeAt(0);
+    const selectedText = normalizeSelectedText(selection.toString());
+
+    if (!selectedText) {
+      return null;
+    }
+
+    const container = range.commonAncestorContainer;
+    const node =
+      container.nodeType === Node.ELEMENT_NODE
+        ? (container as Element)
+        : container.parentElement;
+
+    if (!node) {
+      return null;
+    }
+
+    if (!scrollAreaRef.current?.contains(node)) {
+      return null;
+    }
+
+    if (!node.closest(".react-pdf__Page__textContent")) {
+      return null;
+    }
+
+    return {
+      text: selectedText,
+      rect: range.getBoundingClientRect(),
+    };
+  }, []);
 
   const saveProgress = useCallback(
     (nextPage: number) => {
@@ -720,6 +828,24 @@ export default function ReaderV2Client({
     }
   }
 
+  function handlePdfTextContextMenu(event: ReactMouseEvent<HTMLDivElement>) {
+    const selection = getPdfSelection();
+
+    if (!selection) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    setPdfSelectionMenu({
+      text: selection.text,
+      x: Math.min(event.clientX + 10, window.innerWidth - 24),
+      y: Math.min(event.clientY + 8, window.innerHeight - 24),
+    });
+    revealChromeTemporarily("Trecho selecionado. Escolha uma acao.");
+  }
+
   function handleZoneClick(event: ReactMouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
@@ -806,6 +932,30 @@ export default function ReaderV2Client({
   }, [clearHideChromeTimer, revealChromeTemporarily]);
 
   useEffect(() => {
+    function handleDismissSelectionMenu() {
+      closePdfSelectionMenu();
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closePdfSelectionMenu();
+      }
+    }
+
+    window.addEventListener("scroll", handleDismissSelectionMenu, {
+      passive: true,
+    });
+    window.addEventListener("resize", handleDismissSelectionMenu);
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("scroll", handleDismissSelectionMenu);
+      window.removeEventListener("resize", handleDismissSelectionMenu);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [closePdfSelectionMenu]);
+
+  useEffect(() => {
     if (numPages > 0 && pageNumber > numPages) {
       setPageNumber(numPages);
       setPageInput(String(numPages));
@@ -819,6 +969,11 @@ export default function ReaderV2Client({
 
     saveProgress(pageNumber);
   }, [pageNumber, numPages, saveProgress]);
+
+  useEffect(() => {
+    closePdfSelectionMenu();
+    clearPdfSelection();
+  }, [clearPdfSelection, closePdfSelectionMenu, pageNumber]);
 
   useEffect(() => {
     if (isChromeVisible) {
@@ -1417,7 +1572,7 @@ export default function ReaderV2Client({
           </>
         ) : null}
 
-        {!isZoomed && shouldShowTapZones ? (
+        {!isZoomed && shouldShowTapZones && !isFloatingSelectionMenuOpen ? (
           <>
             <button
               type="button"
@@ -1425,7 +1580,7 @@ export default function ReaderV2Client({
                 handleZoneClick(event);
                 goToPreviousPage();
               }}
-              className="absolute inset-y-0 left-0 z-20 w-[20%] md:w-[16%]"
+              className="pointer-events-none absolute inset-y-0 left-0 z-20 hidden w-[20%] md:w-[16%]"
               aria-label="Pagina anterior"
             />
 
@@ -1450,7 +1605,7 @@ export default function ReaderV2Client({
 
                 focusShell();
               }}
-              className="absolute inset-y-0 left-[20%] z-20 w-[60%] md:left-[16%] md:w-[68%]"
+              className="pointer-events-none absolute inset-y-0 left-[20%] z-20 hidden w-[60%] md:left-[16%] md:w-[68%]"
               aria-label="Area central"
             />
 
@@ -1460,7 +1615,7 @@ export default function ReaderV2Client({
                 handleZoneClick(event);
                 goToNextPage();
               }}
-              className="absolute inset-y-0 right-0 z-20 w-[20%] md:w-[16%]"
+              className="pointer-events-none absolute inset-y-0 right-0 z-20 hidden w-[20%] md:w-[16%]"
               aria-label="Proxima pagina"
             />
           </>
@@ -1472,6 +1627,7 @@ export default function ReaderV2Client({
             className={`relative h-full w-full overflow-auto ${
               isZoomed ? "cursor-grab" : ""
             }`}
+            onContextMenu={handlePdfTextContextMenu}
             style={{
               touchAction: isMobile
                 ? isZoomed
@@ -1524,7 +1680,7 @@ export default function ReaderV2Client({
                         key={`${pageNumber}-${mobileBasePageWidth}`}
                         pageNumber={pageNumber}
                         width={mobileBasePageWidth}
-                        renderTextLayer={false}
+                        renderTextLayer
                         renderAnnotationLayer
                         filterAnnotations={({ annotations }) =>
                           annotations.filter(
@@ -1552,7 +1708,7 @@ export default function ReaderV2Client({
                     key={`${pageNumber}-${desktopRenderedPageWidth}-${zoomLevel}-${fitMode}`}
                     pageNumber={pageNumber}
                     width={desktopRenderedPageWidth}
-                    renderTextLayer={false}
+                    renderTextLayer
                     renderAnnotationLayer
                     filterAnnotations={({ annotations }) =>
                       annotations.filter(
@@ -1570,6 +1726,58 @@ export default function ReaderV2Client({
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="rounded-full border border-white/10 bg-black/35 px-4 py-2 text-sm text-zinc-200 backdrop-blur-xl">
                   Preparando leitura...
+                </div>
+              </div>
+            ) : null}
+
+            {pdfSelectionMenu ? (
+              <div className="fixed inset-0 z-[65]">
+                <div
+                  className="absolute inset-0"
+                  onClick={closePdfSelectionMenu}
+                />
+
+                <div
+                  className={`absolute min-w-[13.5rem] max-w-[calc(100vw-1.5rem)] rounded-[22px] border border-white/12 bg-[#0f1117]/96 p-2 shadow-[0_24px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl ${
+                    isMobile ? "inset-x-3 bottom-4 top-auto" : ""
+                  }`}
+                  style={
+                    isMobile
+                      ? undefined
+                      : {
+                          left: Math.max(12, pdfSelectionMenu.x),
+                          top: Math.max(12, pdfSelectionMenu.y),
+                        }
+                  }
+                  onClick={(event) => event.stopPropagation()}
+                  onPointerDown={(event) => event.stopPropagation()}
+                >
+                  <p className="px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+                    Trecho selecionado
+                  </p>
+                  <p className="line-clamp-3 px-2 pb-2 text-sm leading-6 text-zinc-200">
+                    {pdfSelectionMenu.text}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleCopySelectedPdfText();
+                    }}
+                    className="mt-1 flex w-full items-center justify-between rounded-[16px] border border-white/10 bg-white/[0.03] px-3 py-3 text-left text-sm font-medium text-zinc-100 transition hover:bg-white/[0.07]"
+                  >
+                    <span>Copiar trecho</span>
+                    <span className="text-zinc-500">Copiar</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleAskLogosIaAboutSelection}
+                    className="mt-2 flex w-full items-center justify-between rounded-[16px] border border-amber-300/20 bg-amber-300/10 px-3 py-3 text-left text-sm font-medium text-amber-100 transition hover:bg-amber-300/18"
+                  >
+                    <span>Perguntar ao Logos IA</span>
+                    <span className="text-amber-200/70">Abrir</span>
+                  </button>
                 </div>
               </div>
             ) : null}
@@ -1779,6 +1987,15 @@ export default function ReaderV2Client({
           opacity: 1;
           background: transparent;
           box-shadow: none;
+        }
+
+        [data-reader-shell="v2"] .react-pdf__Page__textContent {
+          user-select: text;
+          cursor: text;
+        }
+
+        [data-reader-shell="v2"] .react-pdf__Page__textContent ::selection {
+          background: rgba(251, 191, 36, 0.32);
         }
       `}</style>
 

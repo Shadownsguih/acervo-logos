@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type KeyboardEvent,
+} from "react";
 
 type StudyAssistantPanelProps = {
   reference: string;
@@ -66,6 +72,13 @@ const QUICK_ACTIONS = [
     prompt: "Qual a aplicacao pratica deste texto para hoje?",
   },
 ] as const;
+
+const LOGOS_IA_PROMPT_EVENT = "logos-ia:prompt";
+
+type LogosIaPromptEventDetail = {
+  prompt: string;
+  selectedText?: string;
+};
 
 async function readJsonSafely<T>(response: Response): Promise<T | null> {
   try {
@@ -153,6 +166,9 @@ export default function StudyAssistantPanel({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [activeSelectedText, setActiveSelectedText] = useState(
+    selectedVerseText
+  );
   const isReaderRoute = pathname.startsWith("/ler");
 
   const effectiveReference = useMemo(() => {
@@ -226,95 +242,143 @@ export default function StudyAssistantPanel({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
-  async function askAssistant(nextQuestion: string) {
-    const normalizedQuestion = nextQuestion.trim();
+  useEffect(() => {
+    setActiveSelectedText(selectedVerseText);
+  }, [selectedVerseText]);
 
-    if (!normalizedQuestion) {
-      setErrorMessage("Escreva sua pergunta antes de consultar o assistente.");
-      return;
-    }
+  const askAssistant = useCallback(
+    async (
+      nextQuestion: string,
+      options?: {
+        selectedTextOverride?: string;
+      }
+    ) => {
+      const normalizedQuestion = nextQuestion.trim();
 
-    setIsLoading(true);
-    setErrorMessage("");
-
-    const nextUserMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: normalizedQuestion,
-    };
-
-    const historyForRequest = messages
-      .slice(-5)
-      .map((item) => ({
-        role: item.role,
-        content: item.content,
-      }))
-      .concat({
-        role: "user" as const,
-        content: normalizedQuestion,
-      });
-
-    setMessages((current) => [...current, nextUserMessage]);
-    setQuestion("");
-
-    try {
-      const response = await fetch("/api/study-assistant", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question: normalizedQuestion,
-          reference: effectiveReference,
-          translation: translationLabel,
-          selectedVerseText,
-          chapterText,
-          mode,
-          contextLabel: effectiveContextLabel,
-          history: historyForRequest,
-        }),
-      });
-
-      const payload = await readJsonSafely<AssistantResponse>(response);
-
-      if (!response.ok || !payload?.ok) {
-        throw new Error(
-          payload?.error || "O assistente nao conseguiu responder agora."
-        );
+      if (!normalizedQuestion) {
+        setErrorMessage("Escreva sua pergunta antes de consultar o assistente.");
+        return;
       }
 
-      setMessages((current) => [
-        ...current,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: payload.answer || "",
-          renderedContent: "",
-          source: payload.source,
-          themes: payload.themes || [],
-          doctrine: payload.doctrine || [],
-          application: payload.application || [],
-          applicationWarning: Boolean(payload.applicationWarning),
-          keyPoints: payload.keyPoints || [],
-          recommendedMaterials: payload.recommendedMaterials || [],
-        },
-      ]);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "O assistente nao conseguiu responder agora."
-      );
-    } finally {
-      setIsLoading(false);
+      const selectedTextForRequest =
+        options?.selectedTextOverride ?? activeSelectedText;
+
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const nextUserMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: normalizedQuestion,
+      };
+
+      const historyForRequest = messages
+        .slice(-5)
+        .map((item) => ({
+          role: item.role,
+          content: item.content,
+        }))
+        .concat({
+          role: "user" as const,
+          content: normalizedQuestion,
+        });
+
+      setMessages((current) => [...current, nextUserMessage]);
+      setQuestion("");
+
+      try {
+        const response = await fetch("/api/study-assistant", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            question: normalizedQuestion,
+            reference: effectiveReference,
+            translation: translationLabel,
+            selectedVerseText: selectedTextForRequest,
+            chapterText,
+            mode,
+            contextLabel: effectiveContextLabel,
+            history: historyForRequest,
+          }),
+        });
+
+        const payload = await readJsonSafely<AssistantResponse>(response);
+
+        if (!response.ok || !payload?.ok) {
+          throw new Error(
+            payload?.error || "O assistente nao conseguiu responder agora."
+          );
+        }
+
+        setMessages((current) => [
+          ...current,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: payload.answer || "",
+            renderedContent: "",
+            source: payload.source,
+            themes: payload.themes || [],
+            doctrine: payload.doctrine || [],
+            application: payload.application || [],
+            applicationWarning: Boolean(payload.applicationWarning),
+            keyPoints: payload.keyPoints || [],
+            recommendedMaterials: payload.recommendedMaterials || [],
+          },
+        ]);
+      } catch (error) {
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "O assistente nao conseguiu responder agora."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      activeSelectedText,
+      chapterText,
+      effectiveContextLabel,
+      effectiveReference,
+      messages,
+      mode,
+      translationLabel,
+    ]
+  );
+
+  useEffect(() => {
+    function handlePromptRequest(event: Event) {
+      const detail = (event as CustomEvent<LogosIaPromptEventDetail>).detail;
+
+      if (!detail?.prompt) {
+        return;
+      }
+
+      setIsOpen(true);
+
+      if (detail.selectedText) {
+        setActiveSelectedText(detail.selectedText);
+      }
+
+      void askAssistant(detail.prompt, {
+        selectedTextOverride: detail.selectedText,
+      });
     }
-  }
+
+    window.addEventListener(LOGOS_IA_PROMPT_EVENT, handlePromptRequest);
+    return () =>
+      window.removeEventListener(LOGOS_IA_PROMPT_EVENT, handlePromptRequest);
+  }, [askAssistant]);
 
   function resetConversation() {
     setMessages([]);
     setQuestion("");
     setErrorMessage("");
     setIsLoading(false);
+    setActiveSelectedText(selectedVerseText);
   }
 
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -331,7 +395,7 @@ export default function StudyAssistantPanel({
     void askAssistant(question);
   }
 
-  const helperLabel = selectedVerseText
+  const helperLabel = activeSelectedText
     ? "O assistente vai priorizar o versiculo selecionado e o contexto do capitulo."
     : mode === "pdf"
     ? "O assistente vai considerar o documento atual, a pagina em leitura e o contexto do material."
