@@ -15,6 +15,10 @@ type SermonAssistantRequest = {
   currentConclusion?: string;
   currentMainPoints?: SermonOutlinePoint[];
   insertPosition?: string;
+  pointTitle?: string;
+  pointContent?: string;
+  pointIndex?: number;
+  pointMode?: string;
   theme?: string;
   objective?: string;
   tone?: string;
@@ -25,7 +29,8 @@ type SermonAssistantAction =
   | "introduction"
   | "main_points"
   | "conclusion"
-  | "notes_to_point";
+  | "notes_to_point"
+  | "point_refine";
 
 type SermonOutlinePoint = {
   title?: string;
@@ -253,6 +258,10 @@ function buildActionPrompt(
     currentConclusion: string;
     currentMainPoints: SermonOutlinePoint[];
     insertPosition: string;
+    pointTitle: string;
+    pointContent: string;
+    pointIndex: number;
+    pointMode: string;
     theme: string;
     objective: string;
     tone: string;
@@ -376,6 +385,49 @@ function buildActionPrompt(
       params.insertPosition
         ? `Posicao desejada para o novo ponto: ${params.insertPosition}`
         : "",
+      params.referenceText ? `Texto biblico base:\n${params.referenceText}` : "",
+      params.notes ? `Observacoes do usuario:\n${params.notes}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  }
+
+  if (action === "point_refine") {
+    return [
+      "Voce e um assistente de apoio ao Meu Sermonario do Acervo Logos.",
+      "Trabalhe somente em um ponto especifico do sermao.",
+      "Responda em portugues do Brasil com tom pastoral, humano, natural e devocional.",
+      "Mantenha fidelidade ao texto biblico e unidade com o restante da mensagem.",
+      "Nao invente informacoes fora do texto fornecido.",
+      params.pointMode === "expand"
+        ? "Expanda o ponto atual, aprofundando a explicacao e a aplicacao sem perder clareza."
+        : params.pointMode === "retone"
+          ? "Reescreva o ponto atual no tom pedido, mantendo a mesma ideia central."
+          : "Melhore o ponto atual, deixando-o mais claro, pregavel e bem organizado.",
+      "Responda somente em JSON valido, sem markdown, neste formato exato:",
+      '{"title":"...","content":"..."}',
+      params.theme ? `Tema proposto pelo usuario: ${params.theme}` : "",
+      params.objective ? `Objetivo da mensagem: ${params.objective}` : "",
+      params.tone ? `Tom desejado da mensagem: ${params.tone}` : "",
+      params.reference ? `Referencia: ${params.reference}` : "",
+      params.translation ? `Versao: ${params.translation}` : "",
+      params.currentTitle ? `Titulo atual do usuario: ${params.currentTitle}` : "",
+      params.introduction ? `Introducao atual:\n${params.introduction}` : "",
+      params.pointIndex > 0 ? `Ponto selecionado: ${params.pointIndex}` : "",
+      params.pointTitle ? `Titulo atual do ponto:\n${params.pointTitle}` : "",
+      params.pointContent ? `Conteudo atual do ponto:\n${params.pointContent}` : "",
+      params.currentMainPoints.length
+        ? `Outros pontos atuais:\n${params.currentMainPoints
+            .map(
+              (point, index) =>
+                `${index + 1}. ${point.title || `Ponto ${index + 1}`}: ${
+                  point.content || ""
+                }`
+            )
+            .join("\n")}`
+        : "",
+      params.application ? `Aplicacao atual:\n${params.application}` : "",
+      params.currentConclusion ? `Conclusao atual:\n${params.currentConclusion}` : "",
       params.referenceText ? `Texto biblico base:\n${params.referenceText}` : "",
       params.notes ? `Observacoes do usuario:\n${params.notes}` : "",
     ]
@@ -513,7 +565,8 @@ export async function POST(request: NextRequest) {
       body.action === "introduction" ||
       body.action === "main_points" ||
       body.action === "conclusion" ||
-      body.action === "notes_to_point"
+      body.action === "notes_to_point" ||
+      body.action === "point_refine"
         ? body.action
         : "outline";
     const reference = normalizeSpaces(String(body.reference ?? ""));
@@ -534,6 +587,10 @@ export async function POST(request: NextRequest) {
           .slice(0, 4)
       : [];
     const insertPosition = normalizeSpaces(String(body.insertPosition ?? ""));
+    const pointTitle = normalizeSpaces(String(body.pointTitle ?? ""));
+    const pointContent = String(body.pointContent ?? "").trim();
+    const pointIndex = Number(body.pointIndex ?? 0);
+    const pointMode = normalizeSpaces(String(body.pointMode ?? ""));
     const theme = normalizeSpaces(String(body.theme ?? ""));
     const objective = String(body.objective ?? "").trim();
     const tone = normalizeSpaces(String(body.tone ?? ""));
@@ -552,6 +609,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (action === "point_refine" && !pointTitle && !pointContent) {
+      return NextResponse.json(
+        { ok: false, error: "Selecione um ponto com conteudo para a IA trabalhar." },
+        { status: 400 }
+      );
+    }
+
     const prompt = buildActionPrompt(action, {
       reference,
       translation,
@@ -563,6 +627,10 @@ export async function POST(request: NextRequest) {
       currentConclusion,
       currentMainPoints,
       insertPosition,
+      pointTitle,
+      pointContent,
+      pointIndex,
+      pointMode,
       theme,
       objective,
       tone,
@@ -586,7 +654,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       action,
       outline:
-        action === "notes_to_point"
+        action === "notes_to_point" || action === "point_refine"
           ? {
               mainPoints: [generated],
             }

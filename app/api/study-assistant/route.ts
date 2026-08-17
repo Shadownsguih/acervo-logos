@@ -81,6 +81,23 @@ function extractJsonCandidate(rawText: string) {
   return rawText.trim();
 }
 
+function detectApplicationRequest(question: string) {
+  const normalized = normalizeText(question);
+
+  return [
+    "aplicacao",
+    "aplicacoes",
+    "aplicar",
+    "pratica",
+    "pratico",
+    "vida real",
+    "para hoje",
+    "como viver",
+    "como aplicar",
+    "o que fazer",
+  ].some((term) => normalized.includes(term));
+}
+
 function extractKeywords(...values: string[]) {
   const stopWords = new Set([
     "de",
@@ -272,6 +289,7 @@ function buildPrompt(params: {
     role: "user" | "assistant";
     content: string;
   }>;
+  wantsApplication: boolean;
 }) {
   const materialsBlock = params.materials.length
     ? params.materials
@@ -301,7 +319,7 @@ function buildPrompt(params: {
     "Voce e um assistente de estudo biblico do Acervo Logos.",
     "Responda em portugues do Brasil, com tom pastoral, reverente, claro e natural.",
     "Explique como um bom professor: didatico, humano, paciente e facil de entender.",
-    "Priorize o significado do texto no seu contexto imediato e, quando ajudar, considere tambem o contexto do livro biblico.",
+    "Priorize o significado do texto no seu contexto imediato, historico e cultural e, quando ajudar, considere tambem o contexto do livro biblico.",
     "Evite respostas superficiais, mas tambem nao use linguagem pesada, artificial ou academica demais.",
     "Traga profundidade quando necessario, sem perder clareza, calor humano e sensibilidade devocional.",
     params.mode === "pdf"
@@ -309,15 +327,21 @@ function buildPrompt(params: {
       : "Baseie sua resposta primeiro no trecho biblico fornecido e, quando fizer sentido, recomende materiais do acervo.",
     "Nao invente citacoes biblicas, nao afirme polemicas doutrinarias como se fossem consenso e nao mencione informacoes nao fornecidas.",
     "Quando houver limite de certeza, use formulacoes como 'o texto enfatiza', 'o contexto sugere' ou 'neste trecho vemos'.",
-    "Ao responder perguntas sobre aplicacao, explique primeiro o sentido do texto e depois mostre uma aplicacao pessoal e pratica para os dias de hoje.",
-    "A aplicacao deve soar humana, concreta, devocional e proxima da vida real do leitor.",
+    params.wantsApplication
+      ? "Como o usuario pediu aplicacao, explique primeiro o sentido do texto e so depois mostre uma aplicacao pessoal e pratica para os dias de hoje."
+      : "Nao traga aplicacoes pessoais ou praticas por conta propria. Foque apenas no contexto historico-cultural, no sentido do texto e em sua explicacao biblica.",
+    params.wantsApplication
+      ? "A aplicacao deve soar humana, concreta, devocional e proxima da vida real do leitor."
+      : "Se o usuario nao pedir aplicacao, nao inclua conselhos devocionais nem implicacoes praticas.",
     "Em perguntas doutrinarias, responda com fidelidade biblica, humildade e equilibrio.",
     "Considere o historico recente da conversa para manter continuidade, mas priorize sempre o trecho biblico atual.",
-    "Gere tambem tres grupos curtos para organizar a resposta: temas, doutrina e aplicacao.",
+    "Gere tambem grupos curtos para organizar a resposta: temas e doutrina.",
     "Responda somente em JSON valido, sem markdown, neste formato exato: {\"answer\":\"...\",\"themes\":[\"...\"],\"doctrine\":[\"...\"],\"application\":[\"...\"],\"keyPoints\":[\"...\"],\"recommendedMaterialIds\":[\"...\"]}.",
     "themes deve resumir os assuntos centrais do trecho, com no maximo 4 itens curtos.",
     "doctrine deve resumir enfases biblicas e teologicas do trecho, com no maximo 4 itens curtos.",
-    "application deve resumir implicacoes praticas para a vida crista que nascem do proprio texto, com no maximo 4 itens curtos.",
+    params.wantsApplication
+      ? "application deve resumir implicacoes praticas para a vida crista que nascem do proprio texto, com no maximo 4 itens curtos."
+      : "application deve vir como lista vazia quando o usuario nao pedir aplicacao.",
     "recommendedMaterialIds deve conter somente IDs da lista de materiais fornecida, com no maximo 3 itens.",
     `Historico recente:\n${historyBlock}`,
     `Pergunta do aluno: ${params.question}`,
@@ -539,6 +563,7 @@ export async function POST(request: NextRequest) {
     const chapterText = normalizeSpaces(String(body.chapterText ?? ""));
     const mode = body.mode === "pdf" ? "pdf" : "bible";
     const contextLabel = normalizeSpaces(String(body.contextLabel ?? ""));
+    const wantsApplication = detectApplicationRequest(question);
     const history = Array.isArray(body.history)
       ? body.history
           .map((item) => {
@@ -593,6 +618,7 @@ export async function POST(request: NextRequest) {
       contextLabel,
       materials: materialCandidates,
       history,
+      wantsApplication,
     });
 
     const generated =
@@ -630,7 +656,8 @@ export async function POST(request: NextRequest) {
       answer: generated.answer,
       themes: generated.themes,
       doctrine: generated.doctrine,
-      application: generated.application,
+      application: wantsApplication ? generated.application : [],
+      applicationWarning: wantsApplication,
       keyPoints: generated.keyPoints,
       recommendedMaterials,
     });

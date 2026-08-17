@@ -102,9 +102,11 @@ type SermonAiAction =
   | "introduction"
   | "main_points"
   | "conclusion"
-  | "notes_to_point";
+  | "notes_to_point"
+  | "point_refine";
 
 type SermonPointInsertPosition = "inicio" | "meio" | "fim";
+type SermonPointAiMode = "improve" | "expand" | "retone";
 
 type SermonAiTone =
   | "expositivo"
@@ -513,10 +515,13 @@ export default function SermonBuilderPanel({
   const supabase = useMemo(() => createClient(), []);
   const autosaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipAutosaveRef = useRef(true);
+  const manuscriptContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [activeTab, setActiveTab] = useState<"editor" | "library">("editor");
+  const [activeTab, setActiveTab] = useState<
+    "editor" | "manuscript" | "library"
+  >("editor");
   const [userId, setUserId] = useState("");
   const [sermons, setSermons] = useState<SermonRecord[]>([]);
   const [selectedSermonId, setSelectedSermonId] = useState<string | null>(null);
@@ -526,6 +531,9 @@ export default function SermonBuilderPanel({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isCreateWarningOpen, setIsCreateWarningOpen] = useState(false);
+  const [isRefreshingManuscript, setIsRefreshingManuscript] = useState(false);
+  const [isManuscriptFullscreen, setIsManuscriptFullscreen] = useState(false);
   const [generatingAiAction, setGeneratingAiAction] =
     useState<SermonAiAction | null>(null);
   const [isAiGuideOpen, setIsAiGuideOpen] = useState(false);
@@ -534,6 +542,10 @@ export default function SermonBuilderPanel({
   const [aiTone, setAiTone] = useState<SermonAiTone>("expositivo");
   const [notesPointInsertPosition, setNotesPointInsertPosition] =
     useState<SermonPointInsertPosition>("fim");
+  const [pointAiModes, setPointAiModes] = useState<Record<string, SermonPointAiMode>>(
+    {}
+  );
+  const [generatingPointId, setGeneratingPointId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -616,6 +628,9 @@ export default function SermonBuilderPanel({
   const hasDevelopmentContent = draft.mainPoints.some(
     (point) => point.title.trim() || point.content.trim()
   );
+  const visibleMainPoints = draft.mainPoints.filter(
+    (point) => point.title.trim() || point.content.trim()
+  );
   const isGeneratingOutline = generatingAiAction !== null;
 
   useEffect(() => {
@@ -640,6 +655,23 @@ export default function SermonBuilderPanel({
 
     return () => {
       window.removeEventListener("resize", syncViewport);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    function syncFullscreenState() {
+      setIsManuscriptFullscreen(
+        document.fullscreenElement === manuscriptContainerRef.current
+      );
+    }
+
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+    return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreenState);
     };
   }, []);
 
@@ -1000,16 +1032,75 @@ export default function SermonBuilderPanel({
     applySermon(initialSermon);
   }
 
-  function applySermon(sermon: SermonRecord) {
+  function applySermon(
+    sermon: SermonRecord,
+    options?: { keepActiveTab?: boolean }
+  ) {
     skipAutosaveRef.current = true;
     setSelectedSermonId(sermon.id);
     setDraft(buildDraftFromRecord(sermon));
     setStatusMessage("");
     setErrorMessage("");
-    setActiveTab("editor");
+    if (!options?.keepActiveTab) {
+      setActiveTab("editor");
+    }
 
     if (typeof window !== "undefined") {
       window.localStorage.setItem(SERMON_STORAGE_KEY, sermon.id);
+    }
+  }
+
+  async function refreshManuscriptNow() {
+    if (!selectedSermonId) {
+      return;
+    }
+
+    setIsRefreshingManuscript(true);
+    setErrorMessage("");
+
+    const { data, error } = await supabase
+      .from("sermons")
+      .select("*")
+      .eq("id", selectedSermonId)
+      .single();
+
+    setIsRefreshingManuscript(false);
+
+    if (error || !data) {
+      setErrorMessage("Nao foi possivel atualizar o manuscrito agora.");
+      return;
+    }
+
+    const refreshed = data as SermonRecord;
+
+    setSermons((current) =>
+      current
+        .map((item) => (item.id === refreshed.id ? refreshed : item))
+        .sort(
+          (left, right) =>
+            new Date(right.updated_at).getTime() -
+            new Date(left.updated_at).getTime()
+        )
+    );
+
+    applySermon(refreshed, { keepActiveTab: true });
+    setStatusMessage(`Manuscrito atualizado em ${formatDate(refreshed.updated_at)}.`);
+  }
+
+  async function toggleManuscriptFullscreen() {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    try {
+      if (document.fullscreenElement === manuscriptContainerRef.current) {
+        await document.exitFullscreen();
+        return;
+      }
+
+      await manuscriptContainerRef.current?.requestFullscreen();
+    } catch {
+      setErrorMessage("Nao foi possivel abrir o manuscrito em tela cheia.");
     }
   }
 
@@ -1124,6 +1215,29 @@ export default function SermonBuilderPanel({
         )
     );
 
+    if (selectedSermonId === updated.id) {
+      const savedDraft = buildDraftFromRecord(updated);
+      const currentSerialized = JSON.stringify({
+        ...nextDraft,
+        mainPoints: nextDraft.mainPoints.map((point) => ({
+          title: point.title,
+          content: point.content,
+        })),
+      });
+      const savedSerialized = JSON.stringify({
+        ...savedDraft,
+        mainPoints: savedDraft.mainPoints.map((point) => ({
+          title: point.title,
+          content: point.content,
+        })),
+      });
+
+      if (currentSerialized !== savedSerialized) {
+        skipAutosaveRef.current = true;
+        setDraft(savedDraft);
+      }
+    }
+
     setStatusMessage(`Salvo em ${formatDate(updated.updated_at)}.`);
   }
 
@@ -1209,12 +1323,31 @@ export default function SermonBuilderPanel({
         return "conclusao";
       case "notes_to_point":
         return "ponto a partir das notas";
+      case "point_refine":
+        return "ponto do sermao";
       default:
         return "esboco";
     }
   }
 
-  async function generateSermonWithAi(action: SermonAiAction = "outline") {
+  function getPointAiModeLabel(mode: SermonPointAiMode) {
+    switch (mode) {
+      case "expand":
+        return "expandir";
+      case "retone":
+        return "reescrever no tom";
+      default:
+        return "melhorar";
+    }
+  }
+
+  async function generateSermonWithAi(
+    action: SermonAiAction = "outline",
+    options?: {
+      pointId?: string;
+      pointMode?: SermonPointAiMode;
+    }
+  ) {
     if (!draft.referenceLabel.trim() || !draft.referenceText.trim()) {
       setErrorMessage("Selecione primeiro o texto biblico do sermao.");
       return;
@@ -1225,7 +1358,18 @@ export default function SermonBuilderPanel({
       return;
     }
 
+    const targetPoint =
+      action === "point_refine" && options?.pointId
+        ? draft.mainPoints.find((point) => point.id === options.pointId) ?? null
+        : null;
+
+    if (action === "point_refine" && !targetPoint) {
+      setErrorMessage("Escolha um ponto valido para a IA trabalhar.");
+      return;
+    }
+
     setGeneratingAiAction(action);
+    setGeneratingPointId(action === "point_refine" ? options?.pointId ?? null : null);
     setErrorMessage("");
     setStatusMessage("");
 
@@ -1255,6 +1399,14 @@ export default function SermonBuilderPanel({
           })),
           insertPosition:
             action === "notes_to_point" ? notesPointInsertPosition : "",
+          pointTitle: action === "point_refine" ? targetPoint?.title ?? "" : "",
+          pointContent:
+            action === "point_refine" ? targetPoint?.content ?? "" : "",
+          pointIndex:
+            action === "point_refine" && targetPoint
+              ? draft.mainPoints.findIndex((point) => point.id === targetPoint.id) + 1
+              : 0,
+          pointMode: action === "point_refine" ? options?.pointMode ?? "improve" : "",
           theme: aiTheme,
           objective: aiObjective,
           tone: aiTone,
@@ -1354,11 +1506,36 @@ export default function SermonBuilderPanel({
           ...draft,
           mainPoints: positionedPoints,
         };
+      } else if (action === "point_refine" && targetPoint) {
+        const generatedPoint = payload.outline.mainPoints?.[0];
+
+        if (!generatedPoint?.title?.trim() && !generatedPoint?.content?.trim()) {
+          setErrorMessage("A IA nao conseguiu trabalhar neste ponto agora.");
+          return;
+        }
+
+        nextDraft = {
+          ...draft,
+          mainPoints: draft.mainPoints.map((point) =>
+            point.id === targetPoint.id
+              ? {
+                  ...point,
+                  title: String(generatedPoint.title ?? "").trim() || point.title,
+                  content:
+                    String(generatedPoint.content ?? "").trim() || point.content,
+                }
+              : point
+          ),
+        };
       }
 
       setDraft(nextDraft);
       setStatusMessage(
-        `Sugestao de ${getAiActionLabel(action)} aplicada ao sermonario.`
+        action === "point_refine"
+          ? `Sugestao para ${getPointAiModeLabel(
+              options?.pointMode ?? "improve"
+            )} o ponto aplicada ao sermonario.`
+          : `Sugestao de ${getAiActionLabel(action)} aplicada ao sermonario.`
       );
 
       if (action === "outline") {
@@ -1370,10 +1547,13 @@ export default function SermonBuilderPanel({
       }
     } catch {
       setErrorMessage(
-        `A IA nao conseguiu gerar ${getAiActionLabel(action)} agora.`
+        action === "point_refine"
+          ? "A IA nao conseguiu trabalhar neste ponto agora."
+          : `A IA nao conseguiu gerar ${getAiActionLabel(action)} agora.`
       );
     } finally {
       setGeneratingAiAction(null);
+      setGeneratingPointId(null);
     }
   }
 
@@ -1463,6 +1643,15 @@ export default function SermonBuilderPanel({
     frameDocument.close();
   }
 
+  function requestCreateSermon() {
+    setIsCreateWarningOpen(true);
+  }
+
+  async function confirmCreateSermon() {
+    setIsCreateWarningOpen(false);
+    await createSermon();
+  }
+
   if (shouldHide) {
     return null;
   }
@@ -1496,6 +1685,53 @@ export default function SermonBuilderPanel({
 
       {isOpen ? (
         <div className="pointer-events-none fixed inset-0 z-[1006]">
+          {isCreateWarningOpen ? (
+            <div className="pointer-events-auto absolute inset-0 z-[3] flex items-center justify-center bg-black/70 px-4 backdrop-blur-[4px]">
+              <div className="w-full max-w-[36rem] rounded-[30px] border border-amber-300/18 bg-[linear-gradient(180deg,#151922,#0b0d13)] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.46)]">
+                <p className="text-[10px] uppercase tracking-[0.28em] text-amber-300/80">
+                  Alerta pastoral
+                </p>
+                <h3 className="mt-3 text-xl font-semibold leading-tight text-white">
+                  Antes de criar um novo sermão
+                </h3>
+
+                <div className="mt-5 space-y-4 text-sm leading-7 text-zinc-200">
+                  <p>
+                    O uso da IA deve ser moderado. Nada substitui a busca e o
+                    estudo da Palavra de Deus, e principalmente a oração.
+                  </p>
+                  <p>
+                    Um bom pregador nao sobe ao púlpito com sermões prontos.
+                    Use a IA apenas como apoio para organizar ideias, revisar
+                    anotações e ajudar no processo dos seus estudos.
+                  </p>
+                  <p>
+                    O verdadeiro sermão nasce do texto bíblico, da comunhão com
+                    o Senhor e de um coração dependente do Espírito de Deus.
+                  </p>
+                </div>
+
+                <div className="mt-6 flex flex-wrap justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateWarningOpen(false)}
+                    className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-xs font-medium text-zinc-100 transition hover:bg-white/[0.08]"
+                  >
+                    Voltar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void confirmCreateSermon()}
+                    disabled={isCreating}
+                    className="rounded-2xl bg-amber-400 px-4 py-2.5 text-xs font-semibold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isCreating ? "Criando..." : "Estou ciente, continuar"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {isMobile ? (
             <button
               type="button"
@@ -1535,7 +1771,7 @@ export default function SermonBuilderPanel({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => void createSermon()}
+                      onClick={requestCreateSermon}
                       disabled={isCreating}
                       className="rounded-full border border-amber-300/25 bg-amber-300/12 px-3 py-2 text-[11px] font-semibold text-amber-100 transition hover:bg-amber-300/18 disabled:cursor-not-allowed disabled:opacity-60"
                     >
@@ -1552,7 +1788,7 @@ export default function SermonBuilderPanel({
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-2 rounded-[22px] border border-white/10 bg-black/15 p-2">
+                <div className="mt-4 grid grid-cols-3 gap-2 rounded-[22px] border border-white/10 bg-black/15 p-2">
                   <button
                     type="button"
                     onClick={() => setActiveTab("editor")}
@@ -1563,6 +1799,17 @@ export default function SermonBuilderPanel({
                     }`}
                   >
                     Editor
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("manuscript")}
+                    className={`rounded-[18px] px-4 py-3 text-sm font-medium transition ${
+                      activeTab === "manuscript"
+                        ? "bg-amber-400 text-black shadow-[0_12px_24px_rgba(245,158,11,0.26)]"
+                        : "bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
+                    }`}
+                  >
+                    Manuscrito
                   </button>
                   <button
                     type="button"
@@ -2132,13 +2379,46 @@ export default function SermonBuilderPanel({
                                     Ponto {index + 1}
                                   </p>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => removeMainPoint(point.id)}
-                                  className="rounded-full border border-red-400/16 bg-red-500/10 px-3 py-1.5 text-[11px] font-medium text-red-200 transition hover:bg-red-500/16"
-                                >
-                                  Remover
-                                </button>
+                                <div className="flex flex-wrap items-center justify-end gap-2">
+                                  <select
+                                    value={pointAiModes[point.id] ?? "improve"}
+                                    onChange={(event) =>
+                                      setPointAiModes((current) => ({
+                                        ...current,
+                                        [point.id]:
+                                          event.target.value as SermonPointAiMode,
+                                      }))
+                                    }
+                                    className="h-9 rounded-2xl border border-white/10 bg-[#0b0d13] px-3 text-[11px] font-medium text-zinc-200 outline-none transition focus:border-amber-300/40"
+                                  >
+                                    <option value="improve">Melhorar</option>
+                                    <option value="expand">Expandir</option>
+                                    <option value="retone">Reescrever no tom</option>
+                                  </select>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      void generateSermonWithAi("point_refine", {
+                                        pointId: point.id,
+                                        pointMode: pointAiModes[point.id] ?? "improve",
+                                      })
+                                    }
+                                    disabled={isGeneratingOutline}
+                                    className="rounded-2xl border border-emerald-300/18 bg-emerald-400/10 px-3 py-2 text-[11px] font-semibold text-emerald-100 transition hover:bg-emerald-400/16 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {generatingAiAction === "point_refine" &&
+                                    generatingPointId === point.id
+                                      ? "Gerando..."
+                                      : "IA neste ponto"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeMainPoint(point.id)}
+                                    className="rounded-full border border-red-400/16 bg-red-500/10 px-3 py-1.5 text-[11px] font-medium text-red-200 transition hover:bg-red-500/16"
+                                  >
+                                    Remover
+                                  </button>
+                                </div>
                               </div>
 
                               <input
@@ -2294,6 +2574,121 @@ export default function SermonBuilderPanel({
                     </div>
                   )}
                 </div>
+              ) : activeTab === "manuscript" ? (
+                <div
+                  ref={manuscriptContainerRef}
+                  className={`min-h-0 flex-1 overflow-y-auto bg-[linear-gradient(180deg,#111319,#0a0c12)] px-5 py-6 ${
+                    isManuscriptFullscreen ? "text-[1.05rem]" : ""
+                  }`}
+                >
+                  {!selectedSermon ? (
+                    <div className="text-sm leading-7 text-zinc-400">
+                      Crie ou selecione um sermao para abrir o modo manuscrito.
+                    </div>
+                  ) : (
+                    <article className="mx-auto max-w-[42rem] space-y-8 text-zinc-100">
+                      <header className="space-y-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.28em] text-amber-300/80">
+                              Modo manuscrito limpo
+                            </p>
+                            <h3 className="mt-3 text-2xl font-semibold leading-tight text-white">
+                              {draft.title.trim() || "Novo sermao"}
+                            </h3>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => void refreshManuscriptNow()}
+                              disabled={isRefreshingManuscript}
+                              className="rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2 text-[11px] font-medium text-zinc-100 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isRefreshingManuscript
+                                ? "Atualizando..."
+                                : "Atualizar agora"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void toggleManuscriptFullscreen()}
+                              className="rounded-2xl border border-amber-300/18 bg-amber-400/10 px-3 py-2 text-[11px] font-semibold text-amber-100 transition hover:bg-amber-400/16"
+                            >
+                              {isManuscriptFullscreen
+                                ? "Sair da tela cheia"
+                                : "Tela cheia"}
+                            </button>
+                          </div>
+                        </div>
+                      </header>
+
+                      {draft.referenceLabel.trim() || draft.referenceText.trim() ? (
+                        <section className="space-y-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-300/80">
+                            Texto base
+                          </p>
+                          {draft.referenceLabel.trim() ? (
+                            <p className="text-lg font-semibold text-white">
+                              {draft.referenceLabel}
+                            </p>
+                          ) : null}
+                          {previewVerses.length ? (
+                            <div className="space-y-3 text-[1.02rem] leading-8 text-zinc-100">
+                              {previewVerses.map((verse) => (
+                                <p key={`manuscript-${verse.reference}`}>
+                                  <span className="mr-2 font-semibold text-amber-300">
+                                    {verse.verse}
+                                  </span>
+                                  <span>{verse.text}</span>
+                                </p>
+                              ))}
+                            </div>
+                          ) : draft.referenceText.trim() ? (
+                            <p className="whitespace-pre-line text-[1.02rem] leading-8 text-zinc-100">
+                              {draft.referenceText}
+                            </p>
+                          ) : null}
+                        </section>
+                      ) : null}
+
+                      {visibleMainPoints.length ? (
+                        <section className="space-y-5">
+                          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-300/80">
+                            Pontos
+                          </p>
+                          <div className="space-y-6">
+                            {visibleMainPoints.map((point, index) => (
+                              <div
+                                key={`manuscript-point-${point.id}`}
+                                className="space-y-2"
+                              >
+                                <h4 className="text-lg font-semibold leading-snug text-white">
+                                  {index + 1}.{" "}
+                                  {point.title.trim() || `Ponto ${index + 1}`}
+                                </h4>
+                                {point.content.trim() ? (
+                                  <p className="whitespace-pre-line text-[1.01rem] leading-8 text-zinc-100">
+                                    {point.content}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      ) : null}
+
+                      {draft.application.trim() ? (
+                        <section className="space-y-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-300/80">
+                            Aplicacao
+                          </p>
+                          <p className="whitespace-pre-line text-[1.02rem] leading-8 text-zinc-100">
+                            {draft.application}
+                          </p>
+                        </section>
+                      ) : null}
+                    </article>
+                  )}
+                </div>
               ) : (
                 <div className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.06),transparent_24%)] px-4 py-4">
                   <div className="rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.12),transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.16)]">
@@ -2308,7 +2703,7 @@ export default function SermonBuilderPanel({
                       </div>
                       <button
                         type="button"
-                        onClick={() => void createSermon()}
+                        onClick={requestCreateSermon}
                         disabled={isCreating}
                         className="rounded-2xl bg-amber-400 px-4 py-2.5 text-xs font-semibold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
                       >

@@ -26,6 +26,7 @@ type AssistantResponse = {
   themes?: string[];
   doctrine?: string[];
   application?: string[];
+  applicationWarning?: boolean;
   keyPoints?: string[];
   recommendedMaterials?: RecommendedMaterial[];
   error?: string;
@@ -40,15 +41,31 @@ type ChatMessage = {
   themes?: string[];
   doctrine?: string[];
   application?: string[];
+  applicationWarning?: boolean;
   keyPoints?: string[];
   recommendedMaterials?: RecommendedMaterial[];
 };
 
 const DEFAULT_QUESTIONS = [
   "Explique o sentido principal deste trecho.",
-  "Qual a aplicacao pratica deste texto para hoje?",
+  "Qual o contexto historico e cultural deste trecho?",
   "Quais materiais do acervo podem aprofundar este assunto?",
 ];
+
+const QUICK_ACTIONS = [
+  {
+    label: "Contexto historico",
+    prompt: "Explique o contexto historico e cultural deste trecho.",
+  },
+  {
+    label: "Doutrina do texto",
+    prompt: "Quais enfases doutrinarias aparecem neste trecho?",
+  },
+  {
+    label: "Aplicacao pratica",
+    prompt: "Qual a aplicacao pratica deste texto para hoje?",
+  },
+] as const;
 
 async function readJsonSafely<T>(response: Response): Promise<T | null> {
   try {
@@ -277,6 +294,7 @@ export default function StudyAssistantPanel({
           themes: payload.themes || [],
           doctrine: payload.doctrine || [],
           application: payload.application || [],
+          applicationWarning: Boolean(payload.applicationWarning),
           keyPoints: payload.keyPoints || [],
           recommendedMaterials: payload.recommendedMaterials || [],
         },
@@ -464,9 +482,9 @@ export default function StudyAssistantPanel({
                       </div>
 
                       <div className="max-w-[88%] rounded-[24px] rounded-bl-md bg-white px-4 py-4 text-sm leading-7 text-[#2c241d] shadow-[0_18px_34px_rgba(24,21,18,0.08)]">
-                        Pergunte sobre o texto, contexto biblico, aplicacao pratica,
-                        significado de termos ou livros do acervo que podem ajudar no
-                        seu estudo.
+                        Pergunte sobre o texto, contexto historico-cultural,
+                        significado de termos ou livros do acervo que podem ajudar
+                        no seu estudo.
                       </div>
                     </div>
                   ) : null}
@@ -558,6 +576,19 @@ export default function StudyAssistantPanel({
                                   "slate"
                                 )}
 
+                                {message.applicationWarning ? (
+                                  <section className="rounded-[20px] border border-amber-300/30 bg-[#fff7e7] px-4 py-3">
+                                    <p className="text-[10px] uppercase tracking-[0.18em] text-[#9b8e80]">
+                                      Aviso
+                                    </p>
+                                    <p className="mt-2 text-sm leading-6 text-[#6e5630]">
+                                      Aplicações geradas por IA devem ser revisadas
+                                      com cuidado, sempre à luz da Bíblia, da oração
+                                      e do seu próprio estudo.
+                                    </p>
+                                  </section>
+                                ) : null}
+
                                 {renderTagSection(
                                   "Aplicacao",
                                   message.application,
@@ -607,6 +638,31 @@ export default function StudyAssistantPanel({
                 </div>
 
                 <div className="shrink-0 border-t border-[#e6dfd4] bg-[linear-gradient(180deg,#fbf8f3,#f3ede3)] px-4 py-4">
+                  <div className="mb-3">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-[#9b8e80]">
+                      Atalhos rapidos
+                    </p>
+                    <div className="mt-2 flex snap-x gap-2 overflow-x-auto pb-1">
+                      {QUICK_ACTIONS.map((action) => (
+                        <button
+                          key={action.label}
+                          type="button"
+                          onClick={() => {
+                            if (isLoading) {
+                              return;
+                            }
+
+                            setQuestion(action.prompt);
+                            void askAssistant(action.prompt);
+                          }}
+                          className="shrink-0 snap-start rounded-full border border-[#d9d2c7] bg-[#fffaf1] px-3 py-2 text-[11px] font-semibold text-[#5f503f] shadow-[0_8px_18px_rgba(24,21,18,0.04)] transition hover:border-amber-400/50 hover:text-[#2b2115]"
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="mb-3 flex snap-x gap-2 overflow-x-auto pb-1">
                     {DEFAULT_QUESTIONS.map((item) => (
                       <button
