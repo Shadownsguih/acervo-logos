@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 
 type StudyAssistantPanelProps = {
@@ -129,11 +130,13 @@ export default function StudyAssistantPanel({
   mode = "bible",
   contextLabel = "",
 }: StudyAssistantPanelProps) {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const isReaderRoute = pathname.startsWith("/ler");
 
   const effectiveReference = useMemo(() => {
     return reference || "Trecho atual";
@@ -356,19 +359,30 @@ export default function StudyAssistantPanel({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="fixed right-0 top-1/2 z-[46] -translate-y-1/2 rounded-l-[24px] border border-r-0 border-amber-300/25 bg-[linear-gradient(180deg,rgba(255,199,80,0.98),rgba(245,168,32,0.96))] px-3 py-4 text-[11px] font-semibold tracking-[0.12em] text-[#23180a] shadow-[-14px_16px_36px_rgba(0,0,0,0.22)] transition hover:brightness-[1.03] xl:right-4 xl:top-auto xl:bottom-24 xl:translate-y-0 xl:rounded-[22px] xl:border-r xl:px-4 xl:py-3 xl:text-sm"
+        className={`fixed z-[1004] border border-amber-300/25 bg-[linear-gradient(180deg,rgba(255,199,80,0.98),rgba(245,168,32,0.96))] text-[11px] font-semibold tracking-[0.12em] text-[#23180a] shadow-[-14px_16px_36px_rgba(0,0,0,0.22)] transition hover:brightness-[1.03] ${
+          isReaderRoute
+            ? "right-3 top-[5.4rem] rounded-2xl px-3.5 py-3 md:right-6 md:top-[6.2rem] md:px-4 md:py-3 md:text-sm"
+            : "right-0 top-1/2 -translate-y-1/2 rounded-l-[24px] border-r-0 px-3 py-4 xl:right-4 xl:top-auto xl:bottom-24 xl:translate-y-0 xl:rounded-[22px] xl:border-r xl:px-4 xl:py-3 xl:text-sm"
+        }`}
       >
-        <span className="block xl:hidden [writing-mode:vertical-rl] [text-orientation:mixed]">
+        <span
+          className={
+            isReaderRoute
+              ? "inline-flex items-center gap-2"
+              : "block xl:hidden [writing-mode:vertical-rl] [text-orientation:mixed]"
+          }
+        >
+          {isReaderRoute ? <AssistantSparkIcon /> : null}
           Logos IA
         </span>
-        <span className="hidden items-center gap-2 xl:inline-flex">
+        <span className={`${isReaderRoute ? "hidden" : "hidden xl:inline-flex"} items-center gap-2`}>
           <AssistantSparkIcon />
           Logos IA
         </span>
       </button>
 
       {isOpen ? (
-        <div className="fixed inset-0 z-[65]">
+        <div className="fixed inset-0 z-[1006]">
           <div
             className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.12),transparent_34%),rgba(7,10,18,0.72)] backdrop-blur-[3px]"
             onClick={() => setIsOpen(false)}

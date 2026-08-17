@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import HeaderSearch from "@/app/components/header-search";
+import { OPEN_SERMON_BUILDER_EVENT } from "@/app/components/sermon-builder-events";
 import { formatRecentReadingRelativeText } from "@/app/components/recent-reading-utils";
 import { useLastReadDocument } from "@/app/components/use-last-read-document";
 
@@ -94,6 +95,11 @@ export default function AppHeaderDrawer({
 
   function handleClose() {
     setIsOpen(false);
+  }
+
+  function handleOpenSermonBuilder() {
+    window.dispatchEvent(new Event(OPEN_SERMON_BUILDER_EVENT));
+    handleClose();
   }
 
   return (
@@ -218,6 +224,28 @@ export default function AppHeaderDrawer({
               )}
 
               <div className="mt-4 rounded-[28px] border border-white/8 bg-[#202236] p-2 shadow-[0_10px_30px_rgba(0,0,0,0.18)]">
+                {isLoggedIn ? (
+                  <button
+                    type="button"
+                    onClick={handleOpenSermonBuilder}
+                    className="mb-2 flex min-h-[54px] w-full items-center justify-between rounded-2xl px-4 text-left text-sm text-amber-200 transition hover:bg-amber-400/10"
+                  >
+                    <span>Meu Sermonario</span>
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4 text-amber-300/80"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m9 6 6 6-6 6" />
+                    </svg>
+                  </button>
+                ) : null}
+
                 <nav>
                   {links.map((link) => (
                     <Link
