@@ -15,13 +15,6 @@ function cleanInline(value) {
     .trim();
 }
 
-function cleanTextBlock(value) {
-  return String(value || "")
-    .replace(/\s+/g, " ")
-    .replace(/\n+/g, " ")
-    .trim();
-}
-
 function toTitleCase(value) {
   const lower = cleanInline(value).toLowerCase();
 

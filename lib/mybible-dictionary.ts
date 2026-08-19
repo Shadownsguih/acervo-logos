@@ -228,7 +228,10 @@ export async function searchMyBibleDictionary(query: string, limit = 20) {
       });
     })
     .slice(0, limit)
-    .map(({ score: _score, ...item }) => item);
+    .map(({ score, ...item }) => {
+      void score;
+      return item;
+    });
 
   return scored;
 }

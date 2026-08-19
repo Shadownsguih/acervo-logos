@@ -49,6 +49,12 @@ type DailyBibleVerseSourceOverride = {
   forced_source: string | null;
 };
 
+type DailyDevotionalSourceName = "pao diario" | "spurgeon";
+
+const DAILY_DEVOTIONAL_SOURCE_ANCHOR_DATE = "2026-08-10";
+const DAILY_DEVOTIONAL_SOURCE_ANCHOR: DailyDevotionalSourceName =
+  "pao diario";
+
 function getBrazilDateKey() {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Sao_Paulo",
@@ -62,24 +68,16 @@ function normalizeSourceName(source?: string | null) {
   return String(source ?? "").trim().toLowerCase();
 }
 
-type DailyDevotionalSourceName = "pao diario" | "spurgeon";
+function isDailyDevotionalSourceName(
+  value: string
+): value is DailyDevotionalSourceName {
+  return value === "pao diario" || value === "spurgeon";
+}
 
-const DAILY_DEVOTIONAL_SOURCE_ANCHOR_DATE = "2026-08-10";
-const DAILY_DEVOTIONAL_SOURCE_ANCHOR: DailyDevotionalSourceName =
-  "pao diario";
-
-function getDailySourceRotation(dateKey: string) {
-  const currentDay = getDateFromKey(dateKey);
-  const anchorDay = getDateFromKey(DAILY_DEVOTIONAL_SOURCE_ANCHOR_DATE);
-  const dayOffset = Math.round(
-    (currentDay.getTime() - anchorDay.getTime()) / 86_400_000
-  );
-
-  if (DAILY_DEVOTIONAL_SOURCE_ANCHOR === "spurgeon") {
-    return Math.abs(dayOffset) % 2 === 0 ? "spurgeon" : "pao diario";
-  }
-
-  return Math.abs(dayOffset) % 2 === 0 ? "pao diario" : "spurgeon";
+function getOppositeDailySource(
+  sourceName: DailyDevotionalSourceName
+): DailyDevotionalSourceName {
+  return sourceName === "pao diario" ? "spurgeon" : "pao diario";
 }
 
 function getDateFromKey(dateKey: string) {
@@ -102,6 +100,49 @@ function subtractDays(dateKey: string, days: number) {
   return formatDateKey(date);
 }
 
+function getRotationBaseline(
+  dateKey: string,
+  overrides: DailyBibleVerseSourceOverride[]
+) {
+  const matchingOverride = [...overrides]
+    .reverse()
+    .find((item) => item.date_key <= dateKey);
+
+  const normalizedForcedSource = normalizeSourceName(
+    matchingOverride?.forced_source
+  );
+
+  if (isDailyDevotionalSourceName(normalizedForcedSource)) {
+    return {
+      dateKey: matchingOverride!.date_key,
+      source: normalizedForcedSource,
+    };
+  }
+
+  return {
+    dateKey: DAILY_DEVOTIONAL_SOURCE_ANCHOR_DATE,
+    source: DAILY_DEVOTIONAL_SOURCE_ANCHOR,
+  };
+}
+
+function getDailySourceRotation(
+  dateKey: string,
+  overrides: DailyBibleVerseSourceOverride[]
+) {
+  const currentDay = getDateFromKey(dateKey);
+  const baseline = getRotationBaseline(dateKey, overrides);
+  const baselineDay = getDateFromKey(baseline.dateKey);
+  const dayOffset = Math.round(
+    (currentDay.getTime() - baselineDay.getTime()) / 86_400_000
+  );
+
+  if (Math.abs(dayOffset) % 2 === 0) {
+    return baseline.source;
+  }
+
+  return getOppositeDailySource(baseline.source);
+}
+
 function getSeededSourceIndex(
   dateKey: string,
   total: number,
@@ -120,14 +161,15 @@ function getRecentSourceIndexes(
   dateKey: string,
   total: number,
   sourceName: string,
-  daysToInspect: number
+  daysToInspect: number,
+  overrides: DailyBibleVerseSourceOverride[]
 ) {
   const recentIndexes = new Set<number>();
 
   for (let offset = 1; offset <= daysToInspect; offset += 1) {
     const previousDateKey = subtractDays(dateKey, offset);
 
-    if (getDailySourceRotation(previousDateKey) !== sourceName) {
+    if (getDailySourceRotation(previousDateKey, overrides) !== sourceName) {
       continue;
     }
 
@@ -143,13 +185,20 @@ function getSmartDailySelectionIndex(
   dateKey: string,
   total: number,
   sourceName: string,
-  refreshCount = 0
+  refreshCount = 0,
+  overrides: DailyBibleVerseSourceOverride[] = []
 ) {
   if (total <= 1) {
     return 0;
   }
 
-  const recentIndexes = getRecentSourceIndexes(dateKey, total, sourceName, 14);
+  const recentIndexes = getRecentSourceIndexes(
+    dateKey,
+    total,
+    sourceName,
+    14,
+    overrides
+  );
   const baseIndex = getSeededSourceIndex(dateKey, total, sourceName);
   const availableIndexes: number[] = [];
 
@@ -209,28 +258,23 @@ async function getDailyDevotionalRefreshCount(dateKey: string) {
   );
 }
 
-async function getDailyDevotionalSourceOverride(dateKey: string) {
+async function getDailyDevotionalSourceOverrides() {
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("daily_bible_verse_source_override")
     .select("date_key, forced_source")
-    .eq("date_key", dateKey)
-    .maybeSingle();
+    .order("date_key", { ascending: true });
 
   if (error) {
     console.error(
-      "Erro ao buscar a fonte forçada do devocional diario:",
+      "Erro ao buscar as fontes forcadas do devocional diario:",
       error.message
     );
-    return null;
+    return [];
   }
 
-  const forcedSource = normalizeSourceName(
-    (data as DailyBibleVerseSourceOverride | null)?.forced_source
-  );
-
-  return forcedSource || null;
+  return (data as DailyBibleVerseSourceOverride[] | null) ?? [];
 }
 
 async function getDailyVerseLibrary() {
@@ -262,10 +306,10 @@ async function getDailyVerseLibrary() {
 
 export async function getOrCreateDailyBibleVerse() {
   const dateKey = getBrazilDateKey();
-  const [library, refreshCount, forcedSource] = await Promise.all([
+  const [library, refreshCount, sourceOverrides] = await Promise.all([
     getDailyVerseLibrary(),
     getDailyDevotionalRefreshCount(dateKey),
-    getDailyDevotionalSourceOverride(dateKey),
+    getDailyDevotionalSourceOverrides(),
   ]);
 
   if (library.length === 0) {
@@ -274,7 +318,7 @@ export async function getOrCreateDailyBibleVerse() {
     );
   }
 
-  const sourceRotation = forcedSource ?? getDailySourceRotation(dateKey);
+  const sourceRotation = getDailySourceRotation(dateKey, sourceOverrides);
   const rotatedLibrary = getLibraryForSource(library, sourceRotation);
   const activeLibrary = rotatedLibrary.length > 0 ? rotatedLibrary : library;
   const selectionSource =
@@ -285,7 +329,8 @@ export async function getOrCreateDailyBibleVerse() {
         dateKey,
         activeLibrary.length,
         selectionSource,
-        refreshCount
+        refreshCount,
+        sourceOverrides
       )
     ];
 

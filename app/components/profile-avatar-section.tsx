@@ -1,5 +1,6 @@
 "use client";
 
+import NextImage from "next/image";
 import {
   ChangeEvent,
   PointerEvent as ReactPointerEvent,
@@ -433,10 +434,13 @@ export default function ProfileAvatarSection({
             <div className="flex min-w-0 items-center gap-3">
               <div className="relative">
                 {avatarUrl ? (
-                  <img
+                  <NextImage
                     src={avatarUrl}
                     alt="Foto de perfil do usuario"
+                    width={64}
+                    height={64}
                     className="h-16 w-16 rounded-full border border-white/10 object-cover shadow-[0_10px_25px_-18px_rgba(0,0,0,0.9)]"
+                    unoptimized
                   />
                 ) : (
                   <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-[#12151d] text-base font-semibold text-amber-300 shadow-[0_10px_25px_-18px_rgba(0,0,0,0.9)]">
@@ -470,7 +474,7 @@ export default function ProfileAvatarSection({
 
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-[0.22em] text-white/55">
-                  Hello
+                  Ola
                 </p>
                 <p className="mt-1 truncate text-lg font-semibold text-white">
                   {displayName}
@@ -516,15 +520,18 @@ export default function ProfileAvatarSection({
           Foto de perfil
         </p>
 
-        <h2 className="mt-2 text-xl font-bold">Avatar do usuario</h2>
+        <h2 className="mt-2 text-xl font-bold">Sua foto de perfil</h2>
 
         <div className="mt-5 flex flex-col items-center gap-4 p-2">
           <div className="relative">
             {avatarUrl ? (
-              <img
+              <NextImage
                 src={avatarUrl}
                 alt="Foto de perfil do usuario"
+                width={112}
+                height={112}
                 className="h-24 w-24 rounded-full border border-white/10 object-cover md:h-28 md:w-28"
+                unoptimized
               />
             ) : (
               <div className="flex h-24 w-24 items-center justify-center rounded-full border border-white/10 bg-[#181c28] text-xl font-semibold text-amber-300 md:h-28 md:w-28 md:text-2xl">
@@ -559,7 +566,7 @@ export default function ProfileAvatarSection({
           <div className="text-center">
             <p className="text-sm font-medium text-zinc-100">{displayName}</p>
             <p className="mt-1 text-xs text-zinc-500">
-              Toque no lapis para alterar sua foto.
+              Toque no icone de edicao para atualizar sua foto.
             </p>
           </div>
 
@@ -641,6 +648,7 @@ export default function ProfileAvatarSection({
                   }}
                 >
                   {cropTransform ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={cropSource}
                       alt="Pre-visualizacao do avatar"
@@ -706,6 +714,7 @@ export default function ProfileAvatarSection({
                     <div className="h-24 w-24 overflow-hidden rounded-full border border-white/10 bg-[#12151d]">
                       {cropTransform ? (
                         <div className="relative h-full w-full overflow-hidden rounded-full">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={cropSource}
                             alt="Previa circular do avatar"

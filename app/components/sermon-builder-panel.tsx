@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import { OPEN_SERMON_BUILDER_EVENT } from "@/app/components/sermon-builder-events";
@@ -575,7 +575,10 @@ export default function SermonBuilderPanel({
     return Array.from({ length: totalChapters }, (_, index) => index + 1);
   }, [selectedBookOption]);
 
-  const availableVerses = referencePassage?.verses ?? [];
+  const availableVerses = useMemo(
+    () => referencePassage?.verses ?? [],
+    [referencePassage]
+  );
 
   const filteredSermons = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -944,39 +947,6 @@ export default function SermonBuilderPanel({
     referencePassage,
   ]);
 
-  useEffect(() => {
-    if (!isOpen || sermons.length || isLoading) {
-      return;
-    }
-
-    void loadSermons();
-  }, [isLoading, isOpen, sermons.length]);
-
-  useEffect(() => {
-    if (!selectedSermonId) {
-      return;
-    }
-
-    if (skipAutosaveRef.current) {
-      skipAutosaveRef.current = false;
-      return;
-    }
-
-    if (autosaveTimeoutRef.current) {
-      clearTimeout(autosaveTimeoutRef.current);
-    }
-
-    autosaveTimeoutRef.current = setTimeout(() => {
-      void saveCurrentSermon(draft);
-    }, AUTOSAVE_DELAY);
-
-    return () => {
-      if (autosaveTimeoutRef.current) {
-        clearTimeout(autosaveTimeoutRef.current);
-      }
-    };
-  }, [draft, selectedSermonId]);
-
   async function loadSermons() {
     setIsLoading(true);
     setErrorMessage("");
@@ -1067,7 +1037,7 @@ export default function SermonBuilderPanel({
     setIsRefreshingManuscript(false);
 
     if (error || !data) {
-      setErrorMessage("Nao foi possivel atualizar o manuscrito agora.");
+      setErrorMessage("Nao foi possivel atualizar a versao final agora.");
       return;
     }
 
@@ -1084,7 +1054,7 @@ export default function SermonBuilderPanel({
     );
 
     applySermon(refreshed, { keepActiveTab: true });
-    setStatusMessage(`Manuscrito atualizado em ${formatDate(refreshed.updated_at)}.`);
+    setStatusMessage(`Modo de pregacao atualizado em ${formatDate(refreshed.updated_at)}.`);
   }
 
   async function toggleManuscriptFullscreen() {
@@ -1100,7 +1070,7 @@ export default function SermonBuilderPanel({
 
       await manuscriptContainerRef.current?.requestFullscreen();
     } catch {
-      setErrorMessage("Nao foi possivel abrir o manuscrito em tela cheia.");
+      setErrorMessage("Nao foi possivel abrir a versao final em tela cheia.");
     }
   }
 
@@ -1240,6 +1210,47 @@ export default function SermonBuilderPanel({
 
     setStatusMessage(`Salvo em ${formatDate(updated.updated_at)}.`);
   }
+
+  const requestLoadSermons = useEffectEvent(() => {
+    void loadSermons();
+  });
+
+  const requestAutosave = useEffectEvent((nextDraft: SermonDraft) => {
+    void saveCurrentSermon(nextDraft);
+  });
+
+  useEffect(() => {
+    if (!isOpen || sermons.length || isLoading) {
+      return;
+    }
+
+    requestLoadSermons();
+  }, [isLoading, isOpen, sermons.length]);
+
+  useEffect(() => {
+    if (!selectedSermonId) {
+      return;
+    }
+
+    if (skipAutosaveRef.current) {
+      skipAutosaveRef.current = false;
+      return;
+    }
+
+    if (autosaveTimeoutRef.current) {
+      clearTimeout(autosaveTimeoutRef.current);
+    }
+
+    autosaveTimeoutRef.current = setTimeout(() => {
+      requestAutosave(draft);
+    }, AUTOSAVE_DELAY);
+
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+      }
+    };
+  }, [draft, selectedSermonId]);
 
   async function deleteCurrentSermon() {
     if (!selectedSermonId) {
@@ -1534,8 +1545,8 @@ export default function SermonBuilderPanel({
         action === "point_refine"
           ? `Sugestao para ${getPointAiModeLabel(
               options?.pointMode ?? "improve"
-            )} o ponto aplicada ao sermonario.`
-          : `Sugestao de ${getAiActionLabel(action)} aplicada ao sermonario.`
+            )} o ponto aplicada ao sermao.`
+          : `Sugestao de ${getAiActionLabel(action)} aplicada ao sermao.`
       );
 
       if (action === "outline") {
@@ -1735,7 +1746,7 @@ export default function SermonBuilderPanel({
           {isMobile ? (
             <button
               type="button"
-              aria-label="Fechar sermonario"
+              aria-label="Fechar editor de sermao"
               onClick={() => setIsOpen(false)}
               className="pointer-events-auto absolute inset-0 bg-black/45 backdrop-blur-[3px]"
             />
@@ -1809,7 +1820,7 @@ export default function SermonBuilderPanel({
                         : "bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
                     }`}
                   >
-                    Manuscrito
+                    Modo de pregacao
                   </button>
                   <button
                     type="button"
@@ -1834,41 +1845,6 @@ export default function SermonBuilderPanel({
                   ) : (
                     <div className="space-y-4">
                       <div className="space-y-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setIsAiGuideOpen((current) => !current)
-                            }
-                            disabled={passageLoading}
-                            className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-2.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/16 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            Gerar com IA
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void saveCurrentSermon(draft)}
-                            disabled={isSaving}
-                            className="rounded-2xl bg-amber-400 px-4 py-2.5 text-xs font-semibold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {isSaving ? "Salvando..." : "Salvar agora"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => exportSermonToPdf(draft)}
-                            className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-xs font-medium text-zinc-100 transition hover:bg-white/[0.08]"
-                          >
-                            Salvar em PDF
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void deleteCurrentSermon()}
-                            className="rounded-2xl border border-red-400/16 bg-red-500/10 px-4 py-2.5 text-xs font-medium text-red-200 transition hover:bg-red-500/16"
-                          >
-                            Excluir
-                          </button>
-                        </div>
-
                         {errorMessage ? (
                           <p className="text-sm text-red-300">{errorMessage}</p>
                         ) : statusMessage ? (
@@ -2252,6 +2228,21 @@ export default function SermonBuilderPanel({
                           </div>
                         </div>
 
+                        {hasReferenceSelection ? (
+                          <div className="mt-4 flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setIsAiGuideOpen((current) => !current)
+                              }
+                              disabled={passageLoading}
+                              className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-2.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/16 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Gerar com IA
+                            </button>
+                          </div>
+                        ) : null}
+
                         <div className="mt-4 rounded-[26px] border border-amber-300/14 bg-[linear-gradient(180deg,rgba(11,13,19,0.98),rgba(20,14,8,0.94))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
                           <p className="text-[10px] uppercase tracking-[0.18em] text-amber-300/80">
                             {draft.referenceLabel || "Selecione o texto"}
@@ -2571,6 +2562,41 @@ export default function SermonBuilderPanel({
                         </div>
                       </section>
                       ) : null}
+
+                      <section className="overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] shadow-[0_18px_44px_rgba(0,0,0,0.16)]">
+                        <div className="border-b border-white/8 px-4 py-4">
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-amber-300/80">
+                            Finalizar
+                          </p>
+                          <h3 className="mt-1 text-base font-semibold text-white">
+                            Salve ou exporte seu sermao
+                          </h3>
+                        </div>
+                        <div className="flex flex-wrap gap-3 p-4">
+                          <button
+                            type="button"
+                            onClick={() => void saveCurrentSermon(draft)}
+                            disabled={isSaving}
+                            className="rounded-2xl bg-amber-400 px-4 py-2.5 text-xs font-semibold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {isSaving ? "Salvando..." : "Salvar agora"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => exportSermonToPdf(draft)}
+                            className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-xs font-medium text-zinc-100 transition hover:bg-white/[0.08]"
+                          >
+                            Salvar em PDF
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void deleteCurrentSermon()}
+                            className="rounded-2xl border border-red-400/16 bg-red-500/10 px-4 py-2.5 text-xs font-medium text-red-200 transition hover:bg-red-500/16"
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </section>
                     </div>
                   )}
                 </div>
@@ -2583,7 +2609,7 @@ export default function SermonBuilderPanel({
                 >
                   {!selectedSermon ? (
                     <div className="text-sm leading-7 text-zinc-400">
-                      Crie ou selecione um sermao para abrir o modo manuscrito.
+                      Crie ou selecione um sermao para abrir a versao final.
                     </div>
                   ) : (
                     <article className="mx-auto max-w-[42rem] space-y-8 text-zinc-100">
@@ -2591,7 +2617,7 @@ export default function SermonBuilderPanel({
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <p className="text-[10px] uppercase tracking-[0.28em] text-amber-300/80">
-                              Modo manuscrito limpo
+                              Modo de pregacao
                             </p>
                             <h3 className="mt-3 text-2xl font-semibold leading-tight text-white">
                               {draft.title.trim() || "Novo sermao"}
@@ -2647,6 +2673,17 @@ export default function SermonBuilderPanel({
                               {draft.referenceText}
                             </p>
                           ) : null}
+                        </section>
+                      ) : null}
+
+                      {draft.introduction.trim() ? (
+                        <section className="space-y-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-300/80">
+                            Introducao
+                          </p>
+                          <p className="whitespace-pre-line text-[1.02rem] leading-8 text-zinc-100">
+                            {draft.introduction}
+                          </p>
                         </section>
                       ) : null}
 

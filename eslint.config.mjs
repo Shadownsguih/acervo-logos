@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated and vendor assets that should not be linted as app source.
+    "public/pdf.worker.min.mjs",
+    "temp-bible-data/**",
+    "scripts/convert-bible.js",
+    "scripts/convert-nvi.js",
+    "scripts/import-bible-verses.js",
   ]),
 ]);
 

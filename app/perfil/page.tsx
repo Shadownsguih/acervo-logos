@@ -674,7 +674,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
                 className="w-[286px] shrink-0 snap-start rounded-[22px] border border-white/8 bg-[#131722] p-4"
               >
                 <p className="text-[11px] uppercase tracking-[0.24em] text-amber-300">
-                  {item.context_label || "Assistente de estudo"}
+                  {item.context_label || "Logos IA"}
                 </p>
                 <h3 className="mt-2 text-base font-semibold text-white">
                   {item.question?.trim() || "Pergunta sem titulo"}
@@ -694,7 +694,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
       <div className="hidden flex-col gap-4 md:flex md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-amber-400">
-            Assistente de estudo
+            Logos IA
           </p>
           <h2 className="mt-2 text-xl font-bold md:text-2xl">
             Historico das conversas com IA
@@ -746,7 +746,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
                       </div>
 
                       <p className="mt-4 text-[11px] uppercase tracking-[0.24em] text-zinc-500">
-                        {item.context_label || "Assistente de estudo"}
+                        {item.context_label || "Logos IA"}
                       </p>
 
                       <h3 className="mt-2 text-base font-semibold text-white md:text-lg">
@@ -782,7 +782,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
         Conta
       </p>
       <h2 className="mt-2 text-lg font-bold text-white md:text-xl md:text-white">
-        Informacoes da conta
+        Dados da conta
       </h2>
 
       <div className="mt-5 space-y-3">
@@ -795,14 +795,6 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
           </p>
         </div>
 
-        <div className="px-0 pt-1 md:rounded-2xl md:border md:border-white/10 md:bg-black/20 md:p-4">
-          <p className="text-xs uppercase tracking-[0.24em] text-zinc-500 md:text-zinc-500">
-            ID do usuario
-          </p>
-          <p className="mt-2 break-all text-xs text-zinc-400 md:text-zinc-400">
-            {user.id}
-          </p>
-        </div>
       </div>
     </section>
   );
@@ -817,7 +809,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
           <div className="hidden items-center justify-between gap-5 md:flex">
             <div className="max-w-2xl">
               <p className="text-xs uppercase tracking-[0.35em] text-amber-400">
-                Perfil do usuario
+                Seu perfil
               </p>
               <h1 className="mt-3 text-4xl font-bold">Minha conta</h1>
               <p className="mt-3 max-w-xl text-sm leading-7 text-zinc-400">

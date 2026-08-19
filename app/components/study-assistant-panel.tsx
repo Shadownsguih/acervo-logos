@@ -487,7 +487,7 @@ export default function StudyAssistantPanel({
                         <div className="mt-1 flex items-center gap-2">
                           <span className="h-2 w-2 rounded-full bg-emerald-500" />
                           <p className="text-xs text-[#6f665c]">
-                            Online para estudo
+                            Pronto para ajudar
                           </p>
                         </div>
                       </div>
@@ -542,7 +542,7 @@ export default function StudyAssistantPanel({
                   {!messages.length && !isLoading ? (
                     <div className="space-y-4">
                       <div className="mx-auto w-fit rounded-full border border-[#eadfce] bg-white/85 px-4 py-1.5 text-[11px] font-medium text-[#8a7c6d]">
-                        Conversa iniciada agora
+                        Nova conversa
                       </div>
 
                       <div className="max-w-[88%] rounded-[24px] rounded-bl-md bg-white px-4 py-4 text-sm leading-7 text-[#2c241d] shadow-[0_18px_34px_rgba(24,21,18,0.08)]">
@@ -582,7 +582,7 @@ export default function StudyAssistantPanel({
                                     </span>
                                     <div>
                                       <p className="text-sm font-semibold text-[#17130f]">
-                                        Assistente de estudo
+                                        Logos IA
                                       </p>
                                       {visibleContent.length < message.content.length ? (
                                         <div className="mt-1">
@@ -695,7 +695,7 @@ export default function StudyAssistantPanel({
                     <div className="mt-4 flex justify-start">
                       <div className="inline-flex items-center gap-2 rounded-full border border-[#eadfce] bg-white/90 px-4 py-2 text-sm text-[#776b5f] shadow-[0_12px_24px_rgba(24,21,18,0.06)]">
                         <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
-                        Respondendo sua pergunta...
+                        Preparando resposta...
                       </div>
                     </div>
                   ) : null}

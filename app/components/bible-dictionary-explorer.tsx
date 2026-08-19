@@ -196,7 +196,7 @@ export default function BibleDictionaryExplorer() {
     if (!selectedEntry || !results.some((item) => item.id === selectedEntry.id)) {
       void openEntry(first.id, false);
     }
-  }, [results]);
+  }, [results, selectedEntry]);
 
   async function openEntry(id: string, switchMobile = true) {
     setLoadingEntry(true);

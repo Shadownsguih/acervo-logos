@@ -44,8 +44,31 @@ type DeviceKind =
 
 type PdfSelectionMenuState = {
   text: string;
+  correctedText?: string;
+  isOcrSelection?: boolean;
+  isCleaning?: boolean;
   x: number;
   y: number;
+};
+
+type OcrWordOverlay = {
+  text: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  fontSize: number;
+};
+
+type OcrPageOverlay = {
+  words: OcrWordOverlay[];
+  pageKey: string;
+};
+
+type OcrCleanupResponse = {
+  ok?: boolean;
+  correctedText?: string;
+  correctedLines?: string[];
 };
 
 export type ReaderV2VolumeItem = {
@@ -113,6 +136,51 @@ function normalizeSelectedText(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function buildOcrOverlayFromCanvas(
+  items: Array<{
+    text?: string;
+    bbox?: {
+      x0: number;
+      y0: number;
+      x1: number;
+      y1: number;
+    };
+  }>,
+  canvas: HTMLCanvasElement
+) {
+  const rect = canvas.getBoundingClientRect();
+
+  if (!canvas.width || !canvas.height || !rect.width || !rect.height) {
+    return [];
+  }
+
+  const scaleX = rect.width / canvas.width;
+  const scaleY = rect.height / canvas.height;
+
+  return items
+    .map((item) => {
+      const text = normalizeSelectedText(item.text ?? "");
+      const bbox = item.bbox;
+
+      if (!text || !bbox) {
+        return null;
+      }
+
+      const width = Math.max((bbox.x1 - bbox.x0) * scaleX, 2);
+      const height = Math.max((bbox.y1 - bbox.y0) * scaleY, 2);
+
+      return {
+        text,
+        left: bbox.x0 * scaleX,
+        top: bbox.y0 * scaleY,
+        width,
+        height,
+        fontSize: Math.max(height * 0.82, 10),
+      } satisfies OcrWordOverlay;
+    })
+    .filter((word): word is OcrWordOverlay => Boolean(word));
+}
+
 export default function ReaderV2Client({
   fileUrl,
   title,
@@ -130,9 +198,19 @@ export default function ReaderV2Client({
   const shellRef = useRef<HTMLDivElement | null>(null);
   const readingAreaRef = useRef<HTMLDivElement | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+  const pageSurfaceRef = useRef<HTMLDivElement | null>(null);
   const lastTapRef = useRef<number>(0);
   const controlsHideTimerRef = useRef<number | null>(null);
   const numPagesRef = useRef(0);
+  const ocrWorkerRef = useRef<{
+    recognize: (image: HTMLCanvasElement) => Promise<unknown>;
+    setParameters?: (
+      params: Record<string, string | number>
+    ) => Promise<unknown>;
+    terminate: () => Promise<unknown>;
+  } | null>(null);
+  const ocrCacheRef = useRef(new Map<string, OcrPageOverlay>());
+  const ocrRunIdRef = useRef(0);
 
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
@@ -181,6 +259,10 @@ export default function ReaderV2Client({
   const [hasPageLinks, setHasPageLinks] = useState(false);
   const [pdfSelectionMenu, setPdfSelectionMenu] =
     useState<PdfSelectionMenuState | null>(null);
+  const [ocrOverlay, setOcrOverlay] = useState<OcrPageOverlay | null>(null);
+  const [isOcrRunning, setIsOcrRunning] = useState(false);
+  const [isOcrRefining, setIsOcrRefining] = useState(false);
+  const [pageRenderNonce, setPageRenderNonce] = useState(0);
   const [statusHint, setStatusHint] = useState(
     "Ambiente de leitura ativo. Toque no centro para recolher os controles."
   );
@@ -228,16 +310,18 @@ export default function ReaderV2Client({
   }
 
   async function handleCopySelectedPdfText() {
-    if (!pdfSelectionMenu?.text) {
+    const textToUse = pdfSelectionMenu?.correctedText || pdfSelectionMenu?.text;
+
+    if (!textToUse) {
       return;
     }
 
     try {
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(pdfSelectionMenu.text);
+        await navigator.clipboard.writeText(textToUse);
       } else {
         const textarea = document.createElement("textarea");
-        textarea.value = pdfSelectionMenu.text;
+        textarea.value = textToUse;
         textarea.setAttribute("readonly", "true");
         textarea.style.position = "fixed";
         textarea.style.opacity = "0";
@@ -256,15 +340,17 @@ export default function ReaderV2Client({
   }
 
   function handleAskLogosIaAboutSelection() {
-    if (!pdfSelectionMenu?.text) {
+    const textToUse = pdfSelectionMenu?.correctedText || pdfSelectionMenu?.text;
+
+    if (!textToUse) {
       return;
     }
 
     window.dispatchEvent(
       new CustomEvent(LOGOS_IA_PROMPT_EVENT, {
         detail: {
-          prompt: `Explique o contexto historico e cultural do seguinte trecho do PDF:\n\n"${pdfSelectionMenu.text}"`,
-          selectedText: pdfSelectionMenu.text,
+          prompt: `Explique o contexto historico e cultural do seguinte trecho do PDF:\n\n"${textToUse}"`,
+          selectedText: textToUse,
         },
       })
     );
@@ -365,15 +451,198 @@ export default function ReaderV2Client({
       return null;
     }
 
-    if (!node.closest(".react-pdf__Page__textContent")) {
+    if (
+      !node.closest(".react-pdf__Page__textContent") &&
+      !node.closest(".reader-ocr-text-layer")
+    ) {
       return null;
     }
 
     return {
       text: selectedText,
       rect: range.getBoundingClientRect(),
+      isOcrSelection: Boolean(node.closest(".reader-ocr-text-layer")),
     };
   }, []);
+
+  const requestOcrCleanup = useCallback(async (rawText: string) => {
+    const response = await fetch("/api/ocr-cleanup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text: rawText,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | {
+          ok?: boolean;
+          correctedText?: string;
+        }
+      | null;
+
+    if (!response.ok || !payload?.ok) {
+      throw new Error("cleanup_failed");
+    }
+
+    return normalizeSelectedText(String(payload.correctedText ?? rawText));
+  }, []);
+
+  const requestOcrLineCleanup = useCallback(async (lines: string[]) => {
+    const response = await fetch("/api/ocr-cleanup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        lines,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | OcrCleanupResponse
+      | null;
+
+    if (
+      !response.ok ||
+      !payload?.ok ||
+      !Array.isArray(payload.correctedLines) ||
+      payload.correctedLines.length !== lines.length
+    ) {
+      throw new Error("cleanup_lines_failed");
+    }
+
+    return payload.correctedLines.map((line) => normalizeSelectedText(line));
+  }, []);
+
+  const ensureOcrWorker = useCallback(async () => {
+    if (ocrWorkerRef.current) {
+      return ocrWorkerRef.current;
+    }
+
+    const { PSM, createWorker } = await import("tesseract.js");
+    const worker = await createWorker("por");
+
+    if (worker.setParameters) {
+      await worker.setParameters({
+        tessedit_pageseg_mode: PSM.AUTO,
+        preserve_interword_spaces: "1",
+      });
+    }
+
+    ocrWorkerRef.current = worker;
+    return worker;
+  }, []);
+
+  const runOcrForCurrentPage = useCallback(
+    async (canvas: HTMLCanvasElement, pageKey: string) => {
+      const runId = ++ocrRunIdRef.current;
+      setIsOcrRunning(true);
+      setIsOcrRefining(false);
+
+      try {
+        const worker = await ensureOcrWorker();
+        const result = (await worker.recognize(canvas)) as {
+          data?: {
+            lines?: Array<{
+              text?: string;
+              bbox?: {
+                x0: number;
+                y0: number;
+                x1: number;
+                y1: number;
+              };
+            }>;
+            words?: Array<{
+              text?: string;
+              bbox?: {
+                x0: number;
+                y0: number;
+                x1: number;
+                y1: number;
+              };
+            }>;
+          };
+        };
+
+        if (runId !== ocrRunIdRef.current) {
+          return;
+        }
+
+        const itemsForOverlay =
+          result.data?.lines?.filter(
+            (line) => normalizeSelectedText(line.text ?? "").length > 0
+          ) ?? [];
+
+        const baseItems =
+          itemsForOverlay.length ? itemsForOverlay : result.data?.words ?? [];
+        const words = buildOcrOverlayFromCanvas(baseItems, canvas);
+
+        if (!words.length) {
+          setOcrOverlay(null);
+          return;
+        }
+
+        const overlay = {
+          words,
+          pageKey,
+        } satisfies OcrPageOverlay;
+
+        ocrCacheRef.current.set(pageKey, overlay);
+        setOcrOverlay(overlay);
+        revealChromeTemporarily("OCR ativo nesta pagina escaneada.");
+
+        if (itemsForOverlay.length) {
+          setIsOcrRefining(true);
+
+          try {
+            const correctedLines = await requestOcrLineCleanup(
+              itemsForOverlay.map((line) => normalizeSelectedText(line.text ?? ""))
+            );
+
+            if (runId !== ocrRunIdRef.current) {
+              return;
+            }
+
+            const correctedOverlay = {
+              words: buildOcrOverlayFromCanvas(
+                itemsForOverlay.map((line, index) => ({
+                  ...line,
+                  text: correctedLines[index] || line.text,
+                })),
+                canvas
+              ),
+              pageKey,
+            } satisfies OcrPageOverlay;
+
+            if (correctedOverlay.words.length) {
+              ocrCacheRef.current.set(pageKey, correctedOverlay);
+              setOcrOverlay(correctedOverlay);
+              revealChromeTemporarily("OCR refinado com IA nesta pagina.");
+            }
+          } catch {
+            // mantem o OCR bruto se a correcao nao responder
+          } finally {
+            if (runId === ocrRunIdRef.current) {
+              setIsOcrRefining(false);
+            }
+          }
+        }
+      } catch {
+        if (runId === ocrRunIdRef.current) {
+          setOcrOverlay(null);
+          setIsOcrRefining(false);
+        }
+      } finally {
+        if (runId === ocrRunIdRef.current) {
+          setIsOcrRunning(false);
+        }
+      }
+    },
+    [ensureOcrWorker, requestOcrLineCleanup, revealChromeTemporarily]
+  );
 
   const saveProgress = useCallback(
     (nextPage: number) => {
@@ -566,6 +835,10 @@ export default function ReaderV2Client({
       .catch(() => {
         setHasPageLinks(false);
       });
+  }
+
+  function handlePageRenderSuccess() {
+    setPageRenderNonce((current) => current + 1);
   }
 
   const handleDocumentItemClick = useCallback(
@@ -838,12 +1111,47 @@ export default function ReaderV2Client({
     event.preventDefault();
     event.stopPropagation();
 
-    setPdfSelectionMenu({
+    const nextMenu = {
       text: selection.text,
+      correctedText: selection.isOcrSelection ? selection.text : undefined,
+      isOcrSelection: selection.isOcrSelection,
+      isCleaning: selection.isOcrSelection,
       x: Math.min(event.clientX + 10, window.innerWidth - 24),
       y: Math.min(event.clientY + 8, window.innerHeight - 24),
-    });
+    } satisfies PdfSelectionMenuState;
+
+    setPdfSelectionMenu(nextMenu);
     revealChromeTemporarily("Trecho selecionado. Escolha uma acao.");
+
+    if (selection.isOcrSelection) {
+      void requestOcrCleanup(selection.text)
+        .then((correctedText) => {
+          setPdfSelectionMenu((current) => {
+            if (!current || current.text !== nextMenu.text) {
+              return current;
+            }
+
+            return {
+              ...current,
+              correctedText: correctedText || current.text,
+              isCleaning: false,
+            };
+          });
+        })
+        .catch(() => {
+          setPdfSelectionMenu((current) => {
+            if (!current || current.text !== nextMenu.text) {
+              return current;
+            }
+
+            return {
+              ...current,
+              correctedText: current.text,
+              isCleaning: false,
+            };
+          });
+        });
+    }
   }
 
   function handleZoneClick(event: ReactMouseEvent<HTMLButtonElement>) {
@@ -973,7 +1281,66 @@ export default function ReaderV2Client({
   useEffect(() => {
     closePdfSelectionMenu();
     clearPdfSelection();
+    setOcrOverlay(null);
+    setIsOcrRunning(false);
+    setIsOcrRefining(false);
   }, [clearPdfSelection, closePdfSelectionMenu, pageNumber]);
+
+  useEffect(() => {
+    if (!pageRenderNonce) {
+      return;
+    }
+
+    const pageKey = `${fileUrl}::${pageNumber}`;
+    const cachedOverlay = ocrCacheRef.current.get(pageKey);
+
+    if (cachedOverlay) {
+      setOcrOverlay(cachedOverlay);
+      setIsOcrRunning(false);
+      setIsOcrRefining(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const pageSurface = pageSurfaceRef.current;
+
+      if (!pageSurface) {
+        return;
+      }
+
+      const nativeTextNodes = Array.from(
+        pageSurface.querySelectorAll(".react-pdf__Page__textContent span")
+      ).some((node) => normalizeSelectedText(node.textContent ?? ""));
+
+      if (nativeTextNodes) {
+        setOcrOverlay(null);
+        setIsOcrRunning(false);
+        setIsOcrRefining(false);
+        return;
+      }
+
+      const canvas = pageSurface.querySelector("canvas");
+
+      if (!(canvas instanceof HTMLCanvasElement)) {
+        return;
+      }
+
+      void runOcrForCurrentPage(canvas, pageKey);
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [fileUrl, pageNumber, pageRenderNonce, runOcrForCurrentPage]);
+
+  useEffect(() => {
+    return () => {
+      ocrRunIdRef.current += 1;
+
+      if (ocrWorkerRef.current) {
+        void ocrWorkerRef.current.terminate();
+        ocrWorkerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isChromeVisible) {
@@ -1660,6 +2027,8 @@ export default function ReaderV2Client({
                   }}
                 >
                   <div
+                    ref={pageSurfaceRef}
+                    className="relative inline-block"
                     style={{
                       width: mobileBasePageWidth
                         ? `${mobileBasePageWidth}px`
@@ -1688,14 +2057,39 @@ export default function ReaderV2Client({
                           )
                         }
                         onLoadSuccess={handlePageLoadSuccess}
+                        onRenderSuccess={handlePageRenderSuccess}
                         className="shadow-[0_32px_90px_rgba(0,0,0,0.42)]"
                       />
+
+                      {ocrOverlay?.pageKey === `${fileUrl}::${pageNumber}` ? (
+                        <div className="reader-ocr-text-layer pointer-events-auto absolute inset-0 z-[3] overflow-hidden">
+                          {ocrOverlay.words.map((word, index) => (
+                            <span
+                              key={`${word.text}-${index}`}
+                              className="absolute select-text whitespace-pre text-transparent"
+                              style={{
+                                left: `${word.left}px`,
+                                top: `${word.top}px`,
+                                width: `${word.width}px`,
+                                height: `${word.height}px`,
+                                fontSize: `${word.fontSize}px`,
+                                lineHeight: `${word.height}px`,
+                              }}
+                            >
+                              {word.text}{" "}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                     </Document>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className={desktopReadingWrapClass}>
+              <div
+                ref={pageSurfaceRef}
+                className={`${desktopReadingWrapClass} relative inline-block`}
+              >
                 <Document
                   file={fileUrl}
                   loading=""
@@ -1716,9 +2110,31 @@ export default function ReaderV2Client({
                       )
                     }
                     onLoadSuccess={handlePageLoadSuccess}
+                    onRenderSuccess={handlePageRenderSuccess}
                     className="shadow-[0_36px_110px_rgba(0,0,0,0.42)]"
                   />
                 </Document>
+
+                {ocrOverlay?.pageKey === `${fileUrl}::${pageNumber}` ? (
+                  <div className="reader-ocr-text-layer pointer-events-auto absolute inset-0 z-[3] overflow-hidden">
+                    {ocrOverlay.words.map((word, index) => (
+                      <span
+                        key={`${word.text}-${index}`}
+                        className="absolute select-text whitespace-pre text-transparent"
+                        style={{
+                          left: `${word.left}px`,
+                          top: `${word.top}px`,
+                          width: `${word.width}px`,
+                          height: `${word.height}px`,
+                          fontSize: `${word.fontSize}px`,
+                          lineHeight: `${word.height}px`,
+                        }}
+                      >
+                        {word.text}{" "}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             )}
 
@@ -1726,6 +2142,18 @@ export default function ReaderV2Client({
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="rounded-full border border-white/10 bg-black/35 px-4 py-2 text-sm text-zinc-200 backdrop-blur-xl">
                   Preparando leitura...
+                </div>
+              </div>
+            ) : null}
+
+            {!isDocumentLoading && (isOcrRunning || isOcrRefining || ocrOverlay) ? (
+              <div className="pointer-events-none absolute right-3 top-3 z-[5]">
+                <div className="rounded-full border border-amber-300/20 bg-black/45 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-100 backdrop-blur-xl">
+                  {isOcrRunning
+                    ? "Lendo OCR"
+                    : isOcrRefining
+                    ? "Refinando OCR"
+                    : "OCR ativo"}
                 </div>
               </div>
             ) : null}
@@ -1753,11 +2181,21 @@ export default function ReaderV2Client({
                   onPointerDown={(event) => event.stopPropagation()}
                 >
                   <p className="px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-                    Trecho selecionado
+                    {pdfSelectionMenu.isOcrSelection
+                      ? "Trecho OCR selecionado"
+                      : "Trecho selecionado"}
                   </p>
                   <p className="line-clamp-3 px-2 pb-2 text-sm leading-6 text-zinc-200">
-                    {pdfSelectionMenu.text}
+                    {pdfSelectionMenu.correctedText || pdfSelectionMenu.text}
                   </p>
+
+                  {pdfSelectionMenu.isOcrSelection ? (
+                    <p className="px-2 pb-2 text-[11px] text-zinc-500">
+                      {pdfSelectionMenu.isCleaning
+                        ? "A IA esta ajustando ortografia e espacos deste OCR."
+                        : "Texto OCR ajustado para leitura e compartilhamento."}
+                    </p>
+                  ) : null}
 
                   <button
                     type="button"
@@ -1996,6 +2434,16 @@ export default function ReaderV2Client({
 
         [data-reader-shell="v2"] .react-pdf__Page__textContent ::selection {
           background: rgba(251, 191, 36, 0.32);
+        }
+
+        [data-reader-shell="v2"] .reader-ocr-text-layer {
+          user-select: text;
+          cursor: text;
+        }
+
+        [data-reader-shell="v2"] .reader-ocr-text-layer ::selection {
+          color: transparent;
+          background: rgba(251, 191, 36, 0.38);
         }
       `}</style>
 

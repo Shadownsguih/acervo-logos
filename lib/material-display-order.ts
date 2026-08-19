@@ -1,6 +1,41 @@
-type SupabaseLike = {
-  from: (table: string) => any;
+type MaterialOrderRow = {
+  id: string;
+  display_order: number | null;
 };
+
+type MaterialOrderQueryResult = {
+  data: MaterialOrderRow[] | null;
+  error: { message?: string } | null;
+};
+
+type MaterialOrderQuery = {
+  select: (columns: string) => MaterialOrderQuery;
+  update: (values: { display_order: number }) => MaterialOrderQuery;
+  eq: (column: string, value: string) => MaterialOrderQuery;
+  neq: (column: string, value: string) => MaterialOrderQuery;
+  not: (column: string, operator: string, value: null) => MaterialOrderQuery;
+  gte: (column: string, value: number) => MaterialOrderQuery;
+  gt: (column: string, value: number) => MaterialOrderQuery;
+  lte: (column: string, value: number) => MaterialOrderQuery;
+  lt: (column: string, value: number) => MaterialOrderQuery;
+  order: (
+    column: string,
+    options: { ascending: boolean }
+  ) => MaterialOrderQuery;
+  limit: (count: number) => MaterialOrderQuery;
+};
+
+type SupabaseLike = {
+  from: (table: string) => unknown;
+};
+
+function asMaterialOrderQuery(value: unknown) {
+  return value as MaterialOrderQuery;
+}
+
+function asMaterialOrderQueryResult(value: unknown) {
+  return value as MaterialOrderQueryResult;
+}
 
 function parsePositiveInteger(value: unknown): number | null {
   const parsed =
@@ -22,8 +57,7 @@ async function getMaxDisplayOrder(
   categoryId: string,
   excludeMaterialId?: string
 ) {
-  let query = supabase
-    .from("materials")
+  let query = asMaterialOrderQuery(supabase.from("materials"))
     .select("id, display_order")
     .eq("category_id", categoryId)
     .not("display_order", "is", null)
@@ -34,10 +68,10 @@ async function getMaxDisplayOrder(
     query = query.neq("id", excludeMaterialId);
   }
 
-  const { data, error } = await query;
+  const { data, error } = asMaterialOrderQueryResult(await query);
 
   if (error) {
-    throw new Error("Não foi possível consultar a ordem atual dos materiais.");
+    throw new Error("Nao foi possivel consultar a ordem atual dos materiais.");
   }
 
   const maxOrder = Number(data?.[0]?.display_order ?? 0);
@@ -57,8 +91,7 @@ async function incrementOrdersFromPosition(
   fromPosition: number,
   excludeMaterialId?: string
 ) {
-  let query = supabase
-    .from("materials")
+  let query = asMaterialOrderQuery(supabase.from("materials"))
     .select("id, display_order")
     .eq("category_id", categoryId)
     .gte("display_order", fromPosition)
@@ -68,13 +101,13 @@ async function incrementOrdersFromPosition(
     query = query.neq("id", excludeMaterialId);
   }
 
-  const { data, error } = await query;
+  const { data, error } = asMaterialOrderQueryResult(await query);
 
   if (error) {
-    throw new Error("Não foi possível reorganizar os materiais da categoria.");
+    throw new Error("Nao foi possivel reorganizar os materiais da categoria.");
   }
 
-  const rows = (data ?? []) as { id: string; display_order: number | null }[];
+  const rows = data ?? [];
 
   for (const row of rows) {
     const currentOrder = Number(row.display_order ?? 0);
@@ -83,13 +116,14 @@ async function incrementOrdersFromPosition(
       continue;
     }
 
-    const { error: updateError } = await supabase
-      .from("materials")
-      .update({ display_order: currentOrder + 1 })
-      .eq("id", row.id);
+    const { error: updateError } = asMaterialOrderQueryResult(
+      await asMaterialOrderQuery(supabase.from("materials"))
+        .update({ display_order: currentOrder + 1 })
+        .eq("id", row.id)
+    );
 
     if (updateError) {
-      throw new Error("Não foi possível abrir espaço na ordenação da categoria.");
+      throw new Error("Nao foi possivel abrir espaco na ordenacao da categoria.");
     }
   }
 }
@@ -100,8 +134,7 @@ async function decrementOrdersAfterPosition(
   afterPosition: number,
   excludeMaterialId?: string
 ) {
-  let query = supabase
-    .from("materials")
+  let query = asMaterialOrderQuery(supabase.from("materials"))
     .select("id, display_order")
     .eq("category_id", categoryId)
     .gt("display_order", afterPosition)
@@ -111,13 +144,13 @@ async function decrementOrdersAfterPosition(
     query = query.neq("id", excludeMaterialId);
   }
 
-  const { data, error } = await query;
+  const { data, error } = asMaterialOrderQueryResult(await query);
 
   if (error) {
-    throw new Error("Não foi possível compactar a ordenação da categoria.");
+    throw new Error("Nao foi possivel compactar a ordenacao da categoria.");
   }
 
-  const rows = (data ?? []) as { id: string; display_order: number | null }[];
+  const rows = data ?? [];
 
   for (const row of rows) {
     const currentOrder = Number(row.display_order ?? 0);
@@ -126,13 +159,14 @@ async function decrementOrdersAfterPosition(
       continue;
     }
 
-    const { error: updateError } = await supabase
-      .from("materials")
-      .update({ display_order: currentOrder - 1 })
-      .eq("id", row.id);
+    const { error: updateError } = asMaterialOrderQueryResult(
+      await asMaterialOrderQuery(supabase.from("materials"))
+        .update({ display_order: currentOrder - 1 })
+        .eq("id", row.id)
+    );
 
     if (updateError) {
-      throw new Error("Não foi possível reajustar a ordem dos materiais.");
+      throw new Error("Nao foi possivel reajustar a ordem dos materiais.");
     }
   }
 }
@@ -144,20 +178,21 @@ async function shiftRangeUp(
   endExclusive: number,
   excludeMaterialId: string
 ) {
-  const { data, error } = await supabase
-    .from("materials")
-    .select("id, display_order")
-    .eq("category_id", categoryId)
-    .gte("display_order", startInclusive)
-    .lt("display_order", endExclusive)
-    .neq("id", excludeMaterialId)
-    .order("display_order", { ascending: false });
+  const { data, error } = asMaterialOrderQueryResult(
+    await asMaterialOrderQuery(supabase.from("materials"))
+      .select("id, display_order")
+      .eq("category_id", categoryId)
+      .gte("display_order", startInclusive)
+      .lt("display_order", endExclusive)
+      .neq("id", excludeMaterialId)
+      .order("display_order", { ascending: false })
+  );
 
   if (error) {
-    throw new Error("Não foi possível mover os materiais para baixo.");
+    throw new Error("Nao foi possivel mover os materiais para baixo.");
   }
 
-  const rows = (data ?? []) as { id: string; display_order: number | null }[];
+  const rows = data ?? [];
 
   for (const row of rows) {
     const currentOrder = Number(row.display_order ?? 0);
@@ -166,13 +201,14 @@ async function shiftRangeUp(
       continue;
     }
 
-    const { error: updateError } = await supabase
-      .from("materials")
-      .update({ display_order: currentOrder + 1 })
-      .eq("id", row.id);
+    const { error: updateError } = asMaterialOrderQueryResult(
+      await asMaterialOrderQuery(supabase.from("materials"))
+        .update({ display_order: currentOrder + 1 })
+        .eq("id", row.id)
+    );
 
     if (updateError) {
-      throw new Error("Não foi possível reorganizar os materiais da categoria.");
+      throw new Error("Nao foi possivel reorganizar os materiais da categoria.");
     }
   }
 }
@@ -184,20 +220,21 @@ async function shiftRangeDown(
   endInclusive: number,
   excludeMaterialId: string
 ) {
-  const { data, error } = await supabase
-    .from("materials")
-    .select("id, display_order")
-    .eq("category_id", categoryId)
-    .gt("display_order", startExclusive)
-    .lte("display_order", endInclusive)
-    .neq("id", excludeMaterialId)
-    .order("display_order", { ascending: true });
+  const { data, error } = asMaterialOrderQueryResult(
+    await asMaterialOrderQuery(supabase.from("materials"))
+      .select("id, display_order")
+      .eq("category_id", categoryId)
+      .gt("display_order", startExclusive)
+      .lte("display_order", endInclusive)
+      .neq("id", excludeMaterialId)
+      .order("display_order", { ascending: true })
+  );
 
   if (error) {
-    throw new Error("Não foi possível mover os materiais para cima.");
+    throw new Error("Nao foi possivel mover os materiais para cima.");
   }
 
-  const rows = (data ?? []) as { id: string; display_order: number | null }[];
+  const rows = data ?? [];
 
   for (const row of rows) {
     const currentOrder = Number(row.display_order ?? 0);
@@ -206,13 +243,14 @@ async function shiftRangeDown(
       continue;
     }
 
-    const { error: updateError } = await supabase
-      .from("materials")
-      .update({ display_order: currentOrder - 1 })
-      .eq("id", row.id);
+    const { error: updateError } = asMaterialOrderQueryResult(
+      await asMaterialOrderQuery(supabase.from("materials"))
+        .update({ display_order: currentOrder - 1 })
+        .eq("id", row.id)
+    );
 
     if (updateError) {
-      throw new Error("Não foi possível reorganizar os materiais da categoria.");
+      throw new Error("Nao foi possivel reorganizar os materiais da categoria.");
     }
   }
 }
