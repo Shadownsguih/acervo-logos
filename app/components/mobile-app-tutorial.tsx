@@ -36,7 +36,7 @@ const HOME_TUTORIAL: TutorialConfig = {
       eyebrow: "Comece por aqui",
       title: "Abra o menu lateral",
       description:
-        "Toque nos 3 pontinhos no topo para acessar categorias, Biblia, perfil, favoritos e os atalhos principais do Acervo Logos.",
+        "Toque nos 3 pontinhos no topo para abrir o menu com categorias, Biblia, perfil, favoritos e os atalhos principais do Acervo Logos.",
       cardClassName: "left-4 top-24 max-w-[280px] sm:left-5 sm:top-28",
       highlights: [
         {
@@ -50,7 +50,7 @@ const HOME_TUTORIAL: TutorialConfig = {
       eyebrow: "Explore o acervo",
       title: "Entre pelas categorias",
       description:
-        "Use Categorias para navegar pelos materiais organizados. A Biblia abre direto no leitor, sem telas intermediarias.",
+        "Use Categorias para navegar pelos materiais organizados. A Biblia abre direto no leitor para deixar o acesso mais rapido.",
       cardClassName: "right-4 top-[34vh] max-w-[290px] sm:right-5",
       highlights: [
         {
@@ -62,9 +62,9 @@ const HOME_TUTORIAL: TutorialConfig = {
     {
       id: "recursos",
       eyebrow: "Estude melhor",
-      title: "Descubra os recursos do app",
+      title: "Use os atalhos da home",
       description:
-        "A home leva voce rapido para favoritos, leitura recente, Biblia e categorias. O objetivo aqui e entrar no conteudo com poucos toques.",
+        "A home foi pensada para levar voce rapido a favoritos, leitura recente, Biblia e categorias, com menos passos para chegar ao conteudo.",
       cardClassName:
         "left-1/2 top-[58vh] w-[calc(100%-32px)] max-w-[320px] -translate-x-1/2 sm:top-[60vh]",
       highlights: [
@@ -87,7 +87,7 @@ const BIBLE_READER_TUTORIAL: TutorialConfig = {
       eyebrow: "Navegacao",
       title: "Escolha traducao, livro e capitulo",
       description:
-        "No topo do leitor voce controla a traducao e a referencia. Toque nesses campos para mudar rapidamente o texto que esta estudando.",
+        "No topo do leitor voce escolhe a traducao e a referencia. Toque nesses campos para mudar rapidamente o texto que esta estudando.",
       cardClassName: "left-4 top-24 max-w-[290px] sm:left-5 sm:top-28",
       highlights: [
         {
@@ -101,7 +101,7 @@ const BIBLE_READER_TUTORIAL: TutorialConfig = {
       eyebrow: "Consulta",
       title: "Use a busca e a camada original",
       description:
-        "A lupa abre a busca no proprio leitor. O botao Hebraico ou Grego mostra o texto original acima do portugues quando o recurso estiver disponivel.",
+        "A lupa abre a busca dentro do proprio leitor. O botao Hebraico ou Grego mostra o texto original acima do portugues quando o recurso estiver disponivel.",
       cardClassName: "right-4 top-[34vh] max-w-[290px] sm:right-5",
       highlights: [
         {

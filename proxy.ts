@@ -17,6 +17,7 @@ function isPublicPath(pathname: string) {
   return (
     pathname === "/" ||
     pathname === "/login" ||
+    pathname === "/planos" ||
     pathname === "/assinatura" ||
     pathname === "/manifest.webmanifest" ||
     pathname === "/manifest.json" ||

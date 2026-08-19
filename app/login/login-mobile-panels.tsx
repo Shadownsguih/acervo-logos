@@ -57,7 +57,7 @@ export default function LoginMobilePanels({
 
                 <div className="mt-6 flex justify-center">
                   <div className="rounded-full border border-white/12 bg-white/[0.12] px-5 py-2 text-[11px] font-medium tracking-[0.22em] text-white/90 shadow-[0_8px_20px_rgba(0,0,0,0.12)] backdrop-blur-md">
-                    ACESSO RESTRITO
+                    ACESSO AO ACERVO
                   </div>
                 </div>
 
@@ -65,12 +65,12 @@ export default function LoginMobilePanels({
                   <h2
                     className={`${cinzelClassName} text-[28px] font-medium uppercase tracking-[0.18em] text-white/92`}
                   >
-                    Faça Login
+                    Faca login
                   </h2>
 
                   <p className="mx-auto mt-3 max-w-[320px] text-sm leading-7 text-white/64">
-                    Entre com seu e-mail e senha para acessar seu conteúdo no
-                    acervo.
+                    Entre com seu e-mail e senha para acessar sua biblioteca,
+                    seus estudos e os materiais do acervo.
                   </p>
                 </div>
 
@@ -91,7 +91,7 @@ export default function LoginMobilePanels({
                         type="email"
                         autoComplete="email"
                         required
-                        className="w-full bg-transparent px-5 py-4 text-[16px] tracking-[0.08em] text-white outline-none placeholder:text-white/52"
+                        className="w-full bg-transparent px-5 py-4 text-[16px] tracking-[0.04em] text-white outline-none placeholder:text-white/52"
                         placeholder="E-mail"
                       />
                     </div>
@@ -103,7 +103,7 @@ export default function LoginMobilePanels({
                         type="password"
                         autoComplete="current-password"
                         required
-                        className="w-full bg-transparent px-5 py-4 text-[16px] tracking-[0.08em] text-white outline-none placeholder:text-white/52"
+                        className="w-full bg-transparent px-5 py-4 text-[16px] tracking-[0.04em] text-white outline-none placeholder:text-white/52"
                         placeholder="Senha"
                       />
                     </div>
@@ -135,7 +135,7 @@ export default function LoginMobilePanels({
                     href="/"
                     className="text-sm text-white/55 transition hover:text-white/85"
                   >
-                    ← Voltar para a página inicial
+                    Voltar para a pagina inicial
                   </Link>
                 </div>
               </div>
@@ -173,29 +173,27 @@ export default function LoginMobilePanels({
                   </p>
 
                   <h1 className="mt-3 text-[22px] font-semibold leading-tight text-white">
-                    É novo no Acervo?
+                    E novo no Acervo?
                   </h1>
 
                   <p className="mx-auto mt-8 max-w-[320px] text-[15px] leading-8 text-white/68">
-                    Explore tudo o que preparamos para você. Clique no botão
-                    abaixo para falar conosco no WhatsApp e liberar seu acesso.
+                    Conheca os planos do Acervo Logos e escolha a melhor forma
+                    de liberar seu acesso.
                   </p>
 
-                  <a
-                    href={whatsappLink}
-                    target="_blank"
-                    rel="noreferrer"
+                  <Link
+                    href="/planos"
                     className="mt-8 inline-flex w-full items-center justify-center rounded-full border border-white/15 bg-white/[0.14] px-6 py-4 text-sm font-semibold tracking-[0.14em] text-white shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-md transition hover:bg-white/[0.20]"
                   >
-                    FALAR NO WHATSAPP
-                  </a>
+                    VER PLANOS
+                  </Link>
 
                   <button
                     type="button"
                     onClick={() => setActivePanel("login")}
                     className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.08] px-6 py-3 text-sm font-medium text-white/88 transition hover:bg-white/[0.12]"
                   >
-                    Já tenho conta
+                    Ja tenho conta
                   </button>
                 </div>
 
@@ -209,7 +207,7 @@ export default function LoginMobilePanels({
                     href="/"
                     className="text-sm text-white/55 transition hover:text-white/85"
                   >
-                    ← Voltar para a página inicial
+                    Voltar para a pagina inicial
                   </Link>
                 </div>
               </div>

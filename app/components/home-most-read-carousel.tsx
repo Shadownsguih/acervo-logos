@@ -158,13 +158,13 @@ export default function HomeMostReadCarousel({
   const accessLabel = isLoggedIn ? "Acesso liberado" : "Requer autenticacao";
   const accessHref = isLoggedIn
     ? `/material/${material.id}`
-    : `/login?next=/material/${material.id}`;
+    : "/planos";
   const accessButtonLabel = isLoggedIn
     ? "Acessar material ->"
-    : "Entrar para acessar ->";
+    : "Ver planos ->";
   const accessDescription = isLoggedIn
     ? "Voce ja esta logado e pode abrir este material agora."
-    : "Entre com sua conta para abrir este material.";
+    : "Escolha um plano para liberar o acesso completo a este material.";
 
   return (
     <div
@@ -231,7 +231,7 @@ export default function HomeMostReadCarousel({
                 <MaterialFavoriteButton
                   materialId={material.id}
                   variant="icon"
-                  redirectTo={`/material/${material.id}`}
+                  redirectTo={isLoggedIn ? `/material/${material.id}` : "/planos"}
                 />
               </div>
             </div>

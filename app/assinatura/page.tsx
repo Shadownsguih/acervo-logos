@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
+import { buildPlanWhatsAppLink, getConfiguredWhatsAppLink } from "@/lib/whatsapp";
 
 function formatDate(value: string | null) {
   if (!value) {
-    return "Data não disponível";
+    return "Data nao disponivel";
   }
 
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "Data não disponível";
+    return "Data nao disponivel";
   }
 
   return new Intl.DateTimeFormat("pt-BR", {
@@ -36,9 +37,9 @@ function hasAccessExpired(value: string | null) {
 function resolveMessage(status: string | null, isExpiredByDate: boolean) {
   if (status === "blocked") {
     return {
-      title: "Seu acesso foi bloqueado",
+      title: "Seu acesso esta bloqueado",
       description:
-        "Seu acesso ao Acervo Logos está bloqueado no momento. Para regularizar sua conta, entre em contato com o administrador.",
+        "No momento sua conta nao esta liberada para usar o Acervo Logos. Fale conosco para regularizar o acesso.",
     };
   }
 
@@ -46,19 +47,20 @@ function resolveMessage(status: string | null, isExpiredByDate: boolean) {
     return {
       title: "Sua assinatura venceu",
       description:
-        "Seu período de acesso ao Acervo Logos terminou. Para continuar usando a biblioteca, é necessário renovar sua assinatura.",
+        "Seu periodo de acesso ao Acervo Logos terminou. Para continuar estudando na biblioteca, renove sua assinatura.",
     };
   }
 
   return {
-    title: "Seu acesso está indisponível",
+    title: "Seu acesso precisa de verificacao",
     description:
-      "Não foi possível validar o acesso da sua conta no momento. Entre em contato com o administrador para regularizar.",
+      "Nao foi possivel validar sua conta agora. Entre em contato para confirmar a situacao do seu acesso.",
   };
 }
 
 export default async function AssinaturaPage() {
   const supabase = await createClient();
+  const whatsappLink = getConfiguredWhatsAppLink();
 
   const {
     data: { user },
@@ -79,9 +81,7 @@ export default async function AssinaturaPage() {
   const expiresAt = profile?.access_expires_at ?? null;
   const subscriptionStatus = profile?.subscription_status ?? null;
   const paymentStatus = profile?.payment_status ?? null;
-
   const isExpiredByDate = hasAccessExpired(expiresAt);
-
   const content = resolveMessage(subscriptionStatus, isExpiredByDate);
 
   return (
@@ -103,10 +103,10 @@ export default async function AssinaturaPage() {
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
               <p className="text-sm uppercase tracking-[0.2em] text-zinc-400">
-                Usuário
+                Conta
               </p>
               <p className="mt-3 text-lg font-semibold text-white">
-                {profile?.full_name?.trim() || user.email || "Usuário"}
+                {profile?.full_name?.trim() || user.email || "Usuario"}
               </p>
               <p className="mt-2 break-all text-sm text-zinc-400">
                 {user.email}
@@ -129,7 +129,7 @@ export default async function AssinaturaPage() {
                     ? "Pendente"
                     : paymentStatus === "overdue"
                     ? "Atrasado"
-                    : "Não definido"}
+                    : "Nao definido"}
                 </span>
               </p>
             </div>
@@ -137,19 +137,58 @@ export default async function AssinaturaPage() {
 
           <div className="mt-8 rounded-3xl border border-amber-500/20 bg-amber-500/10 p-5">
             <p className="text-sm font-medium text-white">
-              Como regularizar seu acesso
+              Como voltar a estudar
             </p>
 
             <p className="mt-3 text-sm leading-6 text-zinc-200">
               Entre em contato para confirmar o pagamento ou solicitar a
-              renovação da assinatura. Assim que sua conta for liberada no
-              painel administrativo, o acesso será restabelecido.
+              renovacao da assinatura. Assim que sua conta for liberada, o
+              acesso ao acervo sera restabelecido.
             </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            <article className="rounded-3xl border border-white/10 bg-black/20 p-5">
+              <p className="text-xs uppercase tracking-[0.24em] text-amber-300">
+                Plano mensal
+              </p>
+              <h2 className="mt-3 text-2xl font-bold text-white">R$ 15/mes</h2>
+              <p className="mt-3 text-sm leading-6 text-zinc-300">
+                Ideal para retomar seu acesso agora e voltar a estudar sem
+                demora.
+              </p>
+              <a
+                href={buildPlanWhatsAppLink("Mensal - R$ 15 por mes")}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-5 inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+              >
+                Escolher plano mensal
+              </a>
+            </article>
+
+            <article className="rounded-3xl border border-amber-300/20 bg-[linear-gradient(180deg,rgba(245,158,11,0.10),rgba(255,255,255,0.03))] p-5">
+              <p className="text-xs uppercase tracking-[0.24em] text-amber-200">
+                Plano anual
+              </p>
+              <h2 className="mt-3 text-2xl font-bold text-white">R$ 140/ano</h2>
+              <p className="mt-3 text-sm leading-6 text-zinc-200">
+                Melhor custo-beneficio para manter seu acesso ao longo do ano.
+              </p>
+              <a
+                href={buildPlanWhatsAppLink("Anual - R$ 140 por ano")}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-5 inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-amber-400 px-5 py-3 text-sm font-semibold text-black transition hover:bg-amber-300"
+              >
+                Escolher plano anual
+              </a>
+            </article>
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <a
-              href="https://wa.me/5577988292621"
+              href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-full bg-amber-400 px-6 py-3 text-sm font-semibold text-black transition hover:bg-amber-300"
@@ -161,7 +200,7 @@ export default async function AssinaturaPage() {
               href="/"
               className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
             >
-              Voltar para a página inicial
+              Voltar para a pagina inicial
             </Link>
           </div>
         </section>

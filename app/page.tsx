@@ -139,27 +139,27 @@ export default async function HomePage() {
 
   const isLoggedIn = Boolean(user);
 
-  const primaryHref = isLoggedIn ? "/categorias" : "/login?next=/categorias";
+  const primaryHref = isLoggedIn ? "/categorias" : "/planos";
   const primaryLabel = isLoggedIn
     ? "Acessar categorias"
-    : "Entrar para acessar o acervo";
+    : "Entrar no acervo";
 
-  const secondaryHref = "/categorias";
-  const secondaryLabel = "Ver categorias";
+  const secondaryHref = isLoggedIn ? "/categorias" : "/planos";
+  const secondaryLabel = "Conhecer categorias";
 
   const heroDescription = isLoggedIn
-    ? "Acesse categorias, materiais e PDFs organizados em um ambiente simples, elegante e pensado para estudo continuo."
-    : "Entre para acessar categorias, materiais e PDFs organizados em um ambiente simples, elegante e pensado para estudo continuo.";
+    ? "Sua biblioteca digital ja esta pronta para continuar a leitura, consultar a Biblia, estudar PDFs e organizar seus materiais favoritos."
+    : "Uma biblioteca teologica digital para leitura, consulta e estudo serio da Palavra, com Biblia integrada, PDFs organizados e recursos pensados para aprofundar o aprendizado.";
 
   const heroHelperText = isLoggedIn
-    ? "Seu acesso ja esta liberado para continuar a leitura."
-    : "O acesso as categorias, materiais, leitura e download dos PDFs exige login.";
+    ? "Retome seus estudos, abra suas categorias e continue de onde voce parou."
+    : "Entre com sua conta para liberar leitura, downloads, favoritos, anotacoes e ferramentas de estudo.";
 
-  const ctaEyebrow = isLoggedIn ? "Seu acervo" : "Acesso ao acervo";
-  const ctaTitle = isLoggedIn ? "Continue sua leitura" : "Entre para continuar";
+  const ctaEyebrow = isLoggedIn ? "Seu acervo" : "Comece agora";
+  const ctaTitle = isLoggedIn ? "Continue de onde voce parou" : "Entre e libere seu acesso";
   const ctaDescription = isLoggedIn
-    ? "Voce ja esta com acesso liberado. Entre agora nas categorias e continue estudando no Acervo Logos."
-    : "Faca login para acessar o conteudo completo do Acervo Logos.";
+    ? "Seu ambiente de estudo ja esta liberado. Abra as categorias, retome leituras salvas e siga estudando com mais profundidade."
+    : "Acesse o Acervo Logos para estudar com mais organizacao, consultar a Biblia, abrir materiais em PDF e montar sua propria biblioteca de apoio.";
   const ctaButtonLabel = isLoggedIn ? "Acessar categorias" : "Fazer login";
 
   const dailyVerse = isLoggedIn ? await getOrCreateDailyBibleVerse() : null;
@@ -239,9 +239,9 @@ export default async function HomePage() {
 
               <div className="relative mx-auto flex max-w-3xl flex-col items-center text-center md:mx-0 md:items-start md:text-left">
                 <h1 className="max-w-4xl text-[2rem] font-bold leading-[1.02] tracking-tight sm:text-5xl md:text-6xl xl:text-7xl">
-                  Acervo teologico digital para{" "}
+                  Estude com profundidade em um{" "}
                   <span className="bg-gradient-to-r from-white via-amber-200 to-amber-400 bg-clip-text text-transparent">
-                    leitura, consulta e estudo
+                    acervo teologico digital
                   </span>
                 </h1>
 
@@ -420,30 +420,30 @@ export default async function HomePage() {
           <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
             <div className="grid gap-4 md:grid-cols-3 md:gap-6">
               <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm sm:p-6">
-                <p className="text-sm font-medium text-white">Leitura em PDF</p>
+                <p className="text-sm font-medium text-white">Leitura organizada</p>
                 <p className="mt-3 text-sm leading-6 text-zinc-400 sm:leading-7">
-                  Materiais preparados para leitura direta e consulta com mais
-                  continuidade.
+                  Abra materiais em PDF com uma experiencia pensada para leitura,
+                  consulta e continuidade de estudo.
                 </p>
               </div>
 
               <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm sm:p-6">
                 <p className="text-sm font-medium text-white">
-                  Acervo organizado
+                  Ferramentas de estudo
                 </p>
                 <p className="mt-3 text-sm leading-6 text-zinc-400 sm:leading-7">
-                  Conteudos distribuidos de forma clara para facilitar a
-                  navegacao e o estudo.
+                  Biblia integrada, favoritos, anotacoes e apoio inteligente para
+                  aprofundar cada leitura.
                 </p>
               </div>
 
               <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm sm:p-6">
                 <p className="text-sm font-medium text-white">
-                  Acesso restrito
+                  Acesso pela sua conta
                 </p>
                 <p className="mt-3 text-sm leading-6 text-zinc-400 sm:leading-7">
-                  Entre com sua conta para abrir materiais, ler e baixar os PDFs
-                  do acervo.
+                  Seu login libera o acervo completo para leitura, download,
+                  favoritos e acompanhamento do seu progresso.
                 </p>
               </div>
             </div>

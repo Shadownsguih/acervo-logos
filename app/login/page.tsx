@@ -6,11 +6,11 @@ import LoginMobilePanels from "./login-mobile-panels";
 function getErrorMessage(erro?: string) {
   switch (erro) {
     case "login":
-      return "Faça login para continuar.";
+      return "Faca login para continuar.";
     case "campos-obrigatorios":
       return "Preencha e-mail e senha.";
     case "credenciais-invalidas":
-      return "E-mail ou senha inválidos.";
+      return "E-mail ou senha invalidos.";
     default:
       return null;
   }
@@ -83,29 +83,25 @@ export default async function LoginPage({
 
                   <div className="flex flex-1 items-center justify-center">
                     <div className="w-full max-w-[340px] text-center">
-                      <p
-                        className="font-serif text-[50px] font-medium uppercase leading-[0.92] tracking-[0.08em] text-white/90"
-                      >
-                        Bem vindo
+                      <p className="font-serif text-[50px] font-medium uppercase leading-[0.92] tracking-[0.08em] text-white/90">
+                        Bem-vindo
                       </p>
 
                       <h1 className="mt-2 text-[31px] font-semibold leading-[0.99] text-white">
-                        É NOVO NO ACERVO?
+                        E novo no acervo?
                       </h1>
 
                       <p className="mx-auto mt-20 max-w-[320px] text-[16px] leading-8 text-white/68">
-                        Explore tudo o que preparamos para você. Clique no botão
-                        WhatsApp para liberar seu acesso agora mesmo!
+                        Conheca os planos do Acervo Logos e escolha a melhor
+                        forma de liberar seu acesso.
                       </p>
 
-                      <a
-                        href={whatsappLink}
-                        target="_blank"
-                        rel="noreferrer"
+                      <Link
+                        href="/planos"
                         className="mt-12 inline-flex min-w-[245px] items-center justify-center rounded-full border border-white/15 bg-white/[0.14] px-8 py-4 text-sm font-semibold tracking-[0.18em] text-white shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-md transition hover:bg-white/[0.20]"
                       >
-                        WHATSAPP
-                      </a>
+                        VER PLANOS
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -120,21 +116,19 @@ export default async function LoginPage({
                 <div className="relative flex h-full flex-col">
                   <div className="flex h-[60px] items-center justify-end">
                     <div className="rounded-full border border-white/12 bg-white/[0.12] px-8 py-2.5 text-sm font-medium tracking-[0.2em] text-white/90 shadow-[0_8px_20px_rgba(0,0,0,0.12)] backdrop-blur-md">
-                      Acesso restrito
+                      Acesso ao acervo
                     </div>
                   </div>
 
                   <div className="mt-16 text-center">
-                    <h2
-                      className="font-serif text-[38px] font-medium uppercase tracking-[0.24em] text-white/92 md:text-[56px]"
-                    >
-                      Faça Login
+                    <h2 className="font-serif text-[38px] font-medium uppercase tracking-[0.24em] text-white/92 md:text-[56px]">
+                      Faca login
                     </h2>
                   </div>
 
                   <p className="mx-auto mt-5 max-w-md text-center text-[16px] leading-8 text-white/64">
-                    Entre com seu e-mail e senha para acessar seu conteúdo no
-                    acervo.
+                    Entre com seu e-mail e senha para acessar sua biblioteca,
+                    seus estudos e os materiais do acervo.
                   </p>
 
                   {errorMessage ? (
@@ -157,8 +151,8 @@ export default async function LoginPage({
                           type="email"
                           autoComplete="email"
                           required
-                          className="w-full bg-transparent px-6 py-5 text-[18px] tracking-[0.16em] text-white outline-none placeholder:text-white/52"
-                          placeholder="USUÁRIO"
+                          className="w-full bg-transparent px-6 py-5 text-[18px] tracking-[0.08em] text-white outline-none placeholder:text-white/52"
+                          placeholder="E-MAIL"
                         />
                       </div>
 
@@ -169,15 +163,15 @@ export default async function LoginPage({
                           type="password"
                           autoComplete="current-password"
                           required
-                          className="w-full bg-transparent px-6 py-5 text-[18px] tracking-[0.20em] text-white outline-none placeholder:text-white/52"
-                          placeholder="******"
+                          className="w-full bg-transparent px-6 py-5 text-[18px] tracking-[0.08em] text-white outline-none placeholder:text-white/52"
+                          placeholder="SENHA"
                         />
                       </div>
                     </div>
 
                     <button
                       type="submit"
-                      className="mx-auto mt-12 flex w-full max-w-[270px] items-center justify-center rounded-full bg-[#2b2955] px-8 py-4 text-[18px] font-semibold tracking-[0.12em] text-white shadow-[0_16px_35px_rgba(20,20,40,0.35)] transition hover:bg-[#34316b]"
+                      className="mx-auto mt-12 flex w-full max-w-[270px] items-center justify-center rounded-full bg-[#2b2955] px-8 py-4 text-[18px] font-semibold tracking-[0.08em] text-white shadow-[0_16px_35px_rgba(20,20,40,0.35)] transition hover:bg-[#34316b]"
                     >
                       Entrar
                     </button>
@@ -188,7 +182,7 @@ export default async function LoginPage({
                       href="/"
                       className="text-sm text-white/55 transition hover:text-white/85"
                     >
-                      ← Voltar para a página inicial
+                      Voltar para a pagina inicial
                     </Link>
                   </div>
                 </div>
@@ -197,7 +191,7 @@ export default async function LoginPage({
           </div>
 
           <div className="pointer-events-none absolute left-[460px] top-1/2 z-20 hidden h-[76px] w-[76px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/12 bg-white/[0.16] text-white shadow-[0_14px_35px_rgba(0,0,0,0.20)] backdrop-blur-md lg:flex">
-            <span className="text-[26px] leading-none">↔</span>
+            <span className="text-[26px] leading-none">⇄</span>
           </div>
         </div>
       </div>
